@@ -1,11 +1,11 @@
 #!/bin/bash
 # file checkout.sh
-# checkout script for Whiznium SBE core library, release sbecore_gumstick
+# checkout script for Whiznium SBE core library, release sbecore_awsubt
 # author Alexander Wirthmueller
 # date created: 14 Aug 2014
 # modified: 12 Jun 2016
 
-export set SRCROOT=/home/gumstix/src
+export set SRCROOT=/home/ubuntu/src
 
 mkdir $SRCROOT/sbecore
 

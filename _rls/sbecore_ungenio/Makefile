@@ -5,39 +5,95 @@
 # modified: 12 Jun 2016
 
 SRCROOT = /Users/mpsitech/src
-LIBROOT = /Users/mpsitech/lib
 
-CC = g++
-CPPFLAGS = -std=c++11 -g -Wall -pthread
+CPP = g++
+CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
 
-INCS = -I$(SRCROOT)
-INCS += -I/usr/local/include/libxml2
-INCS += -I/usr/local/mysql/include -I/Library/PostgreSQL/9.6/include
-INCS += -I$(SRCROOT)/appwzem -I$(SRCROOT)/dbswzem
+STATLIB = ar
+STATLIBFLAGS = rcs
 
-OBJECTS = Engtypes.o Mt.o Strmod.o Stub.o Txtrd.o Types.o Xmlio.o
-OBJECTS_DBSENG = Dbs.o MyDbs.o PgDbs.o LiteDbs.o
-OBJECTS_DBSENG += Mon.o Awem.o ApiMon.o DbsMon.o TxtMon.o
+DYNLIB = g++
+DYNLIBFLAGS = -dynamiclib -undefined dynamic_lookup
+DYNLIBEXT = dylib
 
-LIBRARY = libsbecore
-LIBRARY_DBSENG = libsbedbsengcore
+INCINSTPATH = /usr/local/include
+LIBINSTPATH = /usr/local/lib
+
+INCPATH = -I$(SRCROOT)
+INCPATH += -I/usr/local/include/libxml2 -I/usr/local/mysql/include -I/Library/PostgreSQL/9.6/include -I/usr/local/opt/sqlite/include
+INCPATH += -I$(SRCROOT)/apiwzem -I$(SRCROOT)/dbswzem
+
+OBJS = Dbs.o Engtypes.o Mt.o Strmod.o Stub.o Txtrd.o Types.o Xmlio.o
+OBJS_MY = MyDbs.o
+OBJS_PG = PgDbs.o
+OBJS_LITE = LiteDbs.o
+OBJS_MON = Mon.o TxtMon.o
+OBJS_APIMON = ApiMon.o
+OBJS_DBSMON = DbsMon.o
+
+LIB = libsbecore
+LIB_MY = libsbecore_my
+LIB_PG = libsbecore_pg
+LIB_LITE = libsbecore_lite
+LIB_MON = libsbecore_mon
+LIB_APIMON = libsbecore_apimon
+LIB_DBSMON = libsbecore_dbsmon
 
 .SUFFIXES: .cpp
 
 .cpp.o:
-	$(CC) $(CPPFLAGS) $(INCS) -o $@ -c $<
+	$(CPP) $(CPPFLAGS) $(INCPATH) -o $@ -c $<
 
-all:	$(LIBRARY) $(LIBRARY_DBSENG)
+all:	$(LIB) $(LIB_MY) $(LIB_PG) $(LIB_LITE) $(LIB_MON) $(LIB_APIMON) $(LIB_DBSMON)
 
-$(LIBRARY):	$(OBJECTS)
-	ar rcs $(LIBRARY).a $(OBJECTS)
+$(LIB):	$(OBJS)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB).a $(OBJS)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS) -o $(LIB).$(DYNLIBEXT)
 
-$(LIBRARY_DBSENG):	$(OBJECTS) $(OBJECTS_DBSENG)
-	ar rcs $(LIBRARY_DBSENG).a $(OBJECTS) $(OBJECTS_DBSENG)
+$(LIB_MY):	$(OBJS_MY)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_MY).a $(OBJS_MY)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_MY) -o $(LIB_MY).$(DYNLIBEXT)
+
+$(LIB_PG):	$(OBJS_PG)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_PG).a $(OBJS_PG)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_PG) -o $(LIB_PG).$(DYNLIBEXT)
+
+$(LIB_LITE):	$(OBJS_LITE)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_LITE).a $(OBJS_LITE)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_LITE) -o $(LIB_LITE).$(DYNLIBEXT)
+
+$(LIB_MON):	$(OBJS_MON)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_MON).a $(OBJS_MON)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_MON) -o $(LIB_MON).$(DYNLIBEXT)
+
+$(LIB_APIMON):	$(OBJS_APIMON)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_APIMON).a $(OBJS_APIMON)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_APIMON) -o $(LIB_APIMON).$(DYNLIBEXT)
+
+$(LIB_DBSMON):	$(OBJS_DBSMON)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_DBSMON).a $(OBJS_DBSMON)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_DBSMON) -o $(LIB_DBSMON).$(DYNLIBEXT)
 
 install:
-	cp $(LIBRARY).a $(LIBROOT)/
-	cp $(LIBRARY_DBSENG).a $(LIBROOT)/
+	-mkdir $(INCINSTPATH)/sbecore
+	chmod 755 $(INCINSTPATH)/sbecore
+	cp $(SRCROOT)/sbecore/*.h $(INCINSTPATH)/sbecore/
+	chmod 644 $(INCINSTPATH)/sbecore/*.h
+	cp $(LIB).a $(LIBINSTPATH)/
+	cp $(LIB).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_MY).a $(LIBINSTPATH)/
+	cp $(LIB_MY).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_PG).a $(LIBINSTPATH)/
+	cp $(LIB_PG).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_LITE).a $(LIBINSTPATH)/
+	cp $(LIB_LITE).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_MON).a $(LIBINSTPATH)/
+	cp $(LIB_MON).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_APIMON).a $(LIBINSTPATH)/
+	cp $(LIB_APIMON).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_DBSMON).a $(LIBINSTPATH)/
+	cp $(LIB_DBSMON).$(DYNLIBEXT) $(LIBINSTPATH)/
+	chmod 755 $(LIBINSTPATH)/libsbecore*
 
 clean: 
 	rm -f *.o

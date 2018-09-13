@@ -14,12 +14,12 @@
 #include <sbecore/Strmod.h>
 
 /**
-  * stref_t
+  * stcchitemref_t
   */
-class stref_t {
+class stcchitemref_t {
 
 public:
-	stref_t(const uint ixVStub = 0, const ubigint ref = 0, const uint ixVLocale = 0);
+	stcchitemref_t(const uint ixVStub = 0, const ubigint ref = 0, const uint ixVLocale = 0);
 
 public:
 	uint ixVStub;
@@ -27,7 +27,7 @@ public:
 	uint ixVLocale;
 
 public:
-	bool operator<(const stref_t& comp) const;
+	bool operator<(const stcchitemref_t& comp) const;
 };
 
 /**
@@ -36,14 +36,14 @@ public:
 class Stcchitem {
 
 public:
-	Stcchitem(const stref_t& stref, const string& stub = "");
+	Stcchitem(const stcchitemref_t& stref, const string& stub = "");
 
 public:
-	stref_t stref;
+	stcchitemref_t stref;
 	string stub;
 
-	set<stref_t> strefsSup;
-	set<stref_t> strefsSub;
+	set<stcchitemref_t> strefsSup;
+	set<stcchitemref_t> strefsSub;
 };
 
 /**
@@ -57,19 +57,19 @@ public:
 public:
 	bool transact;
 
-	multimap<stref_t,Stcchitem*> nodes;
+	multimap<stcchitemref_t,Stcchitem*> nodes;
 
 	set<uint> icsVStub;
 	set<uint> icsVStubNew;
 
 public:
-	Stcchitem* addStit(const stref_t& stref, const string& stub = "");
-	Stcchitem* getStitByStref(const stref_t& stref);
+	Stcchitem* addStit(const stcchitemref_t& stref, const string& stub = "");
+	Stcchitem* getStitByStref(const stcchitemref_t& stref);
 
 	void clear();
 
-	void link(const stref_t& strefSup, const stref_t& strefSub);
-	void unlink(const stref_t& strefSup, const stref_t& strefSub);
+	void link(const stcchitemref_t& strefSup, const stcchitemref_t& strefSub);
+	void unlink(const stcchitemref_t& strefSup, const stcchitemref_t& strefSub);
 
 	void begin();
 	void commit();

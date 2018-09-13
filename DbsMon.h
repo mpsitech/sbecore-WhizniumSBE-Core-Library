@@ -28,19 +28,19 @@ public:
 
 	WzemMPeriod* prd;
 
-	map<xcref_t,ubigint> refsClstn; // {xjref,stmgr,srefIxVCall,ixVJobmask,xjrefTrig}->TblWzemMClstn.ref ; API: {xjref,stmgr,srefIxVCall,ixVJobmask,xjrefTrig}->scrRefWzemMClstn
+	map<xclstnref_t,ubigint> refsClstn; // {xjref,srefIxVTarget,srefIxVCall,ixVJobmask,xjrefTrig}->TblWzemMClstn.ref ; API: {xjref,srefIxVCall,srefIxVCall,ixVJobmask,xjrefTrig}->scrRefWzemMClstn
 	map<ubigint,ubigint> refsEvent; // eref->eref ; API: eref->scrRefWzemMEvent
 	map<ubigint,ubigint> refsJob; // xjref->TblWzemMJob.ref ; API: xjref->scrRefWzemMJob
 	map<ubigint,ubigint> refsNode; // xnref->TblWzemMNode.ref ; API: xnref->scrRefWzemMNode
 	map<ubigint,ubigint> refsOp; // xoref->TblWzemMOp.ref ; API: xoref->scrRefWzemMOp
-	map<xpref_t,ubigint> refsPreset; // {xjref,srefIxVPreset}->TblWzemMPreset.ref ; API: {xjref,srefIxVPreset}->scrRefWzemMPreset
+	map<xpresetref_t,ubigint> refsPreset; // {xjref,srefIxVPreset}->TblWzemMPreset.ref ; API: {xjref,srefIxVPreset}->scrRefWzemMPreset
 
 public:
 	void start(const string& Version, const uint ixDbsVDbstype, const string& dbspath, const string& dbsname, const string& ip, const uint port, const string& dbsusername, const string& dbspassword, const string& username, const string& password);
 	void stop();
 
 	void insertJob(const ubigint supXjref, const string& srefIxVJob, const ubigint xjref, const bool Master, const bool Slave, const bool Dcol, const bool Stmgr);
-	void insertClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	void insertClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
 	void insertPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	void insertNode(const ubigint xnref, const string& Ip, const usmallint Port, const utinyint Opprcn);
 
@@ -50,9 +50,9 @@ public:
 	void eventRemoveDcol(const ubigint xjref);
 	void eventAddStmgr(const ubigint xjref);
 	void eventRemoveStmgr(const ubigint xjref);
-	void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref);
+	void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref);
 	void eventAddPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	void eventChangePreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	void eventRemovePreset(const ubigint xjref, const string& srefIxVPreset);
@@ -69,6 +69,7 @@ public:
 	ubigint eventHandleReqDownload(const ubigint xjref);
 	void eventReplyReqDownload(const ubigint eref, const ubigint xjref, const string Filename);
 	void eventHandleReqRet(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);
+	void eventHandleReqMethod(const ubigint xjref, const string& srefIxVFeatgroup, const string& srefIxVMethod);
 	void eventHandleReqTimer(const ubigint xjref, const string& xsref);
 	void eventSubmitDpch(const ubigint xjref, const string& srefIxVDpch, const string& srefsMask, const string& Content);
 	void eventAddInv(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);

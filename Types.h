@@ -3,7 +3,7 @@
   * basic data types and functional expression evaluation (declarations)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 7 Oct 2015
+  * \date modified: 28 May 2018
   */
 
 #ifndef SBECORE_TYPES_H
@@ -27,6 +27,34 @@ typedef unsigned long long int ubigint;
 using namespace std;
 
 #include <sbecore/Mt.h>
+
+/**
+  * Floatmat
+  */
+class Floatmat {
+
+public:
+	Floatmat();
+	
+public:
+	vector<float> vec;
+	unsigned int M;
+	unsigned int N;
+};
+
+/**
+  * Doublemat
+  */
+class Doublemat {
+
+public:
+	Doublemat();
+	
+public:
+	vector<double> vec;
+	unsigned int M;
+	unsigned int N;
+};
 
 /**
   * Arg
@@ -201,12 +229,11 @@ class Refseq {
 
 public:
 	Refseq(const string& sref = "");
-	~Refseq();
 
 public:
 	string sref;
 
-	pthread_mutex_t mAccess;
+	Mutex mAccess;
 	ubigint ref;
 
 public:
@@ -217,8 +244,12 @@ public:
   * Scr
   */
 namespace Scr {
-	string scramble(pthread_mutex_t* mScr, map<ubigint,string>& scr, map<string,ubigint>& descr, const ubigint ref);
-	ubigint descramble(pthread_mutex_t* mScr, map<string,ubigint>& descr, const string& scrRef);
+	string scramble(const ubigint ref);
+	ubigint descramble(const string& scrRef);
 	string random();
+
+	extern Rwmutex rwm;
+	extern map<ubigint,string> scr;
+	extern map<string,ubigint> descr;
 };
 #endif

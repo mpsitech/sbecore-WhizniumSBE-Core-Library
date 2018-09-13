@@ -9,6 +9,7 @@
 #ifndef SBECORE_STRMOD_H
 #define SBECORE_STRMOD_H
 
+#include <cmath>
 #include <set>
 #include <sstream>
 #include <string>
@@ -26,6 +27,8 @@ namespace Ftm {
 	string time(const int timeval); // independent of system time
 	string timeOfDay(const unsigned int stampval); // is system time
 	string stamp(const unsigned int stampval); // is system time
+	string hmsstamp(const unsigned int stampval); // is system time
+	string usecstamp(const double stampval); // is system time
 	unsigned int invdate(const string& dateval);
 	int invtime(const string& timeval);
 	unsigned int invstamp(const string& stampval);

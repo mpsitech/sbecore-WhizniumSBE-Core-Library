@@ -9,10 +9,10 @@
 #include "Stub.h"
 
 /******************************************************************************
- class stref_t
+ class stcchitemref_t
  ******************************************************************************/
 
-stref_t::stref_t(
+stcchitemref_t::stcchitemref_t(
 			const uint ixVStub
 			, const ubigint ref
 			, const uint ixVLocale
@@ -22,8 +22,8 @@ stref_t::stref_t(
 	this->ixVLocale = ixVLocale;
 };
 
-bool stref_t::operator<(
-			const stref_t& comp
+bool stcchitemref_t::operator<(
+			const stcchitemref_t& comp
 		) const {
 	if (ixVStub < comp.ixVStub) return true;
 	else if (ixVStub > comp.ixVStub) return false;
@@ -41,7 +41,7 @@ bool stref_t::operator<(
  ******************************************************************************/
 
 Stcchitem::Stcchitem(
-			const stref_t& stref
+			const stcchitemref_t& stref
 			, const string& stub
 		) {
 	this->stref = stref;
@@ -59,7 +59,7 @@ Stcch::Stcch(
 };
 
 Stcchitem* Stcch::addStit(
-			const stref_t& stref
+			const stcchitemref_t& stref
 			, const string& stub
 		) {
 	Stcchitem* stit = NULL;
@@ -68,7 +68,7 @@ Stcchitem* Stcch::addStit(
 
 	if (!stit) {
 		stit = new Stcchitem(stref, stub);
-		nodes.insert(pair<stref_t,Stcchitem*>(stref, stit));
+		nodes.insert(pair<stcchitemref_t,Stcchitem*>(stref, stit));
 
 		if (transact) {
 			auto it = icsVStub.find(stref.ixVStub);
@@ -80,7 +80,7 @@ Stcchitem* Stcch::addStit(
 };
 
 Stcchitem* Stcch::getStitByStref(
-			const stref_t& stref
+			const stcchitemref_t& stref
 		) {
 	Stcchitem* stit = NULL;
 
@@ -101,8 +101,8 @@ void Stcch::clear() {
 };
 
 void Stcch::link(
-			const stref_t& strefSup
-			, const stref_t& strefSub
+			const stcchitemref_t& strefSup
+			, const stcchitemref_t& strefSub
 		) {
 	Stcchitem* stitSup = NULL;
 	Stcchitem* stitSub = NULL;
@@ -119,8 +119,8 @@ void Stcch::link(
 };
 
 void Stcch::unlink(
-			const stref_t& strefSup
-			, const stref_t& strefSub
+			const stcchitemref_t& strefSup
+			, const stcchitemref_t& strefSub
 		) {
 	Stcchitem* stitSup = NULL;
 	Stcchitem* stitSub = NULL;

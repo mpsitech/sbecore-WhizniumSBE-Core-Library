@@ -25,7 +25,7 @@ public:
 	void stop();
 
 	void insertJob(const ubigint supXjref, const string& srefIxVJob, const ubigint xjref, const bool Master, const bool Slave, const bool Dcol, const bool Stmgr);
-	void insertClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	void insertClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
 	void insertPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	void insertNode(const ubigint xnref, const string& Ip, const usmallint Port, const utinyint Opprcn);
 
@@ -35,9 +35,9 @@ public:
 	void eventRemoveDcol(const ubigint xjref);
 	void eventAddStmgr(const ubigint xjref);
 	void eventRemoveStmgr(const ubigint xjref);
-	void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref);
+	void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref);
 	void eventAddPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	void eventChangePreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	void eventRemovePreset(const ubigint xjref, const string& srefIxVPreset);
@@ -54,6 +54,7 @@ public:
 	ubigint eventHandleReqDownload(const ubigint xjref);
 	void eventReplyReqDownload(const ubigint eref, const ubigint xjref, const string Filename);
 	void eventHandleReqRet(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);
+	void eventHandleReqMethod(const ubigint xjref, const string& srefIxVFeatgroup, const string& srefIxVMethod);
 	void eventHandleReqTimer(const ubigint xjref, const string& xsref);
 	void eventSubmitDpch(const ubigint xjref, const string& srefIxVDpch, const string& srefsMask, const string& Content);
 	void eventAddInv(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);

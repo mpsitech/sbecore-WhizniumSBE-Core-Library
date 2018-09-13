@@ -1,10 +1,10 @@
 # file Makefile
-# make file for Whiznium SBE core library, release sbecore_genio
+# make file for Whiznium SBE core library, release sbecore_awscyg
 # author Alexander Wirthmueller
 # date created: 14 Aug 2014
-# modified: 15 Jun 2017
+# modified: 27 May 2017
 
-SRCROOT = /home/epsi/src
+SRCROOT = /home/Administrator/src
 
 CPP = g++
 CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
@@ -48,31 +48,24 @@ all:	$(LIB) $(LIB_MY) $(LIB_PG) $(LIB_LITE) $(LIB_MON) $(LIB_APIMON) $(LIB_DBSMO
 
 $(LIB):	$(OBJS)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB).a $(OBJS)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS) -o $(LIB).$(DYNLIBEXT)
 
 $(LIB_MY):	$(OBJS_MY)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_MY).a $(OBJS_MY)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_MY) -o $(LIB_MY).$(DYNLIBEXT)
 
 $(LIB_PG):	$(OBJS_PG)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_PG).a $(OBJS_PG)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_PG) -o $(LIB_PG).$(DYNLIBEXT)
 
 $(LIB_LITE):	$(OBJS_LITE)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_LITE).a $(OBJS_LITE)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_LITE) -o $(LIB_LITE).$(DYNLIBEXT)
 
 $(LIB_MON):	$(OBJS_MON)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_MON).a $(OBJS_MON)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_MON) -o $(LIB_MON).$(DYNLIBEXT)
 
 $(LIB_APIMON):	$(OBJS_APIMON)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_APIMON).a $(OBJS_APIMON)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_APIMON) -o $(LIB_APIMON).$(DYNLIBEXT)
 
 $(LIB_DBSMON):	$(OBJS_DBSMON)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_DBSMON).a $(OBJS_DBSMON)
-	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_DBSMON) -o $(LIB_DBSMON).$(DYNLIBEXT)
 
 install:
 	-mkdir $(INCINSTPATH)/sbecore
@@ -80,19 +73,12 @@ install:
 	cp $(SRCROOT)/sbecore/*.h $(INCINSTPATH)/sbecore/
 	chmod 644 $(INCINSTPATH)/sbecore/*.h
 	cp $(LIB).a $(LIBINSTPATH)/
-	cp $(LIB).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_MY).a $(LIBINSTPATH)/
-	cp $(LIB_MY).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_PG).a $(LIBINSTPATH)/
-	cp $(LIB_PG).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_LITE).a $(LIBINSTPATH)/
-	cp $(LIB_LITE).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_MON).a $(LIBINSTPATH)/
-	cp $(LIB_MON).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_APIMON).a $(LIBINSTPATH)/
-	cp $(LIB_APIMON).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_DBSMON).a $(LIBINSTPATH)/
-	cp $(LIB_DBSMON).$(DYNLIBEXT) $(LIBINSTPATH)/
 	chmod 755 $(LIBINSTPATH)/libsbecore*
 
 clean: 

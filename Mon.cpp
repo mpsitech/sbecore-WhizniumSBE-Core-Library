@@ -9,31 +9,31 @@
 #include "Mon.h"
 
 /******************************************************************************
- class xcref_t
+ class xclstnref_t
  ******************************************************************************/
 
-xcref_t::xcref_t(
+xclstnref_t::xclstnref_t(
 			const ubigint xjref
-			, const bool stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVCall
 			, const uint ixVJobmask
 			, const ubigint xjrefTrig
 		) {
 	this->xjref = xjref;
-	this->stmgr = stmgr;
+	this->srefIxVTarget = srefIxVTarget;
 	this->srefIxVCall = srefIxVCall;
 	this->ixVJobmask = ixVJobmask;
 	this->xjrefTrig = xjrefTrig;
 };
 
-bool xcref_t::operator<(
-			const xcref_t& comp
+bool xclstnref_t::operator<(
+			const xclstnref_t& comp
 		) const {
 	if (xjref < comp.xjref) return true;
 	else if (xjref > comp.xjref) return false;
 
-	if (stmgr < comp.stmgr) return true;
-	else if (stmgr > comp.stmgr) return false;
+	if (srefIxVTarget < comp.srefIxVTarget) return true;
+	else if (srefIxVTarget > comp.srefIxVTarget) return false;
 
 	if (srefIxVCall < comp.srefIxVCall) return true;
 	else if (srefIxVCall > comp.srefIxVCall) return false;
@@ -48,10 +48,10 @@ bool xcref_t::operator<(
 };
 
 /******************************************************************************
- class xpref_t
+ class xpresetref_t
  ******************************************************************************/
 
-xpref_t::xpref_t(
+xpresetref_t::xpresetref_t(
 			const ubigint xjref
 			, const string& srefIxVPreset
 		) {
@@ -59,8 +59,8 @@ xpref_t::xpref_t(
 	this->srefIxVPreset = srefIxVPreset;
 };
 
-bool xpref_t::operator<(
-			const xpref_t& comp
+bool xpresetref_t::operator<(
+			const xpresetref_t& comp
 		) const {
 	if (xjref < comp.xjref) return true;
 	else if (xjref > comp.xjref) return false;
@@ -75,28 +75,49 @@ bool xpref_t::operator<(
  class Mon
  ******************************************************************************/
 
-Mon::Mon() {
-	Mutex::init(&mAccess, true, "mAccess", "Mon", "Mon");
-
+Mon::Mon() :
+			mAccess("mAccess", "Mon", "Mon")
+		{
 	t0 = 0.0;
 };
 
 Mon::~Mon() {
-	Mutex::destroy(&mAccess, true, "mAccess", "Mon", "~Mon");
 };
 
-int Mon::lockAccess(
+void Mon::lockAccess(
 			const string& srefObject
 			, const string& srefMember
 		) {
-	return Mutex::lock(&mAccess, "mAccess", srefObject, srefMember);
+	mAccess.lock(srefObject, srefMember);
 };
 
-int Mon::unlockAccess(
+void Mon::unlockAccess(
 			const string& srefObject
 			, const string& srefMember
 		) {
-	return Mutex::unlock(&mAccess, "mAccess", srefObject, srefMember);
+	mAccess.unlock(srefObject, srefMember);
+};
+
+bool Mon::isRunning() {
+	return(t0 != 0.0);
+};
+
+string Mon::getSquawk(
+			const string& srefLocale
+		) {
+	string s = StrMod::lc(srefLocale);
+
+	if (isRunning()) {
+		if (s == "dech") s = "l\\u00e4uft seit " + Ftm::stamp(t0);
+		else if (s == "enus") s = "running since " + Ftm::stamp(t0);
+		else if (s == "frch") s = "en cours d\\u00e8s " + Ftm::stamp(t0);
+	} else {
+		if (s == "dech") s = "bereit";
+		else if (s == "enus") s = "idle";
+		else if (s == "frch") s = "pr\\u00eat";
+	};
+
+	return s;
 };
 
 double Mon::getDt() {
@@ -121,7 +142,7 @@ void Mon::insertJob(
 void Mon::insertClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -179,7 +200,7 @@ void Mon::eventRemoveStmgr(
 void Mon::eventAddClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -190,7 +211,7 @@ void Mon::eventAddClstn(
 void Mon::eventChangeClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -201,7 +222,7 @@ void Mon::eventChangeClstn(
 void Mon::eventRemoveClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 		) {
@@ -314,6 +335,13 @@ void Mon::eventHandleReqRet(
 			, const string& srefIxVDpch
 			, const string& Content
 			, const ubigint xoref
+		) {
+};
+
+void Mon::eventHandleReqMethod(
+			const ubigint xjref
+			, const string& srefIxVFeatgroup
+			, const string& srefIxVMethod
 		) {
 };
 

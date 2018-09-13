@@ -3,10 +3,28 @@
   * basic data types and functional expression evaluation (implementation)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 17 Sep 2015
+  * \date modified: 28 May 2018
   */
 
 #include "Types.h"
+
+/******************************************************************************
+ class Floatmat
+ ******************************************************************************/
+
+Floatmat::Floatmat() {
+	M = 0;
+	N = 0;
+};
+
+/******************************************************************************
+ class Doublemat
+ ******************************************************************************/
+
+Doublemat::Doublemat() {
+	M = 0;
+	N = 0;
+};
 
 /******************************************************************************
  class Arg
@@ -30,6 +48,7 @@ Arg::Arg(
 	if (mask & REFS) this->refs = refs; else this->refs.resize(0);
 	if (mask & SREF) this->sref = sref;
 	if (mask & INTVAL) this->intval = intval; else this->intval = 0;
+	if (mask & DBLVAL) this->dblval = dblval; else this->dblval = 0.0;
 	if (mask & BOOLVAL) this->boolval = boolval; else this->boolval = false;
 	if (mask & TXTVAL) this->txtval = txtval;
 };
@@ -658,27 +677,23 @@ void Expr::dump() {
 
 Refseq::Refseq(
 			const string& sref
-		) {
+		) :
+			mAccess("mAccess", "Refseq(" + sref + ")", "Refseq")
+		{
 	this->sref = sref;
 
-	Mutex::init(&mAccess, true, "mAccess", "Refseq(" + sref + ")", "Refseq");
-
 	ref = 0;
-};
-
-Refseq::~Refseq() {
-	Mutex::destroy(&mAccess, true, "mAccess", "Refseq(" + sref + ")", "~Refseq");
 };
 
 ubigint Refseq::getNewRef() {
 	ubigint ref_backup;
 
-	Mutex::lock(&mAccess, "mAccess", "Refseq(" + sref + ")", "getNewRef");
+	mAccess.lock("Refseq(" + sref + ")", "getNewRef");
 
 	ref++;
 	ref_backup = ref;
 
-	Mutex::unlock(&mAccess, "mAccess", "Refseq(" + sref + ")", "getNewRef");
+	mAccess.unlock("Refseq(" + sref + ")", "getNewRef");
 
 	return ref_backup;
 };
@@ -688,45 +703,51 @@ ubigint Refseq::getNewRef() {
  ******************************************************************************/
 
 string Scr::scramble(
-			pthread_mutex_t* mScr
-			, map<ubigint,string>& scr
-			, map<string,ubigint>& descr
-			, const ubigint ref
+			const ubigint ref
 		) {
 	string retval;
 
 	if (ref == 0) return("");
 
-	Mutex::lock(mScr, "mScr", "Scr", "scramble");
+	rwm.rlock("Scr", "scramble");
 
 	auto it = scr.find(ref);
 
-	if (it == scr.end()) {
-		retval = random();
+	if (it != scr.end()) {
+		retval = it->second;
+
+		rwm.runlock("Scr", "scramble[1]");
+
+	} else {
+		rwm.runlock("Scr", "scramble[2]");
+
+		rwm.wlock("Scr", "scramble");
+
+		while (true) {
+			retval = random();
+			if (descr.find(retval) == descr.end()) break;
+		};
+
 		scr[ref] = retval;
 		descr[retval] = ref;
-	} else {
-		retval = it->second;
-	};
 
-	Mutex::unlock(mScr, "mScr", "Scr", "scramble");
+		rwm.wunlock("Scr", "scramble");
+	};
 
 	return retval;
 };
 
 ubigint Scr::descramble(
-			pthread_mutex_t* mScr
-			, map<string,ubigint>& descr
-			, const string& scrRef
+			const string& scrRef
 		) {
 	ubigint retval = 0;
 
-	Mutex::lock(mScr, "mScr", "Scr", "descramble");
+	rwm.rlock("Scr", "descramble");
 
 	auto it = descr.find(scrRef);
 	if (it != descr.end()) retval = it->second;
 
-	Mutex::unlock(mScr, "mScr", "Scr", "descramble");
+	rwm.runlock("Scr", "descramble");
 
 	return retval;
 };
@@ -748,3 +769,7 @@ string Scr::random() {
 
 	return retval;
 };
+
+Rwmutex Scr::rwm("rwm", "Scr", "Scr");
+map<ubigint,string> Scr::scr;
+map<string,ubigint> Scr::descr;

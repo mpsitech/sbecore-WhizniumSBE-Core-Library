@@ -9,41 +9,41 @@
 #ifndef SBECORE_MON_H
 #define SBECORE_MON_H
 
-#include <sbecore/Types.h>
+#include <sbecore/Strmod.h>
 
 /**
-  * xcref_t
+  * xclstnref_t
   */
-class xcref_t {
+class xclstnref_t {
 
 public:
-	xcref_t(const ubigint xjref = 0, const bool stmgr = false, const string& srefIxVCall = "", const uint ixVJobmask = 0, const ubigint xjrefTrig = 0);
+	xclstnref_t(const ubigint xjref = 0, const string& srefIxVTarget = "", const string& srefIxVCall = "", const uint ixVJobmask = 0, const ubigint xjrefTrig = 0);
 
 public:
 	ubigint xjref;
-	bool stmgr;
+	string srefIxVTarget;
 	string srefIxVCall;
 	uint ixVJobmask;
 	ubigint xjrefTrig;
 
 public:
-	bool operator<(const xcref_t& comp) const;
+	bool operator<(const xclstnref_t& comp) const;
 };
 
 /**
-  * xpref_t
+  * xpresetref_t
   */
-class xpref_t {
+class xpresetref_t {
 
 public:
-	xpref_t(const ubigint xjref = 0, const string& srefIxVPreset = "");
+	xpresetref_t(const ubigint xjref = 0, const string& srefIxVPreset = "");
 
 public:
 	ubigint xjref;
 	string srefIxVPreset;
 
 public:
-	bool operator<(const xpref_t& comp) const;
+	bool operator<(const xpresetref_t& comp) const;
 };
 
 /**
@@ -56,18 +56,21 @@ public:
 	virtual ~Mon();
 
 public:
-	pthread_mutex_t mAccess;
+	Mutex mAccess;
 
 	double t0;
 
 public:
-	int lockAccess(const string& srefObject, const string& srefMember);
-	int unlockAccess(const string& srefObject, const string& srefMember);
+	void lockAccess(const string& srefObject, const string& srefMember);
+	void unlockAccess(const string& srefObject, const string& srefMember);
+
+	bool isRunning();
+	string getSquawk(const string& srefLocale);
 
 	double getDt();
 
 	virtual void insertJob(const ubigint supXjref, const string& srefIxVJob, const ubigint xjref, const bool Master, const bool Slave, const bool Dcol, const bool Stmgr);
-	virtual void insertClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	virtual void insertClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
 	virtual void insertPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	virtual void insertNode(const ubigint xnref, const string& Ip, const usmallint Port, const utinyint Opprcn);
 
@@ -77,9 +80,9 @@ public:
 	virtual void eventRemoveDcol(const ubigint xjref);
 	virtual void eventAddStmgr(const ubigint xjref);
 	virtual void eventRemoveStmgr(const ubigint xjref);
-	virtual void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	virtual void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	virtual void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const bool Stmgr, const string& srefIxVJobmask, const ubigint trgXjref);
+	virtual void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	virtual void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
+	virtual void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref);
 	virtual void eventAddPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	virtual void eventChangePreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
 	virtual void eventRemovePreset(const ubigint xjref, const string& srefIxVPreset);
@@ -96,6 +99,7 @@ public:
 	virtual ubigint eventHandleReqDownload(const ubigint xjref);
 	virtual void eventReplyReqDownload(const ubigint eref, const ubigint xjref, const string Filename);
 	virtual void eventHandleReqRet(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);
+	virtual void eventHandleReqMethod(const ubigint xjref, const string& srefIxVFeatgroup, const string& srefIxVMethod);
 	virtual void eventHandleReqTimer(const ubigint xjref, const string& xsref);
 	virtual void eventSubmitDpch(const ubigint xjref, const string& srefIxVDpch, const string& srefsMask, const string& Content);
 	virtual void eventAddInv(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);

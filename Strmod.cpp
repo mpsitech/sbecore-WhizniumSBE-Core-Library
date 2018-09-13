@@ -102,6 +102,42 @@ string Ftm::stamp(
 	return(retval);
 };
 
+string Ftm::hmsstamp(
+			const unsigned int stampval
+		) {
+	// is system time ; turn into '1-1-2010_9h34m07s' (ex.)
+
+	if (stampval == 0) return("");
+
+	string retval;
+
+	time_t stamp = stampval;
+	tm* tmStamp = gmtime(&stamp);
+
+	retval = to_string(tmStamp->tm_mday) + "-" + to_string(tmStamp->tm_mon+1) + "-" + to_string(tmStamp->tm_year+1900) + "_"
+				+ to_string(tmStamp->tm_hour) + "h";
+
+	if (tmStamp->tm_min < 10) retval += "0";
+	retval += to_string(tmStamp->tm_min) + "m";
+
+	if (tmStamp->tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp->tm_sec) + "s";
+
+	return(retval);
+};
+
+string Ftm::usecstamp(
+			const double stampval
+		) {
+	// is system time ; turn into '1-1-2010 9:34:07 12345' (ex.)
+
+	if (stampval == 0.0) return("");
+
+	double usec = 1e6 * (stampval - ((double) ((unsigned int) stampval)));
+
+	return(Ftm::stamp(stampval) + " " + to_string(lround(usec)));
+};
+
 unsigned int Ftm::invdate(
 			const string& dateval
 		) {
@@ -339,7 +375,7 @@ string StrMod::dotToUsc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i=0;i<s.length();i++) if (retval[i] == '.') retval[i] = '_';
+	for (unsigned int i=0;i<s.length();i++) if ((retval[i] == '-') || (retval[i] == '.')) retval[i] = '_';
 
 	return(retval);
 };

@@ -6,7 +6,7 @@
   * \date modified: 26 Jan 2016
   */
 
-#include "Awem.h"
+#include "ApiWzem.h"
 
 #include "ApiMon.h"
 
@@ -52,7 +52,7 @@ void ApiMon::insertJob(
 void ApiMon::insertClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -110,7 +110,7 @@ void ApiMon::eventRemoveStmgr(
 void ApiMon::eventAddClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -121,7 +121,7 @@ void ApiMon::eventAddClstn(
 void ApiMon::eventChangeClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -132,7 +132,7 @@ void ApiMon::eventChangeClstn(
 void ApiMon::eventRemoveClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 		) {
@@ -245,6 +245,13 @@ void ApiMon::eventHandleReqRet(
 			, const string& srefIxVDpch
 			, const string& Content
 			, const ubigint xoref
+		) {
+};
+
+void ApiMon::eventHandleReqMethod(
+			const ubigint xjref
+			, const string& srefIxVFeatgroup
+			, const string& srefIxVMethod
 		) {
 };
 

@@ -53,7 +53,6 @@ void DbsMon::start(
 	WzemMUser* usr = NULL;
 
 	if (dbswzem->tblwzemmuser->loadRecBySQL("SELECT * FROM TblWzemMUser WHERE sref = '" + username + "' AND Password = '" + password + "'", &usr)) {
-		t0 = 0.0;
 		t0 = getDt();
 
 		dbswzem->tblwzemmperiod->insertNewRec(&prd, usr->ref, usr->refWzemMUsergroup, Version, lround(t0), 0);
@@ -81,6 +80,8 @@ void DbsMon::stop() {
 		refsNode.clear();
 		refsOp.clear();
 		refsPreset.clear();
+
+		t0 = 0.0;
 	};
 
 	unlockAccess("DbsMon", "stop");
@@ -118,7 +119,7 @@ void DbsMon::insertJob(
 void DbsMon::insertClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -139,8 +140,8 @@ void DbsMon::insertClstn(
 		it = refsJob.find(trgXjref);
 		if (it != refsJob.end()) trgRefWzemMJob = it->second;
 
-		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVCall, Stmgr, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgRefWzemMJob, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
-		refsClstn[xcref_t(xjref, Stmgr, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref)] = ref;
+		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVCall, VecWzemVMClstnTarget::getIx(srefIxVTarget), VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgRefWzemMJob, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		refsClstn[xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref)] = ref;
 
 		dbswzem->tblwzemjmclstn->insertNewRec(NULL, ref, 0.0, 0.0, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
 	};
@@ -165,7 +166,7 @@ void DbsMon::insertPreset(
 
 	if (refWzemMJob != 0) {
 		ref = dbswzem->tblwzemmpreset->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVPreset, arg);
-		refsPreset[xpref_t(xjref, srefIxVPreset)] = ref;
+		refsPreset[xpresetref_t(xjref, srefIxVPreset)] = ref;
 
 		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, ref, 0.0, 0.0, arg);
 	};
@@ -214,7 +215,7 @@ void DbsMon::eventAddJob(
 	dbswzem->tblwzemjmjobdcol->insertNewRec(NULL, ref, dt, 0.0, false);
 	dbswzem->tblwzemjmjobstmgr->insertNewRec(NULL, ref, dt, 0.0, false);
 
-	dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDJOB, 0, prd->ref, 0, dt, 0, 0, ref, 0, 0, 0, "", "", "");
+	dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDJOB, 0, prd->ref, 0, dt, 0, 0, ref, 0, 0, 0, "", "", "", "", "");
 
 	unlockAccess("DbsMon", "eventAddJob");
 };
@@ -239,7 +240,7 @@ void DbsMon::eventRemoveJob(
 	if (refWzemMJob != 0) {
 		dbswzem->executeQuery("UPDATE TblWzemMJob SET x1Stopu = " + to_string(dt) + " WHERE ref = " + to_string(refWzemMJob));
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVEJOB, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVEJOB, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->loadRefBySQL("SELECT ref FROM TblWzemMEvent WHERE ixVBasetype = " + to_string(VecWzemVMEventBasetype::ADDJOB) + " AND refWzemMPeriod = " + to_string(prd->ref)
 					+ " AND refWzemMJob = " + to_string(refWzemMJob), refWzemMEvent)) {
@@ -272,7 +273,7 @@ void DbsMon::eventAddDcol(
 
 		dbswzem->tblwzemjmjobdcol->insertNewRec(NULL, refWzemMJob, dt, 0.0, true);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDDCOL, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDDCOL, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventAddDcol");
@@ -300,7 +301,7 @@ void DbsMon::eventRemoveDcol(
 
 		dbswzem->tblwzemjmjobdcol->insertNewRec(NULL, refWzemMJob, dt, 0.0, false);
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVEDCOL, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVEDCOL, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->loadRefBySQL("SELECT ref FROM TblWzemMEvent WHERE ixVBasetype = " + to_string(VecWzemVMEventBasetype::ADDDCOL) + " AND refWzemMPeriod = " + to_string(prd->ref)
 					+ " AND refWzemMJob = " + to_string(refWzemMJob) + " ORDER BY startu DESC LIMIT 1", refWzemMEvent)) {
@@ -333,7 +334,7 @@ void DbsMon::eventAddStmgr(
 
 		dbswzem->tblwzemjmjobstmgr->insertNewRec(NULL, refWzemMJob, dt, 0.0, true);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDSTMGR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDSTMGR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventAddStmgr");
@@ -361,7 +362,7 @@ void DbsMon::eventRemoveStmgr(
 
 		dbswzem->tblwzemjmjobstmgr->insertNewRec(NULL, refWzemMJob, dt, 0.0, false);
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVESTMGR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVESTMGR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->loadRefBySQL("SELECT ref FROM TblWzemMEvent WHERE ixVBasetype = " + to_string(VecWzemVMEventBasetype::ADDSTMGR) + " AND refWzemMPeriod = " + to_string(prd->ref)
 					+ " AND refWzemMJob = " + to_string(refWzemMJob) + " ORDER BY startu DESC LIMIT 1", refWzemMEvent)) {
@@ -379,7 +380,7 @@ void DbsMon::eventRemoveStmgr(
 void DbsMon::eventAddClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -402,12 +403,12 @@ void DbsMon::eventAddClstn(
 		it = refsJob.find(trgXjref);
 		if (it != refsJob.end()) tjbRefWzemMJob = it->second;
 
-		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVCall, Stmgr, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), tjbRefWzemMJob, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
-		refsClstn[xcref_t(xjref, Stmgr, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref)] = ref;
+		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVCall, VecWzemVMClstnTarget::getIx(srefIxVTarget), VecWzemVMClstnJobmask::getIx(srefIxVJobmask), tjbRefWzemMJob, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		refsClstn[xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref)] = ref;
 
 		dbswzem->tblwzemjmclstn->insertNewRec(NULL, ref, dt, 0.0, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDCLSTN, 0, prd->ref, 0, dt, 0, ref, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDCLSTN, 0, prd->ref, 0, dt, 0, ref, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventAddClstn");
@@ -416,7 +417,7 @@ void DbsMon::eventAddClstn(
 void DbsMon::eventChangeClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -436,7 +437,7 @@ void DbsMon::eventChangeClstn(
 
 	ubigint refWzemCEvent = 0;
 
-	auto it = refsClstn.find(xcref_t(xjref, Stmgr, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref));
+	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref));
 	if (it != refsClstn.end()) refWzemMClstn = it->second;
 
 	if (dbswzem->tblwzemmclstn->loadRecByRef(refWzemMClstn, &cln)) {
@@ -444,7 +445,7 @@ void DbsMon::eventChangeClstn(
 
 		dbswzem->tblwzemjmclstn->insertNewRec(NULL, refWzemMClstn, dt, 0.0, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGECLSTN, 0, prd->ref, 0, dt, 0, refWzemMClstn, cln->refWzemMJob, 0, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGECLSTN, 0, prd->ref, 0, dt, 0, refWzemMClstn, cln->refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->tblwzemmevent->loadRecBySQL("SELECT * FROM TblWzemMEvent WHERE refWzemMPeriod = " + to_string(prd->ref) + " AND refWzemMClstn = " + to_string(cln->ref) + " ORDER BY startu ASC LIMIT 1", &evt)) {
 			if (evt->refWzemCEvent == 0) {
@@ -469,7 +470,7 @@ void DbsMon::eventChangeClstn(
 void DbsMon::eventRemoveClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 		) {
@@ -487,13 +488,13 @@ void DbsMon::eventRemoveClstn(
 
 	ubigint refWzemCEvent = 0;
 
-	auto it = refsClstn.find(xcref_t(xjref, Stmgr, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref));
+	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref));
 	if (it != refsClstn.end()) refWzemMClstn = it->second;
 
 	if (dbswzem->tblwzemmclstn->loadRecByRef(refWzemMClstn, &cln)) {
 		cln->x1Stopu = dt;
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVECLSTN, 0, prd->ref, 0, dt, 0, refWzemMClstn, cln->refWzemMJob, 0, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVECLSTN, 0, prd->ref, 0, dt, 0, refWzemMClstn, cln->refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->tblwzemmevent->loadRecBySQL("SELECT * FROM TblWzemMEvent WHERE refWzemMPeriod = " + to_string(prd->ref) + " AND refWzemMClstn = " + to_string(cln->ref) + " ORDER BY startu ASC LIMIT 1", &evt)) {
 			if (evt->refWzemCEvent == 0) {
@@ -536,11 +537,11 @@ void DbsMon::eventAddPreset(
 
 	if (refWzemMJob != 0) {
 		ref = dbswzem->tblwzemmpreset->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVPreset, arg);
-		refsPreset[xpref_t(xjref, srefIxVPreset)] = ref;
+		refsPreset[xpresetref_t(xjref, srefIxVPreset)] = ref;
 
 		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, ref, dt, 0.0, arg);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDPRESET, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, ref, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDPRESET, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, ref, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventAddPreset");
@@ -566,7 +567,7 @@ void DbsMon::eventChangePreset(
 
 	ubigint refWzemCEvent = 0;
 
-	auto it = refsPreset.find(xpref_t(xjref, srefIxVPreset));
+	auto it = refsPreset.find(xpresetref_t(xjref, srefIxVPreset));
 	if (it != refsPreset.end()) refWzemMPreset = it->second;
 
 	if (dbswzem->tblwzemmpreset->loadRecByRef(refWzemMPreset, &pst)) {
@@ -574,7 +575,7 @@ void DbsMon::eventChangePreset(
 
 		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, refWzemMPreset, dt, 0.0, arg);
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGEPRESET, 0, prd->ref, 0, dt, 0, 0, pst->refWzemMJob, 0, 0, refWzemMPreset, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGEPRESET, 0, prd->ref, 0, dt, 0, 0, pst->refWzemMJob, 0, 0, refWzemMPreset, "", "", "", "", "");
 
 		if (dbswzem->tblwzemmevent->loadRecBySQL("SELECT * FROM TblWzemMEvent WHERE refWzemMPeriod = " + to_string(prd->ref) + " AND refWzemMPreset = " + to_string(pst->ref) + " ORDER BY startu ASC LIMIT 1", &evt)) {
 			if (evt->refWzemCEvent == 0) {
@@ -614,13 +615,13 @@ void DbsMon::eventRemovePreset(
 
 	ubigint refWzemCEvent = 0;
 
-	auto it = refsPreset.find(xpref_t(xjref, srefIxVPreset));
+	auto it = refsPreset.find(xpresetref_t(xjref, srefIxVPreset));
 	if (it != refsPreset.end()) refWzemMPreset = it->second;
 
 	if (dbswzem->tblwzemmpreset->loadRecByRef(refWzemMPreset, &pst)) {
 		pst->x1Stopu = dt;
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVEPRESET, 0, prd->ref, 0, dt, 0, 0, pst->refWzemMJob, 0, 0, refWzemMPreset, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVEPRESET, 0, prd->ref, 0, dt, 0, 0, pst->refWzemMJob, 0, 0, refWzemMPreset, "", "", "", "", "");
 
 		if (dbswzem->tblwzemmevent->loadRecBySQL("SELECT * FROM TblWzemMEvent WHERE refWzemMPeriod = " + to_string(prd->ref) + " AND refWzemMPreset = " + to_string(pst->ref) + " ORDER BY startu ASC LIMIT 1", &evt)) {
 			if (evt->refWzemCEvent == 0) {
@@ -660,7 +661,7 @@ void DbsMon::eventAddNode(
 	ref = dbswzem->tblwzemmnode->insertNewRec(NULL, dt, 0.0, prd->ref, xnref, Ip, Port, Opprcn);
 	refsNode[xnref] = ref;
 
-	dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDNODE, 0, prd->ref, 0, dt, 0, 0, 0, ref, 0, 0, "", "", "");
+	dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDNODE, 0, prd->ref, 0, dt, 0, 0, 0, ref, 0, 0, "", "", "", "", "");
 
 	unlockAccess("DbsMon", "eventAddNode");
 };
@@ -685,7 +686,7 @@ void DbsMon::eventRemoveNode(
 	if (refWzemMNode != 0) {
 		dbswzem->executeQuery("UPDATE TblWzemMNode SET x1Stopu = " + to_string(dt) + " WHERE ref = " + to_string(refWzemMNode));
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVENODE, 0, prd->ref, 0, dt, 0, 0, 0, refWzemMNode, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REMOVENODE, 0, prd->ref, 0, dt, 0, 0, 0, refWzemMNode, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->loadRefBySQL("SELECT ref FROM TblWzemMEvent WHERE ixVBasetype = " + to_string(VecWzemVMEventBasetype::ADDNODE) + " AND refWzemMPeriod = " + to_string(prd->ref)
 					+ " AND refWzemMNode = " + to_string(refWzemMNode), refWzemMEvent)) {
@@ -724,7 +725,7 @@ ubigint DbsMon::eventTriggerCall(
 
 		dbswzem->tblwzemjmcallargret->insertNewRec(NULL, ref, dt, 0.0, "");
 
-		eref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::TRIGGERCALL, 0, prd->ref, 0, dt, ref, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		eref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::TRIGGERCALL, 0, prd->ref, 0, dt, ref, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 		refsEvent[eref] = eref;
 	};
 
@@ -759,7 +760,7 @@ void DbsMon::eventHandleCall(
 		if (it != refsEvent.end()) refWzemMEvent = it->second;
 
 		if (dbswzem->tblwzemmevent->loadRecByRef(refWzemMEvent, &evt)) {
-			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLECALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, refWzemMJob, 0, 0, 0, "", "", "");
+			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLECALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 			if (evt->refWzemCEvent == 0) {
 				refWzemCEvent = dbswzem->tblwzemcevent->getNewRef();
@@ -809,7 +810,7 @@ void DbsMon::eventRetCall(
 
 			dbswzem->tblwzemjmcallargret->insertNewRec(NULL, evt->refWzemMCall, dt, 0.0, argRet);
 
-			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::RETCALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, refWzemMJob, 0, 0, 0, "", "", "");
+			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::RETCALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 			if (evt->refWzemCEvent == 0) {
 				refWzemCEvent = dbswzem->tblwzemcevent->getNewRef();
@@ -853,7 +854,7 @@ void DbsMon::eventFinalizeCall(
 		if (dbswzem->tblwzemmcall->loadRecByRef(evt->refWzemMCall, &cal)) {
 			cal->x1Stopu = dt;
 
-			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::FINALIZECALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, 0, 0, 0, 0, "", "", "");
+			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::FINALIZECALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, 0, 0, 0, 0, "", "", "", "", "");
 
 			if (evt->refWzemCEvent == 0) {
 				refWzemCEvent = dbswzem->tblwzemcevent->getNewRef();
@@ -890,7 +891,7 @@ void DbsMon::eventHandleReqCmd(
 	auto it = refsJob.find(xjref);
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
-	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQCMD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, Cmd, "", "");
+	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQCMD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, Cmd, "", "", "", "");
 
 	unlockAccess("DbsMon", "eventHandleReqCmd");
 };
@@ -917,7 +918,7 @@ ubigint DbsMon::eventHandleReqRegular(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQREGULAR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQREGULAR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		eref = evt->ref;
 		refsEvent[eref] = eref;
@@ -959,7 +960,7 @@ void DbsMon::eventReplyReqRegular(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::REPLYREQREGULAR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::REPLYREQREGULAR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		ref = dbswzem->tblwzemmdpch->insertNewRec(NULL, evt->ref, srefIxVDpch, srefsMask, Content);
 		evt->refWzemMDpch = ref;
@@ -996,7 +997,7 @@ void DbsMon::eventHandleReqUpload(
 	auto it = refsJob.find(xjref);
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
-	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQUPLOAD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", Filename, "");
+	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQUPLOAD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", Filename, "", "", "");
 
 	unlockAccess("DbsMon", "eventHandleReqUpload");
 };
@@ -1019,7 +1020,7 @@ ubigint DbsMon::eventHandleReqDownload(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQDOWNLOAD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQDOWNLOAD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		eref = ref;
 		refsEvent[eref] = eref;
@@ -1050,7 +1051,7 @@ void DbsMon::eventReplyReqDownload(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REPLYREQDOWNLOAD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", Filename, "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::REPLYREQDOWNLOAD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", Filename, "", "", "");
 
 		it = refsEvent.find(eref);
 		if (it != refsEvent.end()) refWzemMEvent = it->second;
@@ -1092,7 +1093,7 @@ void DbsMon::eventHandleReqRet(
 	if (dbswzem->tblwzemmop->loadRecByRef(refWzemMOp, &opx)) {
 		opx->x1Stopu = dt;
 
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQRET, 0, prd->ref, 0, dt, 0, 0, opx->refWzemMJob, 0, refWzemMOp, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQRET, 0, prd->ref, 0, dt, 0, 0, opx->refWzemMJob, 0, refWzemMOp, 0, "", "", "", "", "");
 
 		ref = dbswzem->tblwzemmdpch->insertNewRec(NULL, evt->ref, srefIxVDpch, "all", Content);
 		evt->refWzemMDpch = ref;
@@ -1114,6 +1115,26 @@ void DbsMon::eventHandleReqRet(
 	unlockAccess("DbsMon", "eventHandleReqRet");
 };
 
+void DbsMon::eventHandleReqMethod(
+			const ubigint xjref
+			, const string& srefIxVFeatgroup
+			, const string& srefIxVMethod
+		) {
+	if (!prd) return;
+	lockAccess("DbsMon", "eventHandleReqMethod");
+
+	double dt = getDt();
+
+	ubigint refWzemMJob = 0;
+
+	auto it = refsJob.find(xjref);
+	if (it != refsJob.end()) refWzemMJob = it->second;
+
+	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQMETHOD, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", srefIxVFeatgroup, srefIxVMethod, "");
+
+	unlockAccess("DbsMon", "eventHandleReqMethod");
+};
+
 void DbsMon::eventHandleReqTimer(
 			const ubigint xjref
 			, const string& xsref
@@ -1128,7 +1149,7 @@ void DbsMon::eventHandleReqTimer(
 	auto it = refsJob.find(xjref);
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
-	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQTIMER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", xsref);
+	if (refWzemMJob != 0) dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::HANDLEREQTIMER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", xsref);
 
 	unlockAccess("DbsMon", "eventHandleReqTimer");
 };
@@ -1154,7 +1175,7 @@ void DbsMon::eventSubmitDpch(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::SUBMITDPCH, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::SUBMITDPCH, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		ref = dbswzem->tblwzemmdpch->insertNewRec(NULL, evt->ref, srefIxVDpch, srefsMask, Content);
 		evt->refWzemMDpch = ref;
@@ -1191,7 +1212,7 @@ void DbsMon::eventAddInv(
 		ref = dbswzem->tblwzemmop->insertNewRec(NULL, dt, 0.0, refWzemMJob, xoref);
 		refsOp[xoref] = ref;
 
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::ADDINV, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, ref, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::ADDINV, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, ref, 0, "", "", "", "", "");
 
 		ref = dbswzem->tblwzemmdpch->insertNewRec(NULL, evt->ref, srefIxVDpch, "all", Content);
 		evt->refWzemMDpch = ref;
@@ -1222,7 +1243,7 @@ void DbsMon::eventBecomeMaster(
 
 		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, true, false);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::BECOMEMASTER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::BECOMEMASTER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventBecomeMaster");
@@ -1246,7 +1267,7 @@ void DbsMon::eventGiveupMaster(
 
 		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, false, false);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::GIVEUPMASTER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::GIVEUPMASTER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventGiveupMaster");
@@ -1270,7 +1291,7 @@ void DbsMon::eventBecomeSlave(
 
 		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, false, true);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::BECOMESLAVE, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::BECOMESLAVE, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventBecomeSlave");
@@ -1294,7 +1315,7 @@ void DbsMon::eventGiveupSlave(
 
 		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, false, true);
 
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::GIVEUPSLAVE, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::GIVEUPSLAVE, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
 
 	unlockAccess("DbsMon", "eventGiveupSlave");

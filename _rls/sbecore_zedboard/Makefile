@@ -1,33 +1,32 @@
 # file Makefile
-# make file for Whiznium SBE core library, release sbecore_gumstick
+# make file for Whiznium SBE core library, release sbecore_zedboard
 # author Alexander Wirthmueller
 # date created: 14 Aug 2014
-# modified: 19 Aug 2018
+# modified: 3 May 2018
 
-SRCROOT = /home/gumstix/src
+SRCROOT = /home/root/src
 
-CPP = g++
-CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
+CPP = /opt/Xilinx/petalinux-v2017.2/tools/linux-i386/gcc-arm-linux-gnueabi/bin/arm-linux-gnueabihf-g++
+CPPFLAGS = --sysroot=/home/mpsitech/emb/zedboard/avnet-digilent-zedboard-2017.2/build/tmp/sysroots/plnx_arm -std=c++11 -mfloat-abi=hard -g -Wall -Os -pthread
 
-STATLIB = ar
+STATLIB = /opt/Xilinx/petalinux-v2017.2/tools/linux-i386/gcc-arm-linux-gnueabi/bin/arm-linux-gnueabihf-ar
 STATLIBFLAGS = rcs
 
-DYNLIB = g++
+DYNLIB = /opt/Xilinx/petalinux-v2017.2/tools/linux-i386/gcc-arm-linux-gnueabi/bin/arm-linux-gnueabihf-g++
 DYNLIBFLAGS = -shared
 DYNLIBEXT = so
 
-INCINSTPATH = /usr/local/include
-LIBINSTPATH = /usr/local/lib
+INCINSTPATH = /home/mpsitech/emb/zedboard/avnet-digilent-zedboard-2017.2/build/tmp/sysroots/plnx_arm/usr/local/include
+LIBINSTPATH = /home/mpsitech/emb/zedboard/avnet-digilent-zedboard-2017.2/build/tmp/sysroots/plnx_arm/usr/local/lib
 
-INCPATH = -I$(SRCROOT)
-#INCPATH += -I/usr/include/libxml2 -I/usr/include/mysql -I/usr/include/postgresql -I/usr/include
-INCPATH += -I/usr/local/include/libxml2
-#INCPATH += -I$(SRCROOT)/apiwzem -I$(SRCROOT)/dbswzem
+INCPATH = -I=$(SRCROOT)
+#INCPATH += -I=/usr/include/libxml2 -I=/usr/include/mysql -I=/usr/include/postgresql -I=/usr/include
+INCPATH += -I=/usr/include/libxml2 -I=/usr/include
 
 OBJS = Dbs.o Engtypes.o Mt.o Strmod.o Stub.o Txtrd.o Types.o Xmlio.o
 #OBJS_MY = MyDbs.o
 #OBJS_PG = PgDbs.o
-#OBJS_LITE = LiteDbs.o
+OBJS_LITE = LiteDbs.o
 OBJS_MON = Mon.o TxtMon.o
 #OBJS_APIMON = ApiMon.o
 #OBJS_DBSMON = DbsMon.o
@@ -35,7 +34,7 @@ OBJS_MON = Mon.o TxtMon.o
 LIB = libsbecore
 #LIB_MY = libsbecore_my
 #LIB_PG = libsbecore_pg
-#LIB_LITE = libsbecore_lite
+LIB_LITE = libsbecore_lite
 LIB_MON = libsbecore_mon
 #LIB_APIMON = libsbecore_apimon
 #LIB_DBSMON = libsbecore_dbsmon
@@ -45,7 +44,7 @@ LIB_MON = libsbecore_mon
 .cpp.o:
 	$(CPP) $(CPPFLAGS) $(INCPATH) -o $@ -c $<
 
-all:	$(LIB) $(LIB_MON)
+all:	$(LIB) $(LIB_LITE) $(LIB_MON)
 #all:	$(LIB) $(LIB_MY) $(LIB_PG) $(LIB_LITE) $(LIB_MON) $(LIB_APIMON) $(LIB_DBSMON)
 
 $(LIB):	$(OBJS)
@@ -60,9 +59,9 @@ $(LIB):	$(OBJS)
 #	$(STATLIB) $(STATLIBFLAGS) $(LIB_PG).a $(OBJS_PG)
 #	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_PG) -o $(LIB_PG).$(DYNLIBEXT)
 
-#$(LIB_LITE):	$(OBJS_LITE)
-#	$(STATLIB) $(STATLIBFLAGS) $(LIB_LITE).a $(OBJS_LITE)
-#	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_LITE) -o $(LIB_LITE).$(DYNLIBEXT)
+$(LIB_LITE):	$(OBJS_LITE)
+	$(STATLIB) $(STATLIBFLAGS) $(LIB_LITE).a $(OBJS_LITE)
+	$(DYNLIB) $(DYNLIBFLAGS) $(OBJS_LITE) -o $(LIB_LITE).$(DYNLIBEXT)
 
 $(LIB_MON):	$(OBJS_MON)
 	$(STATLIB) $(STATLIBFLAGS) $(LIB_MON).a $(OBJS_MON)
@@ -79,7 +78,7 @@ $(LIB_MON):	$(OBJS_MON)
 install:
 	-mkdir $(INCINSTPATH)/sbecore
 	chmod 755 $(INCINSTPATH)/sbecore
-	cp $(SRCROOT)/sbecore/*.h $(INCINSTPATH)/sbecore/
+	cp /home/mpsitech/emb/zedboard/avnet-digilent-zedboard-2017.2/build/tmp/sysroots/plnx_arm/$(SRCROOT)/sbecore/*.h $(INCINSTPATH)/sbecore/
 	chmod 644 $(INCINSTPATH)/sbecore/*.h
 	cp $(LIB).a $(LIBINSTPATH)/
 	cp $(LIB).$(DYNLIBEXT) $(LIBINSTPATH)/
@@ -87,8 +86,8 @@ install:
 	#cp $(LIB_MY).$(DYNLIBEXT) $(LIBINSTPATH)/
 	#cp $(LIB_PG).a $(LIBINSTPATH)/
 	#cp $(LIB_PG).$(DYNLIBEXT) $(LIBINSTPATH)/
-	#cp $(LIB_LITE).a $(LIBINSTPATH)/
-	#cp $(LIB_LITE).$(DYNLIBEXT) $(LIBINSTPATH)/
+	cp $(LIB_LITE).a $(LIBINSTPATH)/
+	cp $(LIB_LITE).$(DYNLIBEXT) $(LIBINSTPATH)/
 	cp $(LIB_MON).a $(LIBINSTPATH)/
 	cp $(LIB_MON).$(DYNLIBEXT) $(LIBINSTPATH)/
 	#cp $(LIB_APIMON).a $(LIBINSTPATH)/
@@ -97,5 +96,5 @@ install:
 	#cp $(LIB_DBSMON).$(DYNLIBEXT) $(LIBINSTPATH)/
 	chmod 755 $(LIBINSTPATH)/libsbecore*
 
-clean:
+clean: 
 	rm -f *.o

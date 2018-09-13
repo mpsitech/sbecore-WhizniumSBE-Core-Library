@@ -3,7 +3,7 @@
   * methods for XML tree input/output based on libxml2 (declarations)
   * \author Alexander Wirthmüller
   * \date created: 19 Feb 2007
-  * \date modified: 17 Sep 2015
+  * \date modified: 27 May 2018
   */
 
 #ifndef SBECORE_XMLIO_H
@@ -45,10 +45,11 @@ namespace Xmlio {
 	string fromUTF8(const string& s);
 	string toUTF8(const string& s);
 
-	void fromBase64(char* inbuf, unsigned int inbuflen, char** outbuf, unsigned int& outbuflen);
+	void fromBase64(const char* inbuf, unsigned int inbuflen, unsigned char** outbuf, unsigned int& outbuflen);
+	void toBase64(const unsigned char* inbuf, unsigned int inbuflen, char** outbuf, unsigned int& outbuflen);
 
 	bool bigendian();
-	void invertBuffer(char* buf, const unsigned int len, const unsigned int varlen);
+	void invertBuffer(unsigned char* buf, const unsigned int len, const unsigned int varlen);
 
 																													//! parse XML file (doc, docctx are returned)
 	void parseFile(const string& fullpath, xmlDoc** doc, xmlXPathContext** docctx);
@@ -94,9 +95,9 @@ namespace Xmlio {
 	void extractUintvec(xmlXPathContext* docctx, const string& xpath, vector<uint>& vec);
 	void extractUbigintvec(xmlXPathContext* docctx, const string& xpath, vector<ubigint>& vec);
 	void extractFloatvec(xmlXPathContext* docctx, const string& xpath, vector<float>& vec);
-	void extractFloatmat(xmlXPathContext* docctx, const string& xpath, vector<float>& mat, uint& M, uint& N);
+	void extractFloatmat(xmlXPathContext* docctx, const string& xpath, Floatmat& mat);
 	void extractDoublevec(xmlXPathContext* docctx, const string& xpath, vector<double>& vec);
-	void extractDoublemat(xmlXPathContext* docctx, const string& xpath, vector<double>& mat, uint& M, uint& N);
+	void extractDoublemat(xmlXPathContext* docctx, const string& xpath, Doublemat& mat);
 	void extractStringvec(xmlXPathContext* docctx, const string& xpath, vector<string>& vec);
 
 	bool extractBoolUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, bool& val);
@@ -117,9 +118,9 @@ namespace Xmlio {
 	bool extractUintvecUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<uint>& vec);
 	bool extractUbigintvecUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<ubigint>& vec);
 	bool extractFloatvecUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<float>& vec);
-	bool extractFloatmatUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<float>& mat, uint& M, uint& N);
+	bool extractFloatmatUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, Floatmat& mat);
 	bool extractDoublevecUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<double>& vec);
-	bool extractDoublematUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<double>& mat, uint& M, uint& N);
+	bool extractDoublematUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, Doublemat& mat);
 	bool extractStringvecUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, vector<string>& vec);
 
 	bool extractBoolAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, bool& val);
@@ -140,9 +141,9 @@ namespace Xmlio {
 	bool extractUintvecAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<uint>& vec);
 	bool extractUbigintvecAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<ubigint>& vec);
 	bool extractFloatvecAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<float>& vec);
-	bool extractFloatmatAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<float>& mat, uint& M, uint& N);
+	bool extractFloatmatAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, Floatmat& mat);
 	bool extractDoublevecAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<double>& vec);
-	bool extractDoublematAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<double>& mat, uint& M, uint& N);
+	bool extractDoublematAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, Doublemat& mat);
 	bool extractStringvecAttrUclc(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, const string& attrval, vector<string>& vec);
 
 	void extractList(xmlXPathContext* docctx, const string& basexpath, const string& tag, const string& shorttag, const string& attr, vector<unsigned int>& ics, vector<bool>& shorttags);
@@ -167,9 +168,9 @@ namespace Xmlio {
 	void writeUintvec(xmlTextWriter* wr, const string& tag, const vector<uint>& vec);
 	void writeUbigintvec(xmlTextWriter* wr, const string& tag, const vector<ubigint>& vec);
 	void writeFloatvec(xmlTextWriter* wr, const string& tag, const vector<float>& vec);
-	void writeFloatmat(xmlTextWriter* wr, const string& tag, const vector<float>& mat, const uint& M, const uint& N);
+	void writeFloatmat(xmlTextWriter* wr, const string& tag, const Floatmat& mat);
 	void writeDoublevec(xmlTextWriter* wr, const string& tag, const vector<double>& vec);
-	void writeDoublemat(xmlTextWriter* wr, const string& tag, const vector<double>& mat, const uint& M, const uint& N);
+	void writeDoublemat(xmlTextWriter* wr, const string& tag, const Doublemat& mat);
 	void writeStringvec(xmlTextWriter* wr, const string& tag, const vector<string>& vec);
 
 	void writeBoolAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, bool val);
@@ -190,26 +191,30 @@ namespace Xmlio {
 	void writeUintvecAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<uint>& vec);
 	void writeUbigintvecAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<ubigint>& vec);
 	void writeFloatvecAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<float>& vec);
-	void writeFloatmatAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<float>& mat, const uint& M, const uint& N);
+	void writeFloatmatAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const Floatmat& mat);
 	void writeDoublevecAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<double>& vec);
-	void writeDoublematAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<double>& mat, const uint& M, const uint& N);
+	void writeDoublematAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const Doublemat& mat);
 	void writeStringvecAttr(xmlTextWriter* wr, const string& tag, const string& attr, const string& attrval, const vector<string>& vec);
 
+	float compareFloat(const float a, const float b);
+	double compareDouble(const double a, const double b);
 	bool compareUtinyintvec(const vector<utinyint>& a, const vector<utinyint>& b);
 	bool compareUsmallintvec(const vector<usmallint>& a, const vector<usmallint>& b);
 	bool compareIntvec(const vector<int>& a, const vector<int>& b);
 	bool compareUintvec(const vector<uint>& a, const vector<uint>& b);
-	float compareFloat(const float a, const float b);
-	double compareDouble(const double a, const double b);
 	float compareFloatvec(const vector<float>& a, const vector<float>& b);
-	float compareFloatmat(const vector<float>& a, const uint aM, const uint aN, const vector<float>& b, const uint bM, const uint bN);
+	float compareFloatmat(const Floatmat& a, const Floatmat& b);
 	double compareDoublevec(const vector<double>& a, const vector<double>& b);
-	double compareDoublemat(const vector<double>& a, const uint aM, const uint aN, const vector<double>& b, const uint bM, const uint bN);
+	double compareDoublemat(const Doublemat& a, const Doublemat& b);
 	bool compareStringvec(const vector<string>& a, const vector<string>& b);
 
 	bool find(const set<uint>& mask, const uint item);
+
 	void insert(set<uint>& items, const uint item);
 	void insert(set<uint>& items, const set<uint>& _items);
+
+	void push_back(vector<uint>& ics, const uint ix);
+	void push_back(vector<uint>& ics, const vector<uint>& _ics);
 
 	/**
 		* Block

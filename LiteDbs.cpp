@@ -34,7 +34,7 @@ sqlite3_stmt* LiteTable::createStatement(
 	int res;
 	sqlite3_stmt* result = NULL;
 
-	res = sqlite3_prepare_v2(dbs, stmtSQL.c_str(), stmtSQL.length()+1, &result, NULL);
+	res = sqlite3_prepare_v2(dbs, stmtSQL.c_str(), -1, &result, NULL);
 	if (res != SQLITE_OK) throw DbsException("DbsException / SQLite: unable to initialize statement '" + stmtSQL + "'\n");
 
 	return(result);

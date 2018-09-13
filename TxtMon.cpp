@@ -40,7 +40,7 @@ void TxtMon::insertJob(
 void TxtMon::insertClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -98,7 +98,7 @@ void TxtMon::eventRemoveStmgr(
 void TxtMon::eventAddClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -109,7 +109,7 @@ void TxtMon::eventAddClstn(
 void TxtMon::eventChangeClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 			, const string& argMask
@@ -120,7 +120,7 @@ void TxtMon::eventChangeClstn(
 void TxtMon::eventRemoveClstn(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const bool Stmgr
+			, const string& srefIxVTarget
 			, const string& srefIxVJobmask
 			, const ubigint trgXjref
 		) {
@@ -233,6 +233,13 @@ void TxtMon::eventHandleReqRet(
 			, const string& srefIxVDpch
 			, const string& Content
 			, const ubigint xoref
+		) {
+};
+
+void TxtMon::eventHandleReqMethod(
+			const ubigint xjref
+			, const string& srefIxVFeatgroup
+			, const string& srefIxVMethod
 		) {
 };
 

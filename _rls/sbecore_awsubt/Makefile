@@ -1,10 +1,10 @@
 # file Makefile
-# make file for Whiznium SBE core library, release sbecore_genio
+# make file for Whiznium SBE core library, release sbecore_awsubt
 # author Alexander Wirthmueller
 # date created: 14 Aug 2014
-# modified: 15 Jun 2017
+# modified: 27 May 2017
 
-SRCROOT = /home/epsi/src
+SRCROOT = /home/ubuntu/src
 
 CPP = g++
 CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic

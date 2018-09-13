@@ -9,47 +9,48 @@
 #ifndef SBECORE_ENGTYPES_H
 #define SBECORE_ENGTYPES_H
 
+#include <list>
 #include <set>
 
 #include <sbecore/Strmod.h>
 
 /**
-  * cref_t
+  * clstnref_t
   */
-class cref_t {
+class clstnref_t {
 
 public:
-	cref_t(const uint ixVCall = 0, const ubigint jref = 0, const bool stmgr = false, const uint ixVJobmask = 0, const ubigint jrefTrig = 0);
+	clstnref_t(const uint ixVCall = 0, const ubigint jref = 0, const uint ixVTarget = 0, const uint ixVJobmask = 0, const ubigint jrefTrig = 0);
 
 public:
 	uint ixVCall;
 	ubigint jref;
-	bool stmgr;
+	uint ixVTarget;
 	uint ixVJobmask;
 	ubigint jrefTrig;
 
 public:
-	bool operator<(const cref_t& comp) const;
+	bool operator<(const clstnref_t& comp) const;
 };
 
 /**
-  * cref2_t
+  * clstnref2_t
   */
-class cref2_t {
+class clstnref2_t {
 
 public:
-	cref2_t(const ubigint jref = 0, const bool stmgr = false, const uint ixVCall = 0, const uint ixVJobmask = 0, const ubigint jrefTrig = 0);
-	cref2_t(const cref_t& cref);
+	clstnref2_t(const ubigint jref = 0, const uint ixVTarget = 0, const uint ixVCall = 0, const uint ixVJobmask = 0, const ubigint jrefTrig = 0);
+	clstnref2_t(const clstnref_t& cref);
 
 public:
 	ubigint jref;
-	bool stmgr;
+	uint ixVTarget;
 	uint ixVCall;
 	uint ixVJobmask;
 	ubigint jrefTrig;
 
 public:
-	bool operator<(const cref2_t& comp) const;
+	bool operator<(const clstnref2_t& comp) const;
 };
 
 /**
@@ -110,14 +111,96 @@ public:
 		static string getSref(const uint ix);
 	};
 
-public:
-	Clstn(const cref_t& cref, const Arg& argMask, const uint ixVJactype = VecVJactype::LOCK);
+	/**
+		* VecVTarget
+		*/
+	class VecVTarget {
+
+	public:
+		static const uint JOB = 1;
+		static const uint STMGR = 2;
+		static const uint DDSPUB = 3;
+		static const uint UASRV = 4;
+
+	public:
+		static uint getIx(const string& sref);
+		static string getSref(const uint ix);
+	};
 
 public:
-	cref_t cref;
+	Clstn(const clstnref_t& cref, const Arg& argMask, const uint ixVJactype = VecVJactype::LOCK);
+
+public:
+	clstnref_t cref;
 
 	Arg argMask;
 	uint ixVJactype;
+};
+
+/**
+  * featix_t
+  */
+class featix_t {
+
+public:
+	featix_t(const uint ixVFeatgroup = 0, const string& srefIxVFeature = "");
+
+public:
+	uint ixVFeatgroup;
+	string srefIxVFeature;
+
+public:
+	bool operator<(const featix_t& comp) const;
+};
+
+/**
+  * Method
+  */
+class Method {
+
+public:
+	Method(const uint ixVFeatgroup, const string& srefIxVMethod);
+
+public:
+	uint ixVFeatgroup;
+	string srefIxVMethod;
+
+	vector<const void*> parsInv;
+	vector<void*> parsRet;
+
+	bool success;
+};
+
+/**
+  * Msjobinfo
+  */
+class Msjobinfo {
+
+public:
+	Msjobinfo(const uint ixVJob);
+
+public:
+	uint ixVJob;
+
+	ubigint jrefMast;
+	list<ubigint> jrefsSlv;
+
+	set<ubigint> jrefsSrd;
+
+	uint ixVSge;
+};
+
+/**
+  * VecOpVOpres
+  */
+namespace VecOpVOpres {
+	const uint PROGRESS = 1;
+	const uint SUCCESS = 2;
+	const uint FAILURE = 3;
+	const uint COMMERR = 4;
+
+	uint getIx(const string& sref);
+	string getSref(const uint ix);
 };
 
 /**
@@ -135,19 +218,19 @@ public:
 };
 
 /**
-  * pref_t
+  * presetref_t
   */
-class pref_t {
+class presetref_t {
 
 public:
-	pref_t(const ubigint jref = 0, const uint ixVPreset = 0);
+	presetref_t(const ubigint jref = 0, const uint ixVPreset = 0);
 
 public:
 	ubigint jref;
 	uint ixVPreset;
 
 public:
-	bool operator<(const pref_t& comp) const;
+	bool operator<(const presetref_t& comp) const;
 };
 
 /**
@@ -156,10 +239,10 @@ public:
 class Preset {
 
 public:
-	Preset(const pref_t& pref, const Arg& arg);
+	Preset(const presetref_t& pref, const Arg& arg);
 
 public:
-	pref_t pref;
+	presetref_t pref;
 
 	Arg arg;
 };

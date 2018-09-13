@@ -3,7 +3,7 @@
   * methods for XML tree input/output based on libxml2 (implementation)
   * \author Alexander Wirthmüller
   * \date created: 19 Feb 2007
-  * \date modified: 6 Oct 2015
+  * \date modified: 27 May 2018
   */
 
 #include "Xmlio.h"
@@ -93,13 +93,13 @@ string Xmlio::toUTF8(
 };
 
 void Xmlio::fromBase64(
-			char* inbuf
+			const char* inbuf
 			, unsigned int inbuflen
-			, char** outbuf
+			, unsigned char** outbuf
 			, unsigned int& outbuflen
 		) {
 	char quad[4];
-	char trip[3];
+	unsigned char trip[3];
 
 	unsigned int ix, cnt;
 
@@ -120,7 +120,7 @@ void Xmlio::fromBase64(
 
 	if ((inbuflen >= 4) && ((inbuflen%4) == 0)) {
 		outbuflen += 3*cnt;
-		*outbuf = new char[outbuflen];
+		*outbuf = new unsigned char[outbuflen];
 
 		ix = 0;
 
@@ -145,9 +145,14 @@ void Xmlio::fromBase64(
 				else quad[j] = 0;
 			};
 
+			trip[0] = (quad[0] << 2) + ((quad[1] & 0xf0) >> 4);
+			trip[1] = ((quad[1] & 0x0F) << 4) + ((quad[2] & 0xFC) >> 2);
+			trip[2] = ((quad[2] & 0x03) << 6) + quad[3];
+/*
 			trip[0] = 4*quad[0] + (quad[1] & 0xf0)/16;
 			trip[1] = 16*(quad[1] & 0x0f) + (quad[2] & 0xfc)/4;
 			trip[2] = 64*(quad[2] & 0x03) + quad[3];
+*/
 
 			(*outbuf)[3*i] = trip[0];
 
@@ -167,6 +172,68 @@ void Xmlio::fromBase64(
 	};
 };
 
+void Xmlio::toBase64(
+			const unsigned char* inbuf
+			, unsigned int inbuflen
+			, char** outbuf
+			, unsigned int& outbuflen
+		) {
+	unsigned char trip[3];
+	char quad[4];
+
+	unsigned int ix, cnt;
+
+	int rem;
+
+	cnt = inbuflen/3;
+	rem = (inbuflen%3);
+	if (rem != 0) cnt++;
+
+	outbuflen = 4*cnt;
+	*outbuf = new char[outbuflen];
+
+	ix = 0;
+
+	for (unsigned int i=0;i<cnt;i++) {
+		trip[0] = inbuf[ix++];
+		if ((rem == 0) || ((i+1) < cnt)) {
+			trip[1] = inbuf[ix++];
+			trip[2] = inbuf[ix++];
+		} else {
+			trip[1] = 0;
+			trip[2] = 0;
+
+			if (ix < inbuflen) trip[1] = inbuf[ix++];
+			if (ix < inbuflen) trip[2] = inbuf[ix++];
+		};
+
+		quad[0] = (trip[0] >> 2);
+		quad[1] = ((trip[0] & 0x03) << 4) + (trip[1] >> 4);
+		quad[2] = ((trip[1] & 0x0F) << 2) + (trip[2] >> 6);
+		quad[3] = (trip[2] & 0x3F);
+/*
+		quad[0] = trip[0]/4;
+		quad[1] = 16*(trip[0] & 0x03) + trip[1]/16;
+		quad[2] = 4*(trip[1] & 0x0f) + trip[2]/64;
+		quad[3] = (trip[2] & 0x3f);
+*/
+
+		for (unsigned int j=0;j<4;j++) {
+			if ((quad[j] >= 0) && (quad[j] <= 25)) quad[j] = quad[j] + 'A';
+			else if ((quad[j] >= 26) && (quad[j] <= 51)) quad[j] = quad[j] - 26 + 'a';
+			else if ((quad[j] >= 52) && (quad[j] <= 61)) quad[j] = quad[j] - 52 + '0';
+			else if (quad[j] == 62) quad[j] = '+';
+			else if (quad[j] == 63) quad[j] = '/';
+			else quad[j] = 'A';
+
+			(*outbuf)[4*i+j] = quad[j];
+		};
+	};
+
+	if (rem == 1) (*outbuf)[outbuflen-2] = '=';
+	if ((rem == 1) || (rem == 2)) (*outbuf)[outbuflen-1] = '=';
+};
+
 bool Xmlio::bigendian() {
 	unsigned short int var = 255;
 	char* buf = ((char*) &var);
@@ -175,7 +242,7 @@ bool Xmlio::bigendian() {
 };
 
 void Xmlio::invertBuffer(
-			char* buf
+			unsigned char* buf
 			, const unsigned int len
 			, const unsigned int varlen
 		) {
@@ -496,14 +563,14 @@ void Xmlio::extractBool(
 			, bool& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		val = !(strcmp(nodebuf, "true"));
-		delete[] nodebuf;
+		val = !(strcmp((char*) nodebuf, "true"));
+		xmlFree(nodebuf);
 
 	} else val = false;;
 
@@ -516,16 +583,16 @@ void Xmlio::extractTinyint(
 			, tinyint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	int _val = 0;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		_val = atoi(nodebuf);
-		delete[] nodebuf;
+		_val = atoi((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	if ((_val < -127) || (_val > 127)) val = 0; else val = _val;
@@ -539,16 +606,16 @@ void Xmlio::extractUtinyint(
 			, utinyint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	int _val = 0;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		_val = atoi(nodebuf);
-		delete[] nodebuf;
+		_val = atoi((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	if ((_val < 0) || (_val > 255)) val = 0; else val = _val;
@@ -562,16 +629,16 @@ void Xmlio::extractSmallint(
 			, smallint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	int _val = 0;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		_val = atoi(nodebuf);
-		delete[] nodebuf;
+		_val = atoi((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	if ((_val < -16383) || (_val > 16383)) val = 0; else val = _val;
@@ -585,16 +652,16 @@ void Xmlio::extractUsmallint(
 			, usmallint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	int _val = 0;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		_val = atoi(nodebuf);
-		delete[] nodebuf;
+		_val = atoi((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	if ((_val < 0) || (_val > 32767)) val = 0; else val = _val;
@@ -608,14 +675,14 @@ void Xmlio::extractInt(
 			, int& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		val = atoi(nodebuf);
-		delete[] nodebuf;
+		val = atoi((char*) nodebuf);
+		xmlFree(nodebuf);
 
 	} else val = 0;
 
@@ -628,16 +695,16 @@ void Xmlio::extractUint(
 			, uint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	int _val = 0;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		_val = atoi(nodebuf);
-		delete[] nodebuf;
+		_val = atoi((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	if (_val < 0) val = 0; else val = _val;
@@ -651,14 +718,14 @@ void Xmlio::extractBigint(
 			, bigint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		val = atoll(nodebuf);
-		delete[] nodebuf;
+		val = atoll((char*) nodebuf);
+		xmlFree(nodebuf);
 
 	} else val = 0;
 
@@ -671,16 +738,16 @@ void Xmlio::extractUbigint(
 			, ubigint& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	long long int _val = 0;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		_val = atoll(nodebuf);
-		delete[] nodebuf;
+		_val = atoll((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	if (_val < 0) val = 0; else val = _val;
@@ -694,14 +761,14 @@ void Xmlio::extractFloat(
 			, float& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		val = (float) atof(nodebuf);
-		delete[] nodebuf;
+		val = (float) atof((char*) nodebuf);
+		xmlFree(nodebuf);
 
 	} else val = 0.0;
 
@@ -714,14 +781,14 @@ void Xmlio::extractDouble(
 			, double& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		val = atof(nodebuf);
-		delete[] nodebuf;
+		val = atof((char*) nodebuf);
+		xmlFree(nodebuf);
 
 	} else val = 0.0;
 
@@ -734,14 +801,14 @@ void Xmlio::extractString(
 			, string& val
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		val.assign(nodebuf);
-		delete[] nodebuf;
+		val.assign((char*) nodebuf);
+		xmlFree(nodebuf);
 
 	} else val = "";
 
@@ -754,18 +821,18 @@ void Xmlio::extractUtinyintvec(
 			, vector<utinyint>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			vec.resize(len, 0);
@@ -774,7 +841,7 @@ void Xmlio::extractUtinyintvec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -786,24 +853,24 @@ void Xmlio::extractUsmallintvec(
 			, vector<usmallint>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int varlen = sizeof(usmallint);
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			if ((len%varlen) == 0) {
-				if (bigendian()) invertBuffer(buf, len, varlen);
+				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
 				vec.resize(len/varlen, 0);
 				memcpy((void*) vec.data(), (void*) buf, len);
@@ -812,7 +879,7 @@ void Xmlio::extractUsmallintvec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -824,24 +891,24 @@ void Xmlio::extractIntvec(
 			, vector<int>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int varlen = sizeof(int);
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			if ((len%varlen) == 0) {
-				if (bigendian()) invertBuffer(buf, len, varlen);
+				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
 				vec.resize(len/varlen, 0);
 				memcpy((void*) vec.data(), (void*) buf, len);
@@ -850,7 +917,7 @@ void Xmlio::extractIntvec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -862,24 +929,24 @@ void Xmlio::extractUintvec(
 			, vector<uint>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int varlen = sizeof(uint);
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			if ((len%varlen) == 0) {
-				if (bigendian()) invertBuffer(buf, len, varlen);
+				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
 				vec.resize(len/varlen, 0);
 				memcpy((void*) vec.data(), (void*) buf, len);
@@ -888,7 +955,7 @@ void Xmlio::extractUintvec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -900,24 +967,24 @@ void Xmlio::extractUbigintvec(
 			, vector<ubigint>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int varlen = sizeof(ubigint);
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			if ((len%varlen) == 0) {
-				if (bigendian()) invertBuffer(buf, len, varlen);
+				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
 				vec.resize(len/varlen, 0);
 				memcpy((void*) vec.data(), (void*) buf, len);
@@ -926,7 +993,7 @@ void Xmlio::extractUbigintvec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -938,24 +1005,24 @@ void Xmlio::extractFloatvec(
 			, vector<float>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int varlen = sizeof(float);
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			if ((len%varlen) == 0) {
-				if (bigendian()) invertBuffer(buf, len, varlen);
+				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
 				vec.resize(len/varlen, 0);
 				memcpy((void*) vec.data(), (void*) buf, len);
@@ -964,7 +1031,7 @@ void Xmlio::extractFloatvec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -973,19 +1040,13 @@ void Xmlio::extractFloatvec(
 void Xmlio::extractFloatmat(
 			xmlXPathContext* docctx
 			, const string& xpath
-			, vector<float>& mat
-			, uint& M
-			, uint& N
+			, Floatmat& mat
 		) {
-	extractFloatvecUclc(docctx, xpath, "Mat", "Mat", mat);
-	extractUintUclc(docctx, xpath, "M", "M", M);
-	extractUintUclc(docctx, xpath, "N", "N", N);
+	extractFloatvecUclc(docctx, xpath, "vec", "vec", mat.vec);
+	extractUintUclc(docctx, xpath, "M", "M", mat.M);
+	extractUintUclc(docctx, xpath, "N", "N", mat.N);
 
-	if ((M*N) != mat.size()) {
-		M = 0;
-		N = 0;
-		mat.resize(0);
-	};
+	if ((mat.M*mat.N) != mat.vec.size()) mat = Floatmat();
 };
 
 void Xmlio::extractDoublevec(
@@ -994,24 +1055,24 @@ void Xmlio::extractDoublevec(
 			, vector<double>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int varlen = sizeof(double);
 
-	char* buf = NULL;
+	unsigned char* buf = NULL;
 	unsigned int len;
 
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64(nodebuf, strlen(nodebuf), &buf, len);
+		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
 
 		if (buf) {
 			if ((len%varlen) == 0) {
-				if (bigendian()) invertBuffer(buf, len, varlen);
+				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
 				vec.resize(len/varlen, 0);
 				memcpy((void*) vec.data(), (void*) buf, len);
@@ -1020,7 +1081,7 @@ void Xmlio::extractDoublevec(
 			delete[] buf;
 		};
 
-		delete[] nodebuf;
+		xmlFree(nodebuf);
 	};
 
 	xmlXPathFreeObject(obj);
@@ -1029,19 +1090,13 @@ void Xmlio::extractDoublevec(
 void Xmlio::extractDoublemat(
 			xmlXPathContext* docctx
 			, const string& xpath
-			, vector<double>& mat
-			, uint& M
-			, uint& N
+			, Doublemat& mat
 		) {
-	extractDoublevecUclc(docctx, xpath, "Mat", "Mat", mat);
-	extractUintUclc(docctx, xpath, "M", "M", M);
-	extractUintUclc(docctx, xpath, "N", "N", N);
+	extractDoublevecUclc(docctx, xpath, "vec", "vec", mat.vec);
+	extractUintUclc(docctx, xpath, "M", "M", mat.M);
+	extractUintUclc(docctx, xpath, "N", "N", mat.N);
 
-	if ((M*N) != mat.size()) {
-		M = 0;
-		N = 0;
-		mat.resize(0);
-	};
+	if ((mat.M*mat.N) != mat.vec.size()) mat = Doublemat();
 };
 
 void Xmlio::extractStringvec(
@@ -1050,16 +1105,16 @@ void Xmlio::extractStringvec(
 			, vector<string>& vec
 		) {
 	xmlXPathObject* obj;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	string s;
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
-	nodebuf = (char*) xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		s.assign(nodebuf);
-		delete[] nodebuf;
+		s.assign((char*) nodebuf);
+		xmlFree(nodebuf);
 	};
 
 	s = fromUTF8(s);
@@ -1379,14 +1434,12 @@ bool Xmlio::extractFloatmatUclc(
 			, const string& basexpath
 			, const string& tag
 			, const string& shorttag
-			, vector<float>& mat
-			, uint& M
-			, uint& N
+			, Floatmat& mat
 		) {
 	string goodpath;
 
 	if (checkAltXPaths(docctx, goodpath, basexpath, tag, shorttag, StrMod::uc(tag), StrMod::uc(shorttag), StrMod::lc(tag), StrMod::lc(shorttag))) {
-		extractFloatmat(docctx, goodpath, mat, M, N);
+		extractFloatmat(docctx, goodpath, mat);
 		return true;
 	};
 
@@ -1415,14 +1468,12 @@ bool Xmlio::extractDoublematUclc(
 			, const string& basexpath
 			, const string& tag
 			, const string& shorttag
-			, vector<double>& mat
-			, uint& M
-			, uint& N
+			, Doublemat& mat
 		) {
 	string goodpath;
 
 	if (checkAltXPaths(docctx, goodpath, basexpath, tag, shorttag, StrMod::uc(tag), StrMod::uc(shorttag), StrMod::lc(tag), StrMod::lc(shorttag))) {
-		extractDoublemat(docctx, goodpath, mat, M, N);
+		extractDoublemat(docctx, goodpath, mat);
 		return true;
 	};
 
@@ -1795,14 +1846,12 @@ bool Xmlio::extractFloatmatAttrUclc(
 			, const string& shorttag
 			, const string& attr
 			, const string& attrval
-			, vector<float>& mat
-			, uint& M
-			, uint& N
+			, Floatmat& mat
 		) {
 	string goodpath;
 
 	if (checkAttrUclcXpaths(docctx, basexpath, goodpath, tag, shorttag, attr, attrval)) {
-		extractFloatmat(docctx, goodpath, mat, M, N);
+		extractFloatmat(docctx, goodpath, mat);
 		return true;
 	};
 
@@ -1835,14 +1884,12 @@ bool Xmlio::extractDoublematAttrUclc(
 			, const string& shorttag
 			, const string& attr
 			, const string& attrval
-			, vector<double>& mat
-			, uint& M
-			, uint& N
+			, Doublemat& mat
 		) {
 	string goodpath;
 
 	if (checkAttrUclcXpaths(docctx, basexpath, goodpath, tag, shorttag, attr, attrval)) {
-		extractDoublemat(docctx, goodpath, mat, M, N);
+		extractDoublemat(docctx, goodpath, mat);
 		return true;
 	};
 
@@ -1879,7 +1926,7 @@ void Xmlio::extractList(
 		) {
 	xmlXPathObject* obj;
 	xmlNode* node;
-	char* nodebuf = NULL;
+	xmlChar* nodebuf;
 
 	unsigned int ix;
 
@@ -1898,13 +1945,13 @@ void Xmlio::extractList(
 				node = obj->nodesetval->nodeTab[i];
 
 				if (node->type == XML_ATTRIBUTE_NODE) {
-					nodebuf = (char*) xmlNodeGetContent(node);
+					nodebuf = xmlNodeGetContent(node);
 
 					if (nodebuf) {
-						ics.push_back(atol(nodebuf));
+						ics.push_back(atol((char*) nodebuf));
 						shorttags.push_back(false);
 
-						delete[] nodebuf;
+						xmlFree(nodebuf);
 					};
 				};
 			};
@@ -1923,13 +1970,13 @@ void Xmlio::extractList(
 				node = obj->nodesetval->nodeTab[i];
 
 				if (node->type == XML_ATTRIBUTE_NODE) {
-					nodebuf = (char*) xmlNodeGetContent(node);
+					nodebuf = xmlNodeGetContent(node);
 
 					if (nodebuf) {
-						ics.push_back(atol(nodebuf));
+						ics.push_back(atol((char*) nodebuf));
 						shorttags.push_back(true);
 
-						delete[] nodebuf;
+						xmlFree(nodebuf);
 					};
 				};
 			};
@@ -1961,12 +2008,12 @@ void Xmlio::writeBase64(
 			, const unsigned int len
 			, const unsigned int varlen
 		) {
-	if (bigendian()) {
-		char* buf = new char[len*varlen];
+	if (!bigendian()) {
+		unsigned char* buf = new unsigned char[len*varlen];
 
 		memcpy((void*) buf, (void*) _buf, len*varlen);
 		invertBuffer(buf, len, varlen);
-		xmlTextWriterWriteBase64(wr, buf, 0, len*varlen);
+		xmlTextWriterWriteBase64(wr, (char*) buf, 0, len*varlen);
 
 		delete[] buf;
 
@@ -2144,25 +2191,23 @@ void Xmlio::writeFloatvec(
 void Xmlio::writeFloatmat(
 			xmlTextWriter* wr
 			, const string& tag
-			, const vector<float>& mat
-			, const uint& M
-			, const uint& N
+			, const Floatmat& mat
 		) {
 	/* example:
 	<test>
 		<M>3</M>
 		<N>5</N>
-		<mat>MTIzNA==</mat>
+		<vec>MTIzNA==</vec>
 	</test> */
 
 	const unsigned int varlen = sizeof(float); // should be 4
 
 	xmlTextWriterStartElement(wr, BAD_CAST tag.c_str());
-		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(M).c_str());
-		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(N).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(mat.M).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(mat.N).c_str());
 
-		xmlTextWriterStartElement(wr, BAD_CAST "mat");
-			writeBase64(wr, (const char*) mat.data(), mat.size(), varlen);
+		xmlTextWriterStartElement(wr, BAD_CAST "vec");
+			writeBase64(wr, (const char*) mat.vec.data(), mat.vec.size(), varlen);
 		xmlTextWriterEndElement(wr);
 	xmlTextWriterEndElement(wr);
 };
@@ -2182,25 +2227,23 @@ void Xmlio::writeDoublevec(
 void Xmlio::writeDoublemat(
 			xmlTextWriter* wr
 			, const string& tag
-			, const vector<double>& mat
-			, const uint& M
-			, const uint& N
+			, const Doublemat& mat
 		) {
 	/* example:
 	<test>
 		<M>3</M>
 		<N>5</N>
-		<mat>MTIzNA==</mat>
+		<vec>MTIzNA==</vec>
 	</test> */
 
 	const unsigned int varlen = sizeof(double); // should be 8
 
 	xmlTextWriterStartElement(wr, BAD_CAST tag.c_str());
-		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(M).c_str());
-		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(N).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(mat.M).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(mat.N).c_str());
 
-		xmlTextWriterStartElement(wr, BAD_CAST "mat");
-			writeBase64(wr, (const char*) mat.data(), mat.size(), varlen);
+		xmlTextWriterStartElement(wr, BAD_CAST "vec");
+			writeBase64(wr, (const char*) mat.vec.data(), mat.vec.size(), varlen);
 		xmlTextWriterEndElement(wr);
 	xmlTextWriterEndElement(wr);
 };
@@ -2387,8 +2430,6 @@ void Xmlio::writeUtinyintvecAttr(
 		xmlTextWriterWriteAttribute(wr, BAD_CAST attr.c_str(), BAD_CAST attrval.c_str());
 		writeBase64(wr, (const char*) vec.data(), vec.size(), 1);
 	xmlTextWriterEndElement(wr);
-
-//	delete[] buf;
 };
 
 void Xmlio::writeUsmallintvecAttr(
@@ -2434,8 +2475,6 @@ void Xmlio::writeUintvecAttr(
 		xmlTextWriterWriteAttribute(wr, BAD_CAST attr.c_str(), BAD_CAST attrval.c_str());
 		writeBase64(wr, (const char*) vec.data(), vec.size(), varlen);
 	xmlTextWriterEndElement(wr);
-
-//	delete[] buf;
 };
 
 void Xmlio::writeUbigintvecAttr(
@@ -2451,8 +2490,6 @@ void Xmlio::writeUbigintvecAttr(
 		xmlTextWriterWriteAttribute(wr, BAD_CAST attr.c_str(), BAD_CAST attrval.c_str());
 		writeBase64(wr, (const char*) vec.data(), vec.size(), varlen);
 	xmlTextWriterEndElement(wr);
-
-//	delete[] buf;
 };
 
 void Xmlio::writeFloatvecAttr(
@@ -2475,20 +2512,18 @@ void Xmlio::writeFloatmatAttr(
 			, const string& tag
 			, const string& attr
 			, const string& attrval
-			, const vector<float>& mat
-			, const uint& M
-			, const uint& N
+			, const Floatmat& mat
 		) {
 	const unsigned int varlen = sizeof(float); // should be 4
 
 	xmlTextWriterStartElement(wr, BAD_CAST tag.c_str());
 		xmlTextWriterWriteAttribute(wr, BAD_CAST attr.c_str(), BAD_CAST attrval.c_str());
 
-		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(M).c_str());
-		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(N).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(mat.M).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(mat.N).c_str());
 
-		xmlTextWriterStartElement(wr, BAD_CAST "mat");
-			writeBase64(wr, (const char*) mat.data(), mat.size(), varlen);
+		xmlTextWriterStartElement(wr, BAD_CAST "vec");
+			writeBase64(wr, (const char*) mat.vec.data(), mat.vec.size(), varlen);
 		xmlTextWriterEndElement(wr);
 	xmlTextWriterEndElement(wr);
 };
@@ -2513,20 +2548,18 @@ void Xmlio::writeDoublematAttr(
 			, const string& tag
 			, const string& attr
 			, const string& attrval
-			, const vector<double>& mat
-			, const uint& M
-			, const uint& N
+			, const Doublemat& mat
 		) {
 	const unsigned int varlen = sizeof(double); // should be 8
 
 	xmlTextWriterStartElement(wr, BAD_CAST tag.c_str());
 		xmlTextWriterWriteAttribute(wr, BAD_CAST attr.c_str(), BAD_CAST attrval.c_str());
 
-		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(M).c_str());
-		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(N).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "M", BAD_CAST to_string(mat.M).c_str());
+		xmlTextWriterWriteElement(wr, BAD_CAST "N", BAD_CAST to_string(mat.N).c_str());
 
-		xmlTextWriterStartElement(wr, BAD_CAST "mat");
-			writeBase64(wr, (const char*) mat.data(), mat.size(), varlen);
+		xmlTextWriterStartElement(wr, BAD_CAST "vec");
+			writeBase64(wr, (const char*) mat.vec.data(), mat.vec.size(), varlen);
 		xmlTextWriterEndElement(wr);
 	xmlTextWriterEndElement(wr);
 };
@@ -2683,17 +2716,11 @@ float Xmlio::compareFloatvec(
 };
 
 float Xmlio::compareFloatmat(
-			const vector<float>& a
-			, const uint aM
-			, const uint aN
-			, const vector<float>& b
-			, const uint bM
-			, const uint bN
+			const Floatmat& a
+			, const Floatmat& b
 		) {
-	if ( (aM == bM) && (aN == bN) )
-		return(compareFloatvec(a, b));
-	else
-		return 1.0e9;
+	if ( (a.M == b.M) && (a.N == b.N) ) return(compareFloatvec(a.vec, b.vec));
+	else return 1.0e9;
 };
 
 double Xmlio::compareDoublevec(
@@ -2716,17 +2743,11 @@ double Xmlio::compareDoublevec(
 };
 
 double Xmlio::compareDoublemat(
-			const vector<double>& a
-			, const uint aM
-			, const uint aN
-			, const vector<double>& b
-			, const uint bM
-			, const uint bN
+			const Doublemat& a
+			, const Doublemat& b
 		) {
-	if ( (aM == bM) && (aN == bN) )
-		return(compareDoublevec(a, b));
-	else
-		return 1.0e9;
+	if ( (a.M == b.M) && (a.N == b.N) ) return(compareDoublevec(a.vec, b.vec));
+	else return 1.0e9;
 };
 
 bool Xmlio::compareStringvec(
@@ -2767,7 +2788,21 @@ void Xmlio::insert(
 			set<uint>& items
 			, const set<uint>& _items
 		) {
-	for (set<uint>::iterator it=_items.begin();it!=_items.end();it++) insert(items, *it);
+	for (auto it=_items.begin();it!=_items.end();it++) insert(items, *it);
+};
+
+void Xmlio::push_back(
+			vector<uint>& ics
+			, const uint ix
+		) {
+	ics.push_back(ix);
+};
+
+void Xmlio::push_back(
+			vector<uint>& ics
+			, const vector<uint>& _ics
+		) {
+	for (auto it=_ics.begin();it!=_ics.end();it++) push_back(ics, *it);
 };
 
 /******************************************************************************
@@ -2984,7 +3019,7 @@ void Xmlio::Feed::appendRefSrefTitles(
 			, const string& Title2
 			, const string& Title3
 		) {
-	Feeditem* item = new Feeditem(true, 0, 0, sref, Title1, Title2, Title3);
+	Feeditem* item = new Feeditem(true, 0, ref, sref, Title1, Title2, Title3);
 
 	nodes.push_back(item);
 };
