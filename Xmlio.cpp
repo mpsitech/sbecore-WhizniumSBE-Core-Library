@@ -262,9 +262,15 @@ void Xmlio::parseFile(
 			, xmlDoc** doc
 			, xmlXPathContext** docctx
 		) {
-	if (access(fullpath.c_str(), R_OK)) return;
+#ifdef _WIN32
+	if (_access(fullpath.c_str(), 0)) throw SbeException(SbeException::PATHNF, {{"path",fullpath}});
+#else
+	if (access(fullpath.c_str(), R_OK)) throw SbeException(SbeException::PATHNF, {{"path",fullpath}});
+#endif
 
 	*doc = xmlParseFile(fullpath.c_str());
+	if (!*doc) throw SbeException(SbeException::XMLIO_FILEPARSE, {});
+
 	*docctx = xmlXPathNewContext(*doc);
 };
 
@@ -383,6 +389,8 @@ void Xmlio::parseBuffer(
 	};
 
 	*doc = xmlParseMemory(buf, len);
+	if (!*doc) throw SbeException(SbeException::XMLIO_BUFPARSE, {});
+	
 	*docctx = xmlXPathNewContext(*doc);
 };
 
@@ -439,6 +447,25 @@ bool Xmlio::checkXPath(
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 
 	retval = (obj->nodesetval->nodeNr > 0);
+
+	xmlXPathFreeObject(obj);
+	return(retval);
+};
+
+bool Xmlio::checkXPath(
+			xmlXPathContext* docctx
+			, const string& xpath
+			, unsigned int& lineno
+		) {
+	bool retval = false;
+	xmlXPathObject* obj;
+
+	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
+
+	if (obj->nodesetval->nodeNr > 0) {
+		retval = true;
+		lineno = obj->nodesetval->nodeTab[0]->line;
+	};
 
 	xmlXPathFreeObject(obj);
 	return(retval);

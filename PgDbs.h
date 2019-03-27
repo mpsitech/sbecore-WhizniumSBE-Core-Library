@@ -3,11 +3,15 @@
   * database access code globals for PostgreSQL (declarations)
   * \author Alexander Wirthmüller
   * \date created: 1 Jan 2009
-  * \date modified: 4 Nov 2016
+  * \date modified: 28 Feb 2019
   */
 
 #ifndef SBECORE_PGDBS_H
 #define SBECORE_PGDBS_H
+
+#ifdef __linux__
+	#include <netinet/in.h>
+#endif
 
 #include <libpq-fe.h>
 
@@ -25,10 +29,14 @@ public:
 public:
 	void init(PGconn* _dbs);
 	virtual void initStatements();
+/// WILL BECOME OBSOLETE!
 	void initStatementsErr(PGresult* res);
 
 public:
 	PGconn* dbs;
+
+public:
+	void createStatement(const string& stmtName, const string& query, const int nParams);
 
 protected:
 	void begin();

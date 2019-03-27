@@ -1,12 +1,12 @@
 /**
-  * \file Mt.cpp
-  * methods for POSIX threading functionality (implementation)
+  * \file Mttypes.cpp
+  * POSIX threading types and data types with thread safety (implementation)
   * \author Alexander Wirthmüller
-  * \date created: 17 Sep 2015
-  * \date modified: 22 Aug 2018
+  * \date created: 28 Dec 2018
+  * \date modified: 28 Dec 2018
   */
 
-#include "Mt.h"
+#include "Mttypes.h"
 
 /******************************************************************************
  class Cond
@@ -17,6 +17,7 @@ Cond::Cond(
 			, const string& srefObject
 			, const string& srefMember
 		) {
+#ifdef POSIXNOTCPP11
 	int res;
 	pthread_mutexattr_t attr;
 
@@ -36,9 +37,13 @@ Cond::Cond(
 	this->sref = sref;
 
 	if (res == 0) Mt::logDebug("successfully initialized condition", sref, srefObject, srefMember);
+#else
+	Mt::logDebug("successfully initialized condition", sref, srefObject, srefMember);
+#endif
 };
 
 Cond::~Cond() {
+#ifdef POSIXNOTCPP11
 	int res;
 	
 	res = pthread_cond_destroy(&c);
@@ -63,6 +68,9 @@ Cond::~Cond() {
 	};
 
 	if (res == 0) Mt::logDebug("successfully destroyed condition", sref);
+#else
+	Mt::logDebug("successfully destroyed condition", sref);
+#endif
 };
 
 void Cond::lockMutex(
@@ -73,7 +81,17 @@ void Cond::lockMutex(
 
 	Mt::logDebug("attempting to lock mutex", sref + ".m", srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 	else Mt::logDebug("successfully locked mutex", sref + ".m", srefObject, srefMember);
 };
@@ -82,11 +100,17 @@ void Cond::unlockMutex(
 			const string& srefObject
 			, const string& srefMember
 		) {
+#ifdef POSIXNOTCPP11
 	int res;
-	
+
 	res = pthread_mutex_unlock(&m);
+
 	if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
 	else Mt::logDebug("successfully unlocked mutex", sref + ".m", srefObject, srefMember);
+#else
+	m.unlock();
+	Mt::logDebug("successfully unlocked mutex", sref + ".m", srefObject, srefMember);
+#endif
 };
 
 void Cond::signal(
@@ -95,18 +119,38 @@ void Cond::signal(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_cond_signal(&c);
+
 		if (res != 0) Mt::logError(res, "error signalling condition", sref, srefObject, srefMember);
 		else Mt::logDebug("successfully signalled condition", sref, srefObject, srefMember);
+#else
+		c.notify_one();
+		Mt::logDebug("successfully signalled condition", sref, srefObject, srefMember);
+#endif
 	};
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 };
 
@@ -116,18 +160,38 @@ void Cond::broadcast(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_cond_broadcast(&c);
+
 		if (res != 0) Mt::logError(res, "error broadcasting condition", sref, srefObject, srefMember);
-		else Mt::logDebug("successfully broadcadt condition", sref, srefObject, srefMember);
+		else Mt::logDebug("successfully broadcast condition", sref, srefObject, srefMember);
+#else
+		c.notify_all();
+		Mt::logDebug("successfully broadcast condition", sref, srefObject, srefMember);
+#endif
 	};
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 };
 
@@ -139,7 +203,17 @@ void Cond::wait(
 
 	Mt::logDebug("waiting for condition", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_cond_wait(&c, &m);
+#else
+	try {
+		c.wait(m);
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember);
 	else Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
 };
@@ -151,14 +225,17 @@ bool Cond::timedwait(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 	timeval now;
 	timespec then;
+#endif
 
 	if (dt == 0) {
 		wait(srefObject, srefMember);
 		return true;
 
 	} else {
+#ifdef POSIXNOTCPP11
 		gettimeofday(&now, NULL);
 		then.tv_sec = now.tv_sec + (dt/1000000);
 		if ((now.tv_usec + (dt%1000000)) < 1000000) {
@@ -167,9 +244,11 @@ bool Cond::timedwait(
 			then.tv_sec++;
 			then.tv_nsec = 1000*(now.tv_usec + (dt%1000000) - 1000000);
 		};
+#endif
 
 		Mt::logDebug("waiting for condition", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 		res = pthread_cond_timedwait(&c, &m, &then);
 		if ((res != 0) && (res != ETIMEDOUT)) {
 			Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember);
@@ -181,6 +260,24 @@ bool Cond::timedwait(
 			Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
 			return true;
 		};
+#else
+		try {
+			auto res = c.wait_for(m, chrono::microseconds(dt));
+
+			if (res == cv_status::timeout) {
+				Mt::logDebug("timed out waiting for condition", sref, srefObject, srefMember);
+				return false;
+			} else {
+				Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
+				return true;
+			};
+
+		} catch (system_error e) {
+			res = -1;
+			Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember);
+			return false;
+		};
+#endif
 	};
 };
 
@@ -188,7 +285,10 @@ bool Cond::timedwait(
  namespace Mt
  ******************************************************************************/
 
-string Mt::getTid() {
+string Mt::getTid(
+			const bool textNotBare
+		) {
+#ifdef POSIXNOTCPP11
 #ifdef __APPLE__
 	uint64_t tid;
 	pthread_threadid_np(NULL, &tid);
@@ -196,8 +296,20 @@ string Mt::getTid() {
 #ifdef __linux__
 	uint64_t tid = syscall(SYS_gettid);
 #endif
+#ifdef __CYGWIN__
+	uint64_t tid = (uint64_t) pthread_self();
+#endif
 
-	return("[tid " + to_string(tid) + "] ");
+	if (textNotBare) return("[tid " + to_string(tid) + "] ");
+	else return to_string(tid);
+#else
+	ostringstream str;
+	
+	str << this_thread::get_id();
+
+	if (textNotBare) return("[tid " + str.str() + "] ");
+	else return str.str();
+#endif
 };
 
 void Mt::logDebug(
@@ -209,7 +321,7 @@ void Mt::logDebug(
 	// ex. [tid 1234] JobXyz::test()[1] successfully locked mutex mcNewdata
 	if (ixVVerbose < VecVVerbose::ALL) return;
 
-	string s = getTid();
+	string s = getTid(true);
 
 	if (srefObject.length() > 0) s += srefObject;
 	if ((srefObject.length() > 0) && (srefMember.length() > 0)) s += "::";
@@ -231,7 +343,7 @@ void Mt::logError(
 	// ex. JobXyz::test() error waiting for condition cNewdata (18: not possible)
 	if (ixVVerbose < VecVVerbose::ERROR) return;
 
-	string s = getTid();
+	string s = getTid(true);
 
 	if (srefObject.length() > 0) s += srefObject;
 	if ((srefObject.length() > 0) && (srefMember.length() > 0)) s += "::";
@@ -239,7 +351,9 @@ void Mt::logError(
 	if ((srefObject.length() > 0) || (srefMember.length() > 0)) s += " ";
 	s += err;
 	if (srefCondMutex.length() > 0) s += " " + srefCondMutex;
+#ifdef POSIXNOTCPP11
 	s += " (" + to_string(res) + ": " + string(strerror(res)) + ")";
+#endif
 
 	cout << s << endl;
 };
@@ -255,6 +369,7 @@ Mutex::Mutex(
 			, const string& srefObject
 			, const string& srefMember
 		) {
+#ifdef POSIXNOTCPP11
 	int res;
 	pthread_mutexattr_t attr;
 
@@ -269,9 +384,13 @@ Mutex::Mutex(
 	this->sref = sref;
 
 	if (res == 0) Mt::logDebug("successfully initialized mutex", sref, srefObject, srefMember);
+#else
+	Mt::logDebug("successfully initialized mutex", sref, srefObject, srefMember);
+#endif
 };
 
 Mutex::~Mutex() {
+#ifdef POSIXNOTCPP11
 	int res;
 
 	while (true) {
@@ -291,6 +410,9 @@ Mutex::~Mutex() {
 	};
 
 	if (res == 0) Mt::logDebug("successfully destroyed mutex", sref);
+#else
+	Mt::logDebug("successfully destroyed mutex", sref);
+#endif
 };
 
 void Mutex::lock(
@@ -301,7 +423,17 @@ void Mutex::lock(
 
 	Mt::logDebug("attempting to lock mutex", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref, srefObject, srefMember);
 	else Mt::logDebug("successfully locked mutex", sref, srefObject, srefMember);
 };
@@ -314,7 +446,12 @@ bool Mutex::trylock(
 
 	Mt::logDebug("trying to lock mutex", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_trylock(&m);
+#else
+	res = (m.try_lock()) ? 0 : EBUSY;
+#endif
+
 	if ((res != EBUSY) && (res != 0)) {
 		Mt::logError(res, "error try-locking mutex", sref, srefObject, srefMember);
 		return false;
@@ -331,11 +468,17 @@ void Mutex::unlock(
 			const string& srefObject
 			, const string& srefMember
 		) {
+#ifdef POSIXNOTCPP11
 	int res;
 	
 	res = pthread_mutex_unlock(&m);
+
 	if (res != 0) Mt::logError(res, "error unlocking mutex", sref, srefObject, srefMember);
 	else Mt::logDebug("successfully unlocked mutex", sref, srefObject, srefMember);
+#else
+	m.unlock();
+	Mt::logDebug("successfully unlocked mutex", sref, srefObject, srefMember);
+#endif
 };
 
 /******************************************************************************
@@ -347,6 +490,7 @@ Rwmutex::Rwmutex(
 			, const string& srefObject
 			, const string& srefMember
 		) {
+#ifdef POSIXNOTCPP11
 	int res;
 	pthread_mutexattr_t attr;
 
@@ -362,18 +506,26 @@ Rwmutex::Rwmutex(
 		res = pthread_cond_init(&c, NULL);
 		if (res != 0) Mt::logError(res, "error initializing condition", sref + ".c", srefObject, srefMember);
 	};
+#endif
 
 	r = 0;
 
+#ifdef POSIXNOTCPP11
 	tidW = 0;
+#endif
 	w = 0;
 
 	this->sref = sref;
 
+#ifdef POSIXNOTCPP11
 	if (res == 0) Mt::logDebug("successfully initialized r/w mutex", sref, srefObject, srefMember);
+#else
+	Mt::logDebug("successfully initialized r/w mutex", sref, srefObject, srefMember);
+#endif
 };
 
 Rwmutex::~Rwmutex() {
+#ifdef POSIXNOTCPP11
 	int res;
 	
 	res = pthread_cond_destroy(&c);
@@ -398,6 +550,9 @@ Rwmutex::~Rwmutex() {
 	};
 
 	if (res == 0) Mt::logDebug("successfully destroyed r/w mutex", sref);
+#else
+	Mt::logDebug("successfully destroyed r/w mutex", sref);
+#endif
 };
 
 void Rwmutex::rlock(
@@ -410,11 +565,22 @@ void Rwmutex::rlock(
 
 	Mt::logDebug("attempting to lock r/w mutex for read operation", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (res == 0) {
 		if (w > 0) {
+#ifdef POSIXNOTCPP11
 #ifdef __APPLE__
 			uint64_t tid;
 			pthread_threadid_np(NULL, &tid);
@@ -422,12 +588,30 @@ void Rwmutex::rlock(
 #ifdef __linux__
 			uint64_t tid = syscall(SYS_gettid);
 #endif
+#ifdef __CYGWIN__
+			uint64_t tid = (uint64_t) pthread_self();
+#endif
 
 			haswlock = (tidW == tid);
+#else
+			haswlock = (tidW == this_thread::get_id());
+#endif
 		};
 
 		if (!haswlock) {
-			while (w > 0) res = pthread_cond_wait(&c, &m);
+			while (w > 0) {
+#ifdef POSIXNOTCPP11
+				res = pthread_cond_wait(&c, &m);
+#else
+				try {
+					c.wait(m);
+					res = 0;
+				} catch (system_error e) {
+					res = -1;
+				};
+#endif
+			};
+
 			if (res != 0) Mt::logError(res, "error waiting for condition", sref + ".c", srefObject, srefMember);
 		};
 	};
@@ -435,8 +619,12 @@ void Rwmutex::rlock(
 	if (!haswlock) r++;
 	
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 
 	if (res == 0) Mt::logDebug("successfully locked r/w mutex for read operation", sref, srefObject, srefMember);
@@ -452,11 +640,22 @@ bool Rwmutex::rtrylock(
 
 	Mt::logDebug("trying to lock r/w mutex for read operation", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (res == 0) {
 		if (w > 0) {
+#ifdef POSIXNOTCPP11
 #ifdef __APPLE__
 			uint64_t tid;
 			pthread_threadid_np(NULL, &tid);
@@ -464,14 +663,26 @@ bool Rwmutex::rtrylock(
 #ifdef __linux__
 			uint64_t tid = syscall(SYS_gettid);
 #endif
+#ifdef __CYGWIN__
+			uint64_t tid = (uint64_t) pthread_self();
+#endif
 
 			haswlock = (tidW == tid);
+#else
+			haswlock = (tidW == this_thread::get_id());
+#endif
 
 			if (!haswlock) {
+#ifdef POSIXNOTCPP11
 				res = pthread_mutex_unlock(&m);
+
 				if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
 				else Mt::logDebug("failed try-locking busy r/w mutex for read operation", sref, srefObject, srefMember);
-				
+#else
+				m.unlock();
+				Mt::logDebug("failed try-locking busy r/w mutex for read operation", sref, srefObject, srefMember);
+#endif
+
 				return false;
 			};
 		};
@@ -480,8 +691,12 @@ bool Rwmutex::rtrylock(
 	if (!haswlock) r++;
 	
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 
 	if (res == 0) Mt::logDebug("successfully try-locked r/w mutex for read operation", sref, srefObject, srefMember);
@@ -495,7 +710,17 @@ void Rwmutex::runlock(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (w == 0) {
@@ -503,15 +728,23 @@ void Rwmutex::runlock(
 
 		if (res == 0) {
 			if (r == 0) {
+#ifdef POSIXNOTCPP11
 				res = pthread_cond_signal(&c);
 				if (res != 0) Mt::logError(res, "error signalling condition", sref + ".c", srefObject, srefMember);
+#else
+				c.notify_one();
+#endif
 			};
 		};
 	};
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 
 	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from read operation", sref, srefObject, srefMember);
@@ -523,6 +756,7 @@ void Rwmutex::wlock(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 #ifdef __APPLE__
 	uint64_t tid;
 	pthread_threadid_np(NULL, &tid);
@@ -530,15 +764,44 @@ void Rwmutex::wlock(
 #ifdef __linux__
 	uint64_t tid = syscall(SYS_gettid);
 #endif
+#ifdef __CYGWIN__
+	uint64_t tid = (uint64_t) pthread_self();
+#endif
+#else
+	thread::id tid = this_thread::get_id();
+#endif
 
 	Mt::logDebug("attempting to lock r/w mutex for write operation", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (res == 0) {
 		if (tidW != tid) {
-			while ((w > 0) || (r > 0)) res = pthread_cond_wait(&c, &m);
+
+			while ((w > 0) || (r > 0)) {
+#ifdef POSIXNOTCPP11
+				res = pthread_cond_wait(&c, &m);
+#else
+				try {
+					c.wait(m);
+					res = 0;
+				} catch (system_error e) {
+					res = -1;
+				};
+#endif
+			};
+
 			if (res != 0) Mt::logError(res, "error waiting for condition", sref + ".c", srefObject, srefMember);
 		};
 	};
@@ -547,8 +810,12 @@ void Rwmutex::wlock(
 	w++;
 	
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 
 	if (res == 0) Mt::logDebug("successfully locked r/w mutex for write operation", sref, srefObject, srefMember);
@@ -560,6 +827,7 @@ bool Rwmutex::wtrylock(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 #ifdef __APPLE__
 	uint64_t tid;
 	pthread_threadid_np(NULL, &tid);
@@ -567,18 +835,39 @@ bool Rwmutex::wtrylock(
 #ifdef __linux__
 	uint64_t tid = syscall(SYS_gettid);
 #endif
+#ifdef __CYGWIN__
+	uint64_t tid = (uint64_t) pthread_self();
+#endif
+#else
+	thread::id tid = this_thread::get_id();
+#endif
 
 	Mt::logDebug("trying to lock r/w mutex for write operation", sref, srefObject, srefMember);
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	if (res == 0) {
 		if ((tidW != tid) || (r > 0)) {
+#ifdef POSIXNOTCPP11
 			res = pthread_mutex_unlock(&m);
+
 			if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
 			else Mt::logDebug("failed try-locking busy r/w mutex for write operation", sref, srefObject, srefMember);
-			
+#else
+			m.unlock();
+#endif
+
 			return false;
 		};
 	};
@@ -587,8 +876,12 @@ bool Rwmutex::wtrylock(
 	w++;
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 
 	if (res == 0) Mt::logDebug("successfully try-locked r/w mutex for write operation", sref, srefObject, srefMember);
@@ -602,23 +895,148 @@ void Rwmutex::wunlock(
 		) {
 	int res;
 
+#ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
+#else
+	try {
+		m.lock();
+		res = 0;
+	} catch (system_error e) {
+ 		res = -1;
+	};
+#endif
+
 	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
 
 	w--;
+#ifdef POSIXNOTCPP11
 	if (w == 0) tidW = 0;
+#else
+	if (w == 0) tidW = thread::id();
+#endif
 
 	if (res == 0) {
 		if (w == 0) {
+#ifdef POSIXNOTCPP11
 			res = pthread_cond_broadcast(&c);
 			if (res != 0) Mt::logError(res, "error broadcasting condition", sref + ".c", srefObject, srefMember);
+#else
+			c.notify_all();
+#endif
 		};
 	};
 
 	if (res == 0) {
+#ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
 		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+#else
+		m.unlock();
+#endif
 	};
 
 	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from write operation", sref, srefObject, srefMember);
 };
+
+/******************************************************************************
+ class Refseq
+ ******************************************************************************/
+
+Refseq::Refseq(
+			const string& sref
+		) :
+			mAccess("mAccess", "Refseq(" + sref + ")", "Refseq")
+		{
+	this->sref = sref;
+
+	ref = 0;
+};
+
+ubigint Refseq::getNewRef() {
+	ubigint ref_backup;
+
+	mAccess.lock("Refseq(" + sref + ")", "getNewRef");
+
+	ref++;
+	ref_backup = ref;
+
+	mAccess.unlock("Refseq(" + sref + ")", "getNewRef");
+
+	return ref_backup;
+};
+
+/******************************************************************************
+ namespace Scr
+ ******************************************************************************/
+
+string Scr::scramble(
+			const ubigint ref
+		) {
+	string retval;
+
+	if (ref == 0) return("");
+
+	rwm.rlock("Scr", "scramble");
+
+	auto it = scr.find(ref);
+
+	if (it != scr.end()) {
+		retval = it->second;
+
+		rwm.runlock("Scr", "scramble[1]");
+
+	} else {
+		rwm.runlock("Scr", "scramble[2]");
+
+		rwm.wlock("Scr", "scramble");
+
+		while (true) {
+			retval = random();
+			if (descr.find(retval) == descr.end()) break;
+		};
+
+		scr[ref] = retval;
+		descr[retval] = ref;
+
+		rwm.wunlock("Scr", "scramble");
+	};
+
+	return retval;
+};
+
+ubigint Scr::descramble(
+			const string& scrRef
+		) {
+	ubigint retval = 0;
+
+	rwm.rlock("Scr", "descramble");
+
+	auto it = descr.find(scrRef);
+	if (it != descr.end()) retval = it->second;
+
+	rwm.runlock("Scr", "descramble");
+
+	return retval;
+};
+
+string Scr::random() {
+	string retval;
+
+	int digit;
+
+	// assume advance random seed
+
+	// fetch digits and make sure their ASCII code is in the range 0..9/a..z
+	for (unsigned int i=0;i<16;i++) {
+		digit = rand() % 36 + 48;
+		if (digit > 57) digit += (97-48-10);
+
+		retval = retval + ((char) digit);
+	};
+
+	return retval;
+};
+
+Rwmutex Scr::rwm("rwm", "Scr", "Scr");
+map<ubigint,string> Scr::scr;
+map<string,ubigint> Scr::descr;

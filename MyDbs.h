@@ -42,7 +42,7 @@ public:
 	MYSQL_BIND bindDouble(double* d, unsigned long* length, my_bool* is_null, my_bool* error);
 	MYSQL_BIND bindCstring0(unsigned long* length, my_bool* is_null, my_bool* error);
 
-	MYSQL_STMT* createStatement(const string stmtSQL, my_bool getlength = false);
+	MYSQL_STMT* createStatement(const string& stmtSQL, my_bool getlength = false);
 
 protected:
 	void begin();

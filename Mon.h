@@ -9,7 +9,7 @@
 #ifndef SBECORE_MON_H
 #define SBECORE_MON_H
 
-#include <sbecore/Strmod.h>
+#include <sbecore/Mttypes.h>
 
 /**
   * xclstnref_t

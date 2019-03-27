@@ -1,21 +1,12 @@
 /**
   * \file Types.cpp
-  * basic data types and functional expression evaluation (implementation)
+  * common data types, string manipulation and exception (implementation)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 28 May 2018
+  * \date modified: 30 Jan 2019
   */
 
 #include "Types.h"
-
-/******************************************************************************
- class Floatmat
- ******************************************************************************/
-
-Floatmat::Floatmat() {
-	M = 0;
-	N = 0;
-};
 
 /******************************************************************************
  class Doublemat
@@ -27,749 +18,894 @@ Doublemat::Doublemat() {
 };
 
 /******************************************************************************
- class Arg
+ class Floatmat
  ******************************************************************************/
 
-Arg::Arg(
-			const uint ix
-			, const ubigint ref
-			, const vector<ubigint>& refs
-			, const string& sref
-			, const int intval
-			, const double dblval
-			, const bool boolval
-			, const string& txtval
-			, const ubigint mask
+Floatmat::Floatmat() {
+	M = 0;
+	N = 0;
+};
+
+/******************************************************************************
+ namespace Ftm
+ ******************************************************************************/
+
+string Ftm::date(
+			const unsigned int dateval
 		) {
-	this->mask = mask;
+	// dateval is system time / (3600*24) ; turn into '1-1-2010' (ex.)
 
-	if (mask & IX) this->ix = ix; else this->ix = 0;
-	if (mask & REF) this->ref = ref; else this->ref = 0;
-	if (mask & REFS) this->refs = refs; else this->refs.resize(0);
-	if (mask & SREF) this->sref = sref;
-	if (mask & INTVAL) this->intval = intval; else this->intval = 0;
-	if (mask & DBLVAL) this->dblval = dblval; else this->dblval = 0.0;
-	if (mask & BOOLVAL) this->boolval = boolval; else this->boolval = false;
-	if (mask & TXTVAL) this->txtval = txtval;
+	if (dateval == 0) return("");
+
+	time_t stamp = dateval*3600*24;
+
+#ifdef _WIN32
+	tm tmStamp;
+
+	gmtime_s(&tmStamp, &stamp);
+
+	return(to_string(tmStamp.tm_mday) + "-" + to_string(tmStamp.tm_mon + 1) + "-" + to_string(tmStamp.tm_year + 1900));
+#else
+	tm* tmStamp = gmtime(&stamp);
+
+	return(to_string(tmStamp->tm_mday) + "-" + to_string(tmStamp->tm_mon+1) + "-" + to_string(tmStamp->tm_year+1900));
+#endif
 };
 
-bool Arg::operator==(
-			const Arg& comp
-		) const {
-	return((mask == comp.mask) && (ix == comp.ix) && (ref == comp.ref) && (refs == comp.refs) && (sref == comp.sref)
-				&& (intval == comp.intval) && (dblval == comp.dblval) && (boolval == comp.boolval) && (txtval == comp.txtval));
-};
+string Ftm::time(
+			const int timeval
+		) {
+	// timeval is second count ; turn into '9:34:07' (ex.)
 
-bool Arg::operator!=(
-			const Arg& comp
-		) const {
-	return(!operator==(comp));
-};
-
-string Arg::writeText() const {
 	string retval;
 
-	if (mask == IX) retval = to_string(ix);
-	else if (mask == REF) retval = to_string(ref);
-	else if (mask == REFS) {
-		retval = "{";
-		for (unsigned int i=0;i<refs.size();i++) {
-			if (i != 0) retval += ",";
-			retval += to_string(refs[i]);
-		};
-		retval += "}";
-	} else if (mask == SREF) retval = sref;
-	else if (mask == INTVAL) retval = to_string(intval);
-	else if (mask == BOOLVAL) {
-		if (boolval) retval = "true"; else retval = "false";
-	} else if (mask == TXTVAL) retval = txtval;
-	else if (mask != 0) retval = "(multiple components)";
-	else retval = "(empty)";
+	unsigned int s, m, h;
+
+	if (timeval < 0) {
+		s = (-timeval) % 60;
+		m = ((-timeval-s)/60) % 60;
+		h = ((-timeval-60*m-s)/3600);
+	} else {
+		s = timeval % 60;
+		m = ((timeval-s)/60) % 60;
+		h = ((timeval-60*m-s)/3600);
+	};
+
+	if (timeval < 0) retval = "-";
+
+	retval += to_string(h) + ":";
+
+	if (m < 10) retval += "0";
+	retval += to_string(m) + ":";
+
+	if (s < 10) retval += "0";
+	retval += to_string(s);
 
 	return(retval);
 };
 
-/******************************************************************************
- class Expr::VecVTokentype
- ******************************************************************************/
-
-unsigned int Expr::VecVTokentype::getIx(
-			const string& sref
+string Ftm::timeOfDay(
+			const unsigned int stampval
 		) {
-	if (sref.compare("lpar") == 0) return LPAR;
-	else if (sref.compare("rpar") == 0) return RPAR;
-	else if (sref.compare("comma") == 0) return COMMA;
-	else if (sref.compare("excl") == 0) return EXCL;
-	else if (sref.compare("amp") == 0) return AMP;
-	else if (sref.compare("vbar") == 0) return VBAR;
-	else if (sref.compare("less") == 0) return LESS;
-	else if (sref.compare("more") == 0) return MORE;
-	else if (sref.compare("str") == 0) return STR;
-	else if (sref.compare("int") == 0) return INT;
-	else if (sref.compare("dbl") == 0) return DBL;
-	else if (sref.compare("text") == 0) return TEXT;
+	// is system time ; turn into '9:34:07' (ex.)
 
-	return(0);
+	string retval;
+
+	time_t stamp = stampval;
+#ifdef _WIN32
+	tm tmStamp;
+
+	gmtime_s(&tmStamp, &stamp);
+
+	retval = to_string(tmStamp.tm_hour) + ":";
+
+	if (tmStamp.tm_min < 10) retval += "0";
+	retval += to_string(tmStamp.tm_min) + ":";
+
+	if (tmStamp.tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp.tm_sec);
+#else
+	tm* tmStamp = gmtime(&stamp);
+
+	retval = to_string(tmStamp->tm_hour) + ":";
+
+	if (tmStamp->tm_min < 10) retval += "0";
+	retval += to_string(tmStamp->tm_min) + ":";
+
+	if (tmStamp->tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp->tm_sec);
+#endif
+
+	return(retval);
 };
 
-string Expr::VecVTokentype::getSref(
-			const unsigned int ix
+string Ftm::stamp(
+			const unsigned int stampval
 		) {
-	if (ix == LPAR) return("lpar");
-	else if (ix == RPAR) return("rpar");
-	else if (ix == COMMA) return("comma");
-	else if (ix == EXCL) return("excl");
-	else if (ix == AMP) return("amp");
-	else if (ix == VBAR) return("vbar");
-	else if (ix == LESS) return("less");
-	else if (ix == MORE) return("more");
-	else if (ix == STR) return("str");
-	else if (ix == INT) return("int");
-	else if (ix == DBL) return("dbl");
-	else if (ix == TEXT) return("text");
+	// is system time ; turn into '1-1-2010 9:34:07' (ex.)
 
-	return("");
+	if (stampval == 0) return("");
+
+	string retval;
+
+	time_t stamp = stampval;
+#ifdef _WIN32
+	tm tmStamp;
+
+	gmtime_s(&tmStamp, &stamp);
+
+	retval = to_string(tmStamp.tm_mday) + "-" + to_string(tmStamp.tm_mon + 1) + "-" + to_string(tmStamp.tm_year + 1900) + " "
+		+ to_string(tmStamp.tm_hour) + ":";
+
+	if (tmStamp.tm_min < 10) retval += "0";
+	retval += to_string(tmStamp.tm_min) + ":";
+
+	if (tmStamp.tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp.tm_sec);
+#else
+	tm* tmStamp = gmtime(&stamp);
+
+	retval = to_string(tmStamp->tm_mday) + "-" + to_string(tmStamp->tm_mon+1) + "-" + to_string(tmStamp->tm_year+1900) + " "
+				+ to_string(tmStamp->tm_hour) + ":";
+
+	if (tmStamp->tm_min < 10) retval += "0";
+	retval += to_string(tmStamp->tm_min) + ":";
+
+	if (tmStamp->tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp->tm_sec);
+#endif
+
+	return(retval);
 };
 
-/******************************************************************************
- class Expr::Token
- ******************************************************************************/
-
-Expr::Token::Token(
-			const unsigned int ixVTokentype
-			, const unsigned int ptr
-			, const unsigned int len
+string Ftm::hmsstamp(
+			const unsigned int stampval
 		) {
-	this->ixVTokentype = ixVTokentype;
-	this->ptr = ptr;
-	this->len = len;
+	// is system time ; turn into '1-1-2010_9h34m07s' (ex.)
 
-	ixSibling = (0-1);
+	if (stampval == 0) return("");
+
+	string retval;
+
+	time_t stamp = stampval;
+#ifdef _WIN32
+	tm tmStamp;
+
+	gmtime_s(&tmStamp, &stamp);
+
+	retval = to_string(tmStamp.tm_mday) + "-" + to_string(tmStamp.tm_mon + 1) + "-" + to_string(tmStamp.tm_year + 1900) + "_"
+		+ to_string(tmStamp.tm_hour) + "h";
+
+	if (tmStamp.tm_min < 10) retval += "0";
+	retval += to_string(tmStamp.tm_min) + "m";
+
+	if (tmStamp.tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp.tm_sec) + "s";
+#else
+	tm* tmStamp = gmtime(&stamp);
+
+	retval = to_string(tmStamp->tm_mday) + "-" + to_string(tmStamp->tm_mon+1) + "-" + to_string(tmStamp->tm_year+1900) + "_"
+				+ to_string(tmStamp->tm_hour) + "h";
+
+	if (tmStamp->tm_min < 10) retval += "0";
+	retval += to_string(tmStamp->tm_min) + "m";
+
+	if (tmStamp->tm_sec < 10) retval += "0";
+	retval += to_string(tmStamp->tm_sec) + "s";
+#endif
+
+return(retval);
 };
 
-/******************************************************************************
- class Expr::VecVNodetype
- ******************************************************************************/
-
-unsigned int Expr::VecVNodetype::getIx(
-			const string& sref
+string Ftm::usecstamp(
+			const double stampval
 		) {
-	if (sref.compare("void") == 0) return VOID;
-	else if (sref.compare("sref") == 0) return SREF;
-	else if (sref.compare("intval") == 0) return INTVAL;
-	else if (sref.compare("dblval") == 0) return DBLVAL;
-	else if (sref.compare("txtval") == 0) return TXTVAL;
-	else if (sref.compare("fct") == 0) return FCT;
+	// is system time ; turn into '1-1-2010 9:34:07 12345' (ex.)
 
-	return(0);
+	if (stampval == 0.0) return("");
+
+	double usec = 1e6 * (stampval - ((double) ((unsigned int) stampval)));
+
+	return(Ftm::stamp(stampval) + " " + to_string(lround(usec)));
 };
 
-string Expr::VecVNodetype::getSref(
-			const unsigned int ix
+unsigned int Ftm::invdate(
+			const string& dateval
 		) {
-	if (ix == VOID) return("void");
-	else if (ix == SREF) return("sref");
-	else if (ix == INTVAL) return("intval");
-	else if (ix == DBLVAL) return("dblval");
-	else if (ix == TXTVAL) return("txtval");
-	else if (ix == FCT) return("fct");
+	// turn '1-1-2010' into system date (ex.)
+	unsigned int retval = 0;
 
-	return("");
-};
+	string str = dateval;
+	size_t ptr;
 
-/******************************************************************************
- class Expr::Node
- ******************************************************************************/
+	unsigned int D, M, Y;
 
-Expr::Node::Node(
-			const string& s
-			, const vector<Token*>& tkns
-			, unsigned int ixTkn0
-			, unsigned int ixTkn1
-			, string& err
-		) {
-	Token* tkn = NULL;
+	ptr = str.find('-');
+	if (ptr != string::npos) {
+		D = atoi(str.substr(0, ptr).c_str());
+		str = str.substr(ptr+1);
 
-//	cout << "(" << ixTkn0 << "," << ixTkn1 << ")" << endl;
+		ptr = str.find('-');
+		if (ptr != string::npos) {
+			M = atoi(str.substr(0, ptr).c_str());
+			str = str.substr(ptr+1);
 
-	unsigned int ixTkn;
+			Y = atoi(str.c_str());
 
-	vector<unsigned int> icsTknstrength;
-	icsTknstrength.resize(4);
-
-	vector<unsigned int> icsTkncomma;
-
-	ixVNodetype = VecVNodetype::VOID;
-
-	intval = 0;
-	dblval = 0.0;
-
-	if (ixTkn0 == ixTkn1) {
-		// leaf node
-		tkn = tkns[ixTkn0];
-
-		if (tkn->ixVTokentype == VecVTokentype::STR) {
-			ixVNodetype = VecVNodetype::SREF;
-			key = s.substr(tkn->ptr, tkn->len);
-		} else if (tkn->ixVTokentype == VecVTokentype::INT) {
-			ixVNodetype = VecVNodetype::INTVAL;
-			intval = atoi(s.substr(tkn->ptr, tkn->len).c_str());
-		} else if (tkn->ixVTokentype == VecVTokentype::DBL) {
-			ixVNodetype = VecVNodetype::DBLVAL;
-			dblval = atof(s.substr(tkn->ptr, tkn->len).c_str());
-		} else if (tkn->ixVTokentype == VecVTokentype::TEXT) {
-			ixVNodetype = VecVNodetype::TXTVAL;
-			txtval = s.substr(tkn->ptr, tkn->len);
-		} else {
-			//ixVNodetype = VecVNodetype::VOID;
-			err = "invalid token " + to_string(ixTkn0) + " at position " + to_string(tkn->ptr);
-		};
-
-	} else {
-		// - expression to be processed further (at least one operator/function)
-
-		tkn = tkns[ixTkn0];
-		if (tkn->ixSibling == ixTkn1) {
-			// evaluate interior of (.)
-			ixTkn0++;
-			ixTkn1--;
-		};
-
-		ixTkn = ixTkn0;
-
-		// - find operator token with the lowest strength
-		for (unsigned int i=0;i<icsTknstrength.size();i++) icsTknstrength[i] = ixTkn1+1;
-		while (ixTkn < ixTkn1) {
-			tkn = tkns[ixTkn];
-
-			if ((tkn->ixVTokentype == VecVTokentype::VBAR) || (tkn->ixVTokentype == VecVTokentype::LESS) || (tkn->ixVTokentype == VecVTokentype::MORE)) {
-				// level 0 (weakest): |, >, <
-				if (icsTknstrength[0] == (ixTkn1+1)) icsTknstrength[0] = ixTkn;
-
-			} else if (tkn->ixVTokentype == VecVTokentype::AMP) {
-				// level 1: &
-				if (icsTknstrength[1] == (ixTkn1+1)) icsTknstrength[1] = ixTkn;
-
-			} else if (tkn->ixVTokentype == VecVTokentype::EXCL) {
-				// level 2: !
-				if (icsTknstrength[2] == (ixTkn1+1)) icsTknstrength[2] = ixTkn;
-
-			} else if (tkn->ixVTokentype == VecVTokentype::LPAR) {
-				// level 3: fct(), ()
-				if (icsTknstrength[3] == (ixTkn1+1)) {
-					icsTknstrength[3] = ixTkn;
-					if (ixTkn != ixTkn0) if (tkns[ixTkn-1]->ixVTokentype == VecVTokentype::STR) icsTknstrength[3] = ixTkn-1;
-				};
-				ixTkn = tkn->ixSibling;
+			D = D-1;
+			if (M > 1) D += 31;
+			if (M > 2) {
+				D += 28;
+				if ((Y%4) == 0) D += 1;
+				if ((Y%100) == 0) D -= 1;
+				if ((Y%400) == 0) D += 1;
 			};
+			if (M > 3) D += 31;
+			if (M > 4) D += 30;
+			if (M > 5) D += 31;
+			if (M > 6) D += 30;
+			if (M > 7) D += 31;
+			if (M > 8) D += 31;
+			if (M > 9) D += 30;
+			if (M > 10) D += 31;
+			if (M > 11) D += 30;
 
-			ixTkn++;
+			retval = D + (Y-1970)*365 + ((Y-1969)/4) - ((Y-1901)/100) + ((Y-1900+299)/400);
 		};
+	};
 
-		ixTkn = ixTkn1+1;
-		for (unsigned int i=0;i<icsTknstrength.size();i++) {
-			if (icsTknstrength[i] != (ixTkn1+1)) {
-				ixTkn = icsTknstrength[i];
-				break;
-			};
+	return retval;
+};
+
+int Ftm::invtime(
+			const string& timeval
+		) {
+	// turn '-0:34:07' into second count (ex.)
+	int retval = 0;
+
+	bool neg = false;
+
+	string str = timeval;
+	size_t ptr;
+
+	unsigned int h, m, s;
+
+	if (str.length() > 0) neg = (str[0] == '-');
+	if (neg) str = str.substr(1);
+
+	ptr = str.find(':');
+	if (ptr != string::npos) {
+		h = atoi(str.substr(0, ptr).c_str());
+
+		str = str.substr(ptr+1);
+
+		ptr = str.find(':');
+		if (ptr != string::npos) {
+			m = atoi(str.substr(0, ptr).c_str());
+			str = str.substr(ptr+1);
+
+			s = atoi(str.c_str());
+
+			retval = 3600*h + 60*m + s;
+			if (neg) retval = -retval;
 		};
+	};
 
-		if (ixTkn != (ixTkn1+1)) {
-			// - split and follow up recursively depending on token type
-			tkn = tkns[ixTkn];
+	return retval;
+};
 
-			if (tkn->ixVTokentype == VecVTokentype::EXCL) {
-				ixVNodetype = VecVNodetype::FCT;
-				key = "not";
-				subs.push_back(new Node(s, tkns, ixTkn+1, ixTkn1, err)); // prefix
+unsigned int Ftm::invstamp(
+			const string& stampval
+		) {
+	// turn '1-1-2010 9:34:07' into system time (ex.)
+	unsigned int retval = 0;
 
-			} else if (tkn->ixVTokentype == VecVTokentype::AMP) {
-				ixVNodetype = VecVNodetype::FCT;
-				key = "and";
-				subs.push_back(new Node(s, tkns, ixTkn0, ixTkn-1, err)); // infix
-				subs.push_back(new Node(s, tkns, ixTkn+1, ixTkn1, err));
+	string str = stampval;
+	size_t ptr;
 
-			} else if (tkn->ixVTokentype == VecVTokentype::VBAR) {
-				ixVNodetype = VecVNodetype::FCT;
-				key = "or";
-				subs.push_back(new Node(s, tkns, ixTkn0, ixTkn-1, err)); // infix
-				subs.push_back(new Node(s, tkns, ixTkn+1, ixTkn1, err));
+	unsigned int D, M, Y;
+	unsigned int h, m, s;
 
-			} else if (tkn->ixVTokentype == VecVTokentype::LESS) {
-				ixVNodetype = VecVNodetype::FCT;
-				key = "less";
-				subs.push_back(new Node(s, tkns, ixTkn0, ixTkn-1, err)); // infix
-				subs.push_back(new Node(s, tkns, ixTkn+1, ixTkn1, err));
+	ptr = str.find('-');
+	if (ptr != string::npos) {
+		D = atoi(str.substr(0, ptr).c_str());
+		str = str.substr(ptr+1);
 
-			} else if (tkn->ixVTokentype == VecVTokentype::MORE) {
-				ixVNodetype = VecVNodetype::FCT;
-				key = "more";
-				subs.push_back(new Node(s, tkns, ixTkn0, ixTkn-1, err)); // infix
-				subs.push_back(new Node(s, tkns, ixTkn+1, ixTkn1, err));
+		ptr = str.find('-');
+		if (ptr != string::npos) {
+			M = atoi(str.substr(0, ptr).c_str());
+			str = str.substr(ptr+1);
 
-			} else if (tkn->ixVTokentype == VecVTokentype::STR) {
-				ixVNodetype = VecVNodetype::FCT;
-				key = s.substr(tkn->ptr, tkn->len);
+			ptr = str.find(' ');
+			if (ptr != string::npos) {
+				Y = atoi(str.substr(0, ptr).c_str());
+				str = str.substr(ptr+1);
 
-				ixTkn0 = ixTkn+1;
-				ixTkn1 = tkns[ixTkn0]->ixSibling;
+				ptr = str.find(':');
+				if (ptr != string::npos) {
+					h = atoi(str.substr(0, ptr).c_str());
+					str = str.substr(ptr+1);
 
-				// function arguments are comma separated
-				for (ixTkn=ixTkn0+1;ixTkn<ixTkn1;ixTkn++) {
-					tkn = tkns[ixTkn];
+					ptr = str.find(':');
+					if (ptr != string::npos) {
+						m = atoi(str.substr(0, ptr).c_str());
+						str = str.substr(ptr+1);
 
-					if (tkn->ixSibling < tkns.size()) {
-						ixTkn = tkn->ixSibling;
-					} else {
-						if (tkn->ixVTokentype == VecVTokentype::COMMA) icsTkncomma.push_back(ixTkn);
+						s = atoi(str.c_str());
+
+						D = D-1;
+						if (M > 1) D += 31;
+						if (M > 2) {
+							D += 28;
+							if ((Y%4) == 0) D += 1;
+							if ((Y%100) == 0) D -= 1;
+							if ((Y%400) == 0) D += 1;
+						};
+						if (M > 3) D += 31;
+						if (M > 4) D += 30;
+						if (M > 5) D += 31;
+						if (M > 6) D += 30;
+						if (M > 7) D += 31;
+						if (M > 8) D += 31;
+						if (M > 9) D += 30;
+						if (M > 10) D += 31;
+						if (M > 11) D += 30;
+
+						retval = s + m*60 + h*3600 + D*86400 + (Y-1970)*31536000 + ((Y-1969)/4)*86400 - ((Y-1901)/100)*86400 + ((Y-1900+299)/400)*86400;
 					};
 				};
-
-				ixTkn = ixTkn0+1;
-
-				for (unsigned int i=0;i<icsTkncomma.size();i++) {
-					subs.push_back(new Node(s, tkns, ixTkn, icsTkncomma[i]-1, err));
-					ixTkn = icsTkncomma[i]+1;
-				};
-
-				if (ixTkn != ixTkn1) subs.push_back(new Node(s, tkns, ixTkn, ixTkn1-1, err));
-
-			} else {
-				ixVNodetype = VecVNodetype::VOID;
-				err = "invalid token " + to_string(ixTkn) + " at position " + to_string(tkn->ptr);
-			};
-
-			for (unsigned int i=0;i<subs.size();i++) {
-				if (subs[i]->ixVNodetype == VecVNodetype::VOID) {
-					ixVNodetype = VecVNodetype::VOID;
-					break;
-				};
-			};
-		};
-	};
-};
-
-Expr::Node::~Node() {
-	for (unsigned int i=0;i<subs.size();i++) delete subs[i];
-	subs.resize(0);
-};
-
-void Expr::Node::expand() {
-	bool valid;
-
-	Node* node = NULL;
-
-	// check node for eligibility
-	valid = ((ixVNodetype == VecVNodetype::FCT) && (subs.size() == 1));
-	if (valid) valid = !logicfct();
-
-	// check sub-tree for eligibility
-	if (valid) valid = subs[0]->logictree();
-
-	if (valid) {
-		// - shift function to leaves
-		node = subs[0];
-
-		node->fctToLeaves(key);
-
-		// replace node content by that of the only sub-node
-		*this = *node;
-
-		node->subs.resize(0);
-		delete node;
-
-	} else {
-		for (unsigned int i=0;i<subs.size();i++) subs[i]->expand();
-	};
-};
-
-bool Expr::Node::has(
-			unsigned int _ixVNodetype
-			, const string& _key
-		) {
-	bool retval = (_ixVNodetype == ixVNodetype);
-	if (retval && (_key.length() > 0)) retval = (key.compare(_key) == 0);
-
-	if (!retval) {
-		for (unsigned int i=0;i<subs.size();i++) {
-			retval = subs[i]->has(_ixVNodetype, _key);
-			if (retval) break;
-		};
-	};
-
-	return retval;
-};
-
-bool Expr::Node::logicfct() {
-	bool retval = (ixVNodetype == VecVNodetype::FCT);
-
-	if (retval) {
-		retval = (key.compare("not") == 0);
-		if (!retval) retval = (key.compare("and") == 0);
-		if (!retval) retval = (key.compare("or") == 0);
-		if (!retval) retval = (key.compare("less") == 0);
-		if (!retval) retval = (key.compare("more") == 0);
-	};
-
-	return retval;
-};
-
-bool Expr::Node::logictree() {
-	bool retval = false;
-
-	if (subs.size() == 0) {
-		retval = true;
-
-	} else {
-		retval = logicfct();
-
-		if (retval) {
-			for (unsigned int i=0;i<subs.size();i++) {
-				retval = subs[i]->logictree();
-				if (!retval) break;
 			};
 		};
 	};
 
 	return retval;
-};
-
-void Expr::Node::fctToLeaves(
-			const string& fctkey
-		) {
-	if (subs.size() == 0) {
-		subs.push_back(new Node(*this));
-
-		ixVNodetype = VecVNodetype::FCT;
-		key = fctkey;
-		intval = 0;
-		dblval = 0.0;
-		txtval = "";
-
-	} else {
-		for (unsigned int i=0;i<subs.size();i++) subs[i]->fctToLeaves(fctkey);
-	};
-};
-
-void Expr::Node::dump(
-			unsigned int il
-		) {
-	for (unsigned int i=0;i<il;i++) cout << "\t";
-
-	if (subs.size() == 0) cout << "- "; else cout << "+ ";
-
-	cout << "(" << VecVNodetype::getSref(ixVNodetype) << ")";
-
-	if (ixVNodetype == VecVNodetype::SREF) {
-		cout << " " << key;
-	} else if (ixVNodetype == VecVNodetype::INTVAL) {
-		cout << " " << intval;
-	} else if (ixVNodetype == VecVNodetype::DBLVAL) {
-		cout << " " << dblval;
-	} else if (ixVNodetype == VecVNodetype::TXTVAL) {
-		cout << " " << txtval;
-	} else if (ixVNodetype == VecVNodetype::FCT) {
-		cout << " " << key;
-	};
-
-	cout << endl;
-
-	for (unsigned int i=0;i<subs.size();i++) subs[i]->dump(il+1);
 };
 
 /******************************************************************************
- class Expr
+ class SbeException
  ******************************************************************************/
 
-Expr::Expr() {
-	root = NULL;
-
-	ixVState = VecVState::RESET;
+SbeException::SbeException(
+			const uint ix
+			, const map<string,string>& vals
+		) {
+	this->ix = ix;
+	this->vals = vals;
 };
 
-Expr::~Expr() {
-	reset();
+string SbeException::getSref() {
+	if (ix == PATHNF) return("pathnf");
+
+	if (ix == XMLIO_BUFPARSE) return("xmlio.bufparse");
+	if (ix == XMLIO_FILEPARSE) return("xmlio.fileparse");
+
+	if (ix == DBS_CONN) return("dbs.conn");
+	if (ix == DBS_QUERY) return("dbs.query");
+	if (ix == DBS_STMTPREP) return("dbs.stmtprep");
+	if (ix == DBS_STMTEXEC) return("dbs.stmtexec");
+
+	if (ix == TXTRD_TKNUNID) return("txtrd.tknunid");
+	if (ix == TXTRD_TKNMISPL) return("txtrd.tknmispl");
+	if (ix == TXTRD_ENDTKN) return("txtrd.endtkn");
+	if (ix == TXTRD_CONTENT) return("txtrd.content");
+
+	if (ix == IEX_FILETYPE) return("iex.filetype");
+	if (ix == IEX_VERSION) return("iex.version");
+	if (ix == IEX_IOP) return("iex.iop");
+	if (ix == IEX_RETR) return("iex.retr");
+	if (ix == IEX_IDIREF) return("iex.idiref");
+	if (ix == IEX_IREF) return("iex.iref");
+	if (ix == IEX_TSREF) return("iex.tsref");
+	if (ix == IEX_THSREF) return("iex.thsref");
+	if (ix == IEX_THINT) return("iex.thint");
+	if (ix == IEX_VSREF) return("iex.vsref");
+	if (ix == IEX_FTM) return("iex.ftm");
+	if (ix == IEX_IARG) return("iex.iarg");
+
+	return("");
 };
 
-void Expr::reset() {
-	for (unsigned int i=0;i<tkns.size();i++) delete tkns[i];
-	tkns.resize(0);
+string SbeException::getSquawk(
+			uint (*getIx)(const string&)
+			, string (*getTitle)(const uint, const uint)
+			, const uint ixVLocale
+		) {
+	string retval;
 
-	if (root) {
-		delete root;
-		root = NULL;
+	map<string,string>::iterator it, it2;
+
+	it = vals.find("tid");
+	if (it != vals.end()) retval = it->second;
+
+	it = vals.find("object");
+	it2 = vals.find("member");
+
+	if (it != vals.end()) retval += it->second;
+	if ((it != vals.end()) && (it2 != vals.end())) retval += "::";
+	if (it2 != vals.end()) retval += it2->second + "()";
+	if ((it != vals.end()) || (it2 != vals.end())) retval += " ";
+
+	retval += getTitle(getIx(getSref()), ixVLocale);
+	
+	for (it=vals.begin();it!=vals.end();it++) retval = StrMod::replacePlh(retval, it->first, it->second);
+
+	return retval;
+};
+
+/******************************************************************************
+ namespace StrMod
+ ******************************************************************************/
+
+string StrMod::cap(
+			const string& s
+		) {
+	string retval = s;
+
+	if (s.length() > 0) {
+		if (retval[0] == '&') {
+			if (s.length() > 1) retval[1] = toupper(retval[1]);
+		 } else {
+			retval[0] = toupper(retval[0]);
+		};
 	};
 
-	ixVState = VecVState::RESET;
-	err = "";
+	return(retval);
 };
 
-bool Expr::tokenize(
-			const string& expr
+string StrMod::uncap(
+			const string& s
 		) {
-	bool retval;
+	string retval = s;
 
-	unsigned int ptr;
+	if (s.length() > 0) {
+		if (retval[0] == '&') {
+			if (s.length() > 1) retval[1] = tolower(retval[1]);
+		 } else {
+			retval[0] = tolower(retval[0]);
+		};
+	};
 
-	bool skipstr;
-	bool skipintdbl;
-	bool skiptext;
+	return(retval);
+};
 
-	Token* tkn = NULL;
+string StrMod::lc(
+			const string& s
+		) {
+	string retval = s;
+	for (unsigned int i=0;i<s.length();i++) retval[i] = tolower(retval[i]);
 
-	vector<Token*> sbls;
+	return(retval);
+};
 
-	reset();
+string StrMod::uc(
+			const string& s
+		) {
+	string retval = s;
+	for (unsigned int i=0;i<s.length();i++) retval[i] = toupper(retval[i]);
 
-//	cout << "tokenizing '" << expr << "'" << endl;
+	return(retval);
+};
 
-	// --- initialize
-	s = expr;
+string StrMod::spcex(
+			const string& s
+		) {
+	string retval = s;
 
-	// --- tokenize
-	ptr = 0;
+	while (retval.length() > 0) if (retval[0] == ' ') retval = retval.substr(1); else break;
+	if (retval.length() > 0) while (retval[retval.length()-1] == ' ') retval = retval.substr(0, retval.length()-1);
+
+	return(retval);
+};
+
+string StrMod::esc(
+			const string& s
+		) {
+	string retval = s;
+
+	size_t ptr = 0;
+
+	ptr = retval.find('\\');
+	while (ptr != string::npos) {
+		retval = retval.substr(0, ptr) + "\\" + retval.substr(ptr);
+		ptr = retval.find('\\', ptr+2);
+	};
+
+	return(retval);
+};
+
+string StrMod::dotToUsc(
+			const string& s
+		) {
+	string retval = s;
+	for (unsigned int i=0;i<s.length();i++) if ((retval[i] == '-') || (retval[i] == '.')) retval[i] = '_';
+
+	return(retval);
+};
+
+string StrMod::uscToCap(
+			const string& s
+		) {
+	string retval = s;
+
+	size_t ptr = 0;
 	
-	skipstr = false;
-	skipintdbl = false;
-	skiptext = false;
+	ptr = retval.find('_');
+	while (ptr != string::npos) {
+		if ((ptr+1) < retval.length()) retval = retval.substr(0, ptr) + cap(retval.substr(ptr+1));
+		else retval = retval.substr(0, ptr);
 
-	while (ptr < s.size()) {
-		if (skipstr) {
-			if ((s[ptr] == '.') || ((s[ptr] >= 'A') && (s[ptr] <= 'Z')) || ((s[ptr] >= 'a') && (s[ptr] <= 'z')) || ((s[ptr] >= '0') && (s[ptr] <= '9'))) {
+		ptr = retval.find('_', ptr);
+	};
+
+	return(retval);
+};
+
+string StrMod::boolToString(
+			const bool b
+		) {
+	if (b) return("true");
+	else return("false");
+};
+
+string StrMod::timetToString(
+			const time_t rawtime
+		) {
+	string retval;
+
+#ifdef _WIN32
+	tm exttime;
+
+	gmtime_s(&exttime, &rawtime);
+
+	retval = to_string(exttime.tm_mday);
+
+	switch (exttime.tm_mon) {
+#else
+	tm* exttime = gmtime(&rawtime);
+
+	retval = to_string(exttime->tm_mday);
+
+	switch (exttime->tm_mon) {
+#endif
+	case 0:
+		retval += " Jan ";
+		break;
+	case 1:
+		retval += " Feb ";
+		break;
+	case 2:
+		retval += " Mar ";
+		break;
+	case 3:
+		retval += " Apr ";
+		break;
+	case 4:
+		retval += " May ";
+		break;
+	case 5:
+		retval += " Jun ";
+		break;
+	case 6:
+		retval += " Jul ";
+		break;
+	case 7:
+		retval += " Aug ";
+		break;
+	case 8:
+		retval += " Sep ";
+		break;
+	case 9:
+		retval += " Oct ";
+		break;
+	case 10:
+		retval += " Nov ";
+		break;
+	case 11:
+		retval += " Dec ";
+		break;
+	};
+
+#ifdef _WIN32
+	retval += to_string(1900 + exttime.tm_year);
+#else
+	retval += to_string(1900+exttime->tm_year);
+#endif
+
+	return(retval);
+};
+
+bool StrMod::has(
+			const vector<string>& vec
+			, const string& str
+		) {
+	bool found = false;
+
+	for (unsigned int i=0;i<vec.size();i++) {
+		if (vec[i] == str) {
+			found = true;
+			break;
+		};
+	};
+
+	return found;
+};
+
+void StrMod::stringToVector(
+			const string& str
+			, vector<string>& vec
+			, const char sep
+		) {
+	unsigned int len = str.length();
+
+	unsigned int start = 0;
+	bool ignore = false;
+
+	char c;
+
+	vec.resize(0);
+
+	for (unsigned int i=0;i<len;i++) {
+		c = str[i];
+
+		if (c == '&') {
+			ignore = true;
+		} else if (c == sep) {
+			if (ignore) {
+				ignore = false;
 			} else {
-				tkn->len = ptr-tkn->ptr;
-				tkns.push_back(tkn);
-				skipstr = false;
-				ptr--;
+				vec.push_back(str.substr(start, i-start));
+				start = i+1;
 			};
-		} else if (skipintdbl) {
-			if (s[ptr] == '.') {
-				tkn->ixVTokentype = VecVTokentype::DBL;
-			} else if ((s[ptr] >= '0') && (s[ptr] <= '9')) {
-			} else {
-				tkn->len = ptr-tkn->ptr;
-				tkns.push_back(tkn);
-				skipintdbl = false;
-				ptr--;
-			};
-		} else if (skiptext) {
-			if (s[ptr] == '"') {
-				tkn->len = ptr-tkn->ptr;
-				tkns.push_back(tkn);
-				skiptext = false;
-			};
+		};
+	};
+	if (start < len) vec.push_back(str.substr(start));
+	else if (start == len) if (len != 0) if (str[start-1] == sep) vec.push_back("");
+
+	for (unsigned int i=0;i<vec.size();i++) vec[i] = spcex(vec[i]);
+};
+
+void StrMod::stringToDoublevec(
+			const string& str
+			, vector<double>& vec
+			, const char sep
+		) {
+	vector<string> _vec;
+
+	stringToVector(str, _vec, sep);
+
+	vec.resize(_vec.size());
+	for (unsigned int i=0;i<_vec.size();i++) vec[i] = atof(_vec[i].c_str());
+};
+
+void StrMod::vectorToString(
+			const vector<string>& vec
+			, string& str
+			, const char sep
+		) {
+	str = "";
+	for (unsigned int i=0;i<vec.size();i++) str += sep + vec[i];
+
+	if (str.length() > 0) str = str.substr(1);
+};
+
+bool StrMod::srefInSrefs(
+			const string& srefs
+			, const string& sref
+		) {
+	bool isin = false;
+	bool bgnvalid, endvalid;
+
+	size_t srefslen = srefs.length();
+	size_t sreflen = sref.length();
+
+	size_t ptr1, ptr2;
+
+	ptr1 = 0;
+	ptr2 = srefs.find(sref, ptr1);
+
+	while (ptr2 != string::npos) {
+		bgnvalid = false;
+		endvalid = false;
+
+		// validate beginning
+		if (ptr2 == 0) {
+			bgnvalid = true;
 		} else {
-			if (s[ptr] == '(') {
-				tkns.push_back(new Token(VecVTokentype::LPAR, ptr, 1));
-			} else if (s[ptr] == ')') {
-				tkns.push_back(new Token(VecVTokentype::RPAR, ptr, 1));
-			} else if (s[ptr] == ',') {
-				tkns.push_back(new Token(VecVTokentype::COMMA, ptr, 1));
-			} else if (s[ptr] == '!') {
-				tkns.push_back(new Token(VecVTokentype::EXCL, ptr, 1));
-			} else if (s[ptr] == '&') {
-				tkns.push_back(new Token(VecVTokentype::AMP, ptr, 1));
-			} else if (s[ptr] == '|') {
-				tkns.push_back(new Token(VecVTokentype::VBAR, ptr, 1));
-			} else if (s[ptr] == '<') {
-				tkns.push_back(new Token(VecVTokentype::LESS, ptr, 1));
-			} else if (s[ptr] == '>') {
-				tkns.push_back(new Token(VecVTokentype::MORE, ptr, 1));
-			} else if (((s[ptr] >= 'A') && (s[ptr] <= 'Z')) || ((s[ptr] >= 'a') && (s[ptr] <= 'z'))) {
-				tkn = new Token(VecVTokentype::STR, ptr, 0);
-				skipstr = true;
-			} else if ((s[ptr] == '-') || (s[ptr] == '+') || ((s[ptr] >= '0') && (s[ptr] <= '9'))) {
-				tkn = new Token(VecVTokentype::INT, ptr, 0);
-				skipintdbl = true;
-			} else if (s[ptr] == '"') {
-				tkn = new Token(VecVTokentype::TEXT, ptr+1, 0);
-				skiptext = true;
+			if ((srefs[ptr2-1] == ';') || (srefs[ptr2-1] == ' ')) bgnvalid = true;
+		};
+
+		// validate ending
+		if (bgnvalid) {
+			if ((ptr2+sreflen) == srefslen) {
+				endvalid = true;
+			} else {
+				if ((srefs[ptr2+sreflen] == ';') || (srefs[ptr2+sreflen] == ' ')) endvalid = true;
 			};
 		};
 
-		ptr++;
-	};
-
-	if (skipstr || skipintdbl || skiptext) {
-		tkn->len = ptr-tkn->ptr;
-		tkns.push_back(tkn);
-	};
-
-	retval = (tkns.size() > 0);
-	if (!retval) err = "no tokens recognized";
-
-//	for (unsigned int i=0;i<tkns.size();i++) cout << tkns[i]->ixVBasetype << endl;
-
-	if (retval) {
-		// --- find siblings
-		sbls.resize(0);
-		for (unsigned int i=0;i<tkns.size();i++) {
-			if (tkns[i]->ixVTokentype == VecVTokentype::LPAR) {
-				sbls.push_back(tkns[i]);
-			} else if (tkns[i]->ixVTokentype == VecVTokentype::RPAR) {
-				if (sbls.size() > 0) {
-					sbls[sbls.size()-1]->ixSibling = i;
-					sbls.pop_back();
-				};
-			};
-		};
-
-		for (unsigned int i=0;i<tkns.size();i++) {
-			if (tkns[i]->ixVTokentype == VecVTokentype::LPAR) {
-				if (tkns[i]->ixSibling > tkns.size()) {
-					err = "token " + to_string(i) + " at position " + to_string(tkns[i]->ptr) + " does not have a sibling";
-
-					retval = false;
-					break;
-				};
-			};
+		if (bgnvalid && endvalid) {
+			isin = true;
+			break;
+		} else {
+			ptr1 = ptr2+1;
+			ptr2 = srefs.find(sref, ptr1);
 		};
 	};
 
-	if (retval) ixVState = VecVState::TOKENIZED;
-	else ixVState = VecVState::TKNERR;
+	return isin;
+};
+
+void StrMod::refsToVector(
+			const string& refs
+			, vector<ubigint>& vec
+		) {
+	vector<string> strvec;
+
+	stringToVector(refs, strvec);
+
+	vec.resize(0);
+
+	for (unsigned int i=0;i<strvec.size();i++) vec.push_back(atoll(strvec[i].c_str()));
+};
+
+string StrMod::replaceChar(
+			const string& s
+			, const char c
+			, const char d
+		) {
+	string retval = s;
+
+	for (size_t ptr=0;ptr<retval.length();ptr++) if (retval[ptr] == c) retval[ptr] = d;
+
+	return retval;
+};
+
+void StrMod::findPlhs(
+			const string& s
+			, set<string>& plhs
+			, const bool add
+		) {
+	if (!add) plhs.clear();
+
+	size_t ptr1, ptr2;
+
+	ptr1 = s.find('&');
+	while (ptr1 != string::npos) {
+		ptr2 = s.find(';', ptr1);
+		if (ptr2 != string::npos) plhs.insert(s.substr(ptr1+1, ptr2-ptr1-1));
+		ptr1 = s.find('&', ptr2);
+	};
+};
+
+string StrMod::findFirstPlh(
+			const string& s
+			, size_t start
+		) {
+	string retval;
+
+	size_t ptr1, ptr2;
+
+	ptr1 = s.find('&', start);
+	if (ptr1 != string::npos) {
+		ptr2 = s.find(';', ptr1);
+
+		if (ptr2 != string::npos) retval = s.substr(ptr1+1, ptr2-ptr1-1);
+	};
+
+	return retval;
+};
+
+string StrMod::replacePlh(
+			const string& s
+			, const string& plh
+			, const double val
+		) {
+	return(replacePlh(s, plh, to_string(val)));
+};
+
+string StrMod::replacePlh(
+			const string& s
+			, const string& plh
+			, const string& val
+		) {
+	string retval = s;
+
+	string s2 = "&" + plh + ";";
+
+	size_t ptr = retval.find(s2);
+	while (ptr != string::npos) {
+		retval.replace(ptr, s2.length(), val);
+		ptr = retval.find(s2);
+	};
+
+	return retval;
+};
+
+unsigned int StrMod::getCharcnt(
+			const string& s
+		) {
+	unsigned int retval = s.length();
+
+	size_t ptr;
+
+	ptr = s.find("\\u");
+	while (ptr != string::npos) {
+		retval -= 5;
+		ptr = s.find("\\u", ptr+1);
+	};
+
+	if (retval > s.length()) retval = s.length();
+
+	return retval;
+};
+
+string StrMod::readLine(
+			ifstream& infile
+			, char* buf
+			, const size_t buflen
+		) {
+	string retval;
+
+	size_t ptr;
+
+	infile.getline(buf, buflen, '\n');
+	retval = string(buf);
+
+	if (retval.length() > 0) {
+		ptr = retval.rfind('\r');
+		if (ptr != string::npos) retval = retval.substr(0, ptr);
+	};
+
+	return retval;
+};
+
+/******************************************************************************
+ class Version
+ ******************************************************************************/
+
+Version::Version(
+			const string& _s
+		) {
+	vector<string> ss;
+	string s;
+
+	s = StrMod::spcex(_s);
+	if (s.length() > 0) if ((s[0] == 'V') || (s[0] == 'v')) s = s.substr(1);
+
+	StrMod::stringToVector(s, ss, '.');
+
+	for (unsigned int i=0;i<ss.size();i++) is.push_back(atoi(ss[i].c_str()));
+};
+
+bool Version::defined() const {
+	return(is.size() > 0);
+};
+
+bool Version::operator<(
+			const Version& comp
+		) const {
+	// I. 3.0 < 3.1
+	// II. 5.1 < 5.1.7
+	// III. 5.1.7 < 5.2
+
+	for (unsigned int i=0;i<is.size();i++) {
+		if (i < comp.is.size()) {
+			if (is[i] < comp.is[i]) return true;
+			else if (is[i] > comp.is[i]) return false;
+		} else return true; // III.
+	};
 	
-	return retval;
+	if (is.size() == comp.is.size()) return false; // I. ==
+	else return true; // II.
 };
 
-bool Expr::parse() {
-	if (ixVState != VecVState::TOKENIZED) return false;
+string Version::to_string() const {
+	string retval = "-";
 
-	bool retval;
-
-	root = new Node(s, tkns, 0, tkns.size()-1, err);
-
-	retval = (root->ixVNodetype != VecVNodetype::VOID);
-
-	if (retval) {
-		root->expand();
-
-	} else {
-		delete root;
-		root = NULL;
-
-		if (err.length() == 0) err = "malformed expression";
-
-		retval = false;
-	};
-
-	if (retval) ixVState = VecVState::PARSED;
-	else ixVState = VecVState::PRSERR;
-
-	return retval;
-};
-
-bool Expr::has(
-			unsigned int ixVNodetype
-			, const string& key
-		) {
-	if (ixVState == VecVState::PARSED) return root->has(ixVNodetype, key);
-	else return false;
-};
-
-void Expr::dump() {
-	if (ixVState == VecVState::PARSED) root->dump(0);
-};
-
-/******************************************************************************
- class Refseq
- ******************************************************************************/
-
-Refseq::Refseq(
-			const string& sref
-		) :
-			mAccess("mAccess", "Refseq(" + sref + ")", "Refseq")
-		{
-	this->sref = sref;
-
-	ref = 0;
-};
-
-ubigint Refseq::getNewRef() {
-	ubigint ref_backup;
-
-	mAccess.lock("Refseq(" + sref + ")", "getNewRef");
-
-	ref++;
-	ref_backup = ref;
-
-	mAccess.unlock("Refseq(" + sref + ")", "getNewRef");
-
-	return ref_backup;
-};
-
-/******************************************************************************
- namespace Scr
- ******************************************************************************/
-
-string Scr::scramble(
-			const ubigint ref
-		) {
-	string retval;
-
-	if (ref == 0) return("");
-
-	rwm.rlock("Scr", "scramble");
-
-	auto it = scr.find(ref);
-
-	if (it != scr.end()) {
-		retval = it->second;
-
-		rwm.runlock("Scr", "scramble[1]");
-
-	} else {
-		rwm.runlock("Scr", "scramble[2]");
-
-		rwm.wlock("Scr", "scramble");
-
-		while (true) {
-			retval = random();
-			if (descr.find(retval) == descr.end()) break;
-		};
-
-		scr[ref] = retval;
-		descr[retval] = ref;
-
-		rwm.wunlock("Scr", "scramble");
+	for (unsigned int i=0;i<is.size();i++) {
+		if (i == 0) retval = std::to_string(is[0]);
+		else retval += "." + std::to_string(is[i]);
 	};
 
 	return retval;
 };
-
-ubigint Scr::descramble(
-			const string& scrRef
-		) {
-	ubigint retval = 0;
-
-	rwm.rlock("Scr", "descramble");
-
-	auto it = descr.find(scrRef);
-	if (it != descr.end()) retval = it->second;
-
-	rwm.runlock("Scr", "descramble");
-
-	return retval;
-};
-
-string Scr::random() {
-	string retval;
-
-	int digit;
-
-	// assume advance random seed
-
-	// fetch digits and make sure their ASCII code is in the range 0..9/a..z
-	for (unsigned int i=0;i<16;i++) {
-		digit = rand() % 36 + 48;
-		if (digit > 57) digit += (97-48-10);
-
-		retval = retval + ((char) digit);
-	};
-
-	return retval;
-};
-
-Rwmutex Scr::rwm("rwm", "Scr", "Scr");
-map<ubigint,string> Scr::scr;
-map<string,ubigint> Scr::descr;

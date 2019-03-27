@@ -3,7 +3,7 @@
   * database access code globals for PostgreSQL (implementation)
   * \author Alexander Wirthmüller
   * \date created: 1 Jan 2009
-  * \date modified: 10 Aug 2014
+  * \date modified: 28 Feb 2019
   */
 
 #include "PgDbs.h"
@@ -28,17 +28,28 @@ void PgTable::init(
 void PgTable::initStatements() {
 };
 
+/// WILL BECOME OBSOLETE !!!
 void PgTable::initStatementsErr(
 			PGresult* res
 		) {
-	throw DbsException("DbsException / PgSQL: unable to initialize statement\n" + string(PQresultErrorMessage(res)) + "\n");
+};
+
+void PgTable::createStatement(
+			const string& stmtName
+			, const string& query
+			, const int nParams
+		) {
+	PGresult* res;
+
+	res = PQprepare(dbs, stmtName.c_str(), query.c_str(), nParams, NULL);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK) throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","PgTable::createStatement()"}, {"sql",query}});
 };
 
 void PgTable::begin() {
 	PGresult* res;
 
 	res = PQexec(dbs, "BEGIN");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK) throw DbsException("DbsException / PgSQL: failed to begin transaction\n");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK) throw SbeException(SbeException::DBS_QUERY, {{"dbms","PgTable::begin()"}, {"sql","BEGIN"}});
 
 	PQclear(res);
 };
@@ -61,7 +72,7 @@ void PgTable::rollback() {
 	PGresult* res;
 
 	res = PQexec(dbs, "ROLLBACK");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK) throw DbsException("DbsException / PgSQL: failed to roll back transaction\n");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK) throw SbeException(SbeException::DBS_QUERY, {{"dbms","PgTable::rollback()"}, {"sql","ROLLBACK"}});
 
 	PQclear(res);
 };
@@ -80,7 +91,7 @@ bool PgTable::loadUbigintByStmt(
 	
 	res = PQexecPrepared(dbs, srefStmt.c_str(), N, vals, l, f, 0);
 	
-	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw DbsException("DbsException / PgSQL: error executing statement! (" + srefStmt + ")\n");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw SbeException(SbeException::DBS_STMTEXEC, {{"dbms","PgTable::loadUbigintByStmt()"}});
 
 	if (PQntuples(res) == 1) {
 		ptr = PQgetvalue(res, 0, 0);
@@ -108,7 +119,7 @@ bool PgTable::loadUintByStmt(
 	
 	res = PQexecPrepared(dbs, srefStmt.c_str(), N, vals, l, f, 0);
 	
-	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw DbsException("DbsException / PgSQL: error executing statement! (" + srefStmt + ")\n");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw SbeException(SbeException::DBS_STMTEXEC, {{"dbms","PgTable::loadUintByStmt()"}});
 
 	if (PQntuples(res) == 1) {
 		ptr = PQgetvalue(res, 0, 0);
@@ -136,7 +147,7 @@ bool PgTable::loadStringByStmt(
 	
 	res = PQexecPrepared(dbs, srefStmt.c_str(), N, vals, l, f, 0);
 	
-	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw DbsException("DbsException / PgSQL: error executing statement! (" + srefStmt + ")\n");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw SbeException(SbeException::DBS_STMTEXEC, {{"dbms","PgTable::loadStringByStmt()"}});
 
 	if (PQntuples(res) == 1) {
 		ptr = PQgetvalue(res, 0, 0);
@@ -164,7 +175,7 @@ bool PgTable::loadRefByStmt(
 	
 	res = PQexecPrepared(dbs, srefStmt.c_str(), N, vals, l, f, 0);
 	
-	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw DbsException("DbsException / PgSQL: error executing statement! (" + srefStmt + ")\n");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw SbeException(SbeException::DBS_STMTEXEC, {{"dbms","PgTable::loadRefByStmt()"}});
 
 	if (PQntuples(res) == 1) {
 		ptr = PQgetvalue(res, 0, 0);
@@ -194,7 +205,7 @@ ubigint PgTable::loadRefsByStmt(
 
 	res = PQexecPrepared(dbs, srefStmt.c_str(), N, vals, l, f, 0);
 	
-	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw DbsException("DbsException / PgSQL: error executing statement! (" + srefStmt + ")\n");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) throw SbeException(SbeException::DBS_STMTEXEC, {{"dbms","PgTable::loadRefsByStmt()"}});
 
 	if (!append) refs.resize(0);
 

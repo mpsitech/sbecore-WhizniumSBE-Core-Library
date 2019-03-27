@@ -6,9 +6,9 @@
   * \date modified: 26 Jan 2016
   */
 
-#include "ApiWzem.h"
-
 #include "ApiMon.h"
+
+#include "ApiWzem.h"
 
 /******************************************************************************
  class ApiMon

@@ -1,9 +1,9 @@
 /**
   * \file Types.h
-  * basic data types and functional expression evaluation (declarations)
+  * common data types, string manipulation and exception (declarations)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 28 May 2018
+  * \date modified: 30 Jan 2019
   */
 
 #ifndef SBECORE_TYPES_H
@@ -17,30 +17,23 @@ typedef unsigned int uint;
 typedef long long int bigint;
 typedef unsigned long long int ubigint;
 
+#ifdef _WIN32
+	#include <time.h>
+#endif
+
+#include <cmath>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
 using namespace std;
 
-#include <sbecore/Mt.h>
-
-/**
-  * Floatmat
-  */
-class Floatmat {
-
-public:
-	Floatmat();
-	
-public:
-	vector<float> vec;
-	unsigned int M;
-	unsigned int N;
-};
+#include <sbecore/config.h>
 
 /**
   * Doublemat
@@ -57,199 +50,125 @@ public:
 };
 
 /**
-  * Arg
+  * Floatmat
   */
-class Arg {
+class Floatmat {
 
 public:
-	static const ubigint IX = 1;
-	static const ubigint REF = 2;
-	static const ubigint REFS = 4;
-	static const ubigint SREF = 8;
-	static const ubigint INTVAL = 16;
-	static const ubigint DBLVAL = 32;
-	static const ubigint BOOLVAL = 64;
-	static const ubigint TXTVAL = 128;
-	static const ubigint ALL = 255;
+	Floatmat();
+	
+public:
+	vector<float> vec;
+	unsigned int M;
+	unsigned int N;
+};
+
+/**
+  * Ftm
+  */
+namespace Ftm {
+	string date(const unsigned int dateval); // is system time / (3600*24)
+	string time(const int timeval); // independent of system time
+	string timeOfDay(const unsigned int stampval); // is system time
+	string stamp(const unsigned int stampval); // is system time
+	string hmsstamp(const unsigned int stampval); // is system time
+	string usecstamp(const double stampval); // is system time
+	unsigned int invdate(const string& dateval);
+	int invtime(const string& timeval);
+	unsigned int invstamp(const string& stampval);
+};
+
+/**
+  * SbeException
+  */
+class SbeException {
 
 public:
-	Arg(const uint ix = 0, const ubigint ref = 0, const vector<ubigint>& refs = {}, const string& sref = "", const int intval = 0, const double dblval = 0.0, const bool boolval = false, const string& txtval = "", const ubigint mask = 0);
+	static const uint PATHNF = 1;
+
+	static const uint XMLIO_BUFPARSE = 101;
+	static const uint XMLIO_FILEPARSE = 102;
+
+	static const uint DBS_CONN = 201;
+	static const uint DBS_QUERY = 202;
+	static const uint DBS_STMTPREP = 203;
+	static const uint DBS_STMTEXEC = 204;
+
+	static const uint TXTRD_TKNUNID = 301;
+	static const uint TXTRD_TKNMISPL = 302;
+	static const uint TXTRD_ENDTKN = 303;
+	static const uint TXTRD_CONTENT = 304;
+
+	static const uint IEX_FILETYPE = 401;
+	static const uint IEX_VERSION = 402;
+	static const uint IEX_IOP = 403;
+	static const uint IEX_RETR = 404;
+	static const uint IEX_IDIREF = 405;
+	static const uint IEX_IREF = 406;
+	static const uint IEX_TSREF = 407;
+	static const uint IEX_THSREF = 408;
+	static const uint IEX_THINT = 409;
+	static const uint IEX_VSREF = 410;
+	static const uint IEX_FTM = 411;
+	static const uint IEX_IARG = 412;
 
 public:
-	ubigint mask;
+	SbeException(const uint ix, const map<string,string>& vals);
 
+public:
 	uint ix;
-	ubigint ref;
-	vector<ubigint> refs;
-	string sref;
-	int intval;
-	double dblval;
-	bool boolval;
-	string txtval;
+	map<string,string> vals;
 
 public:
-	bool operator==(const Arg& comp) const;
-	bool operator!=(const Arg& comp) const;
-	string writeText() const;
+	string getSref();
+	string getSquawk(uint (*getIx)(const string&), string (*getTitle)(const uint, const uint), const uint ixVLocale);
 };
 
-constexpr int intvalInvalid = numeric_limits<int>::min();
-constexpr double dblvalInvalid = -numeric_limits<double>::infinity();
-
 /**
-  * Expr
+  * StrMod
   */
-class Expr {
-
-public:
-	/**
-		* VecVTokentype
-		*/
-	class VecVTokentype {
-
-	public:
-		static const unsigned int LPAR = 1;
-		static const unsigned int RPAR = 2;
-		static const unsigned int COMMA = 3;
-		static const unsigned int EXCL = 4;
-		static const unsigned int AMP = 5;
-		static const unsigned int VBAR = 6;
-		static const unsigned int LESS = 7;
-		static const unsigned int MORE = 8;
-		static const unsigned int STR = 9;
-		static const unsigned int INT = 10;
-		static const unsigned int DBL = 11;
-		static const unsigned int TEXT = 12;
-
-		static unsigned int getIx(const string& sref);
-		static string getSref(const unsigned int ix);
-	};
-
-	/**
-		* Token
-		*/
-	class Token {
-
-	public:
-		Token(const unsigned int ixVTokentype, const unsigned int ptr, const unsigned int len);
-
-	public:
-		unsigned int ixVTokentype;
-
-		unsigned int ptr;
-		unsigned int len;
-
-		unsigned int ixSibling;
-	};
-
-	/**
-		* VecVNodetype
-		*/
-	class VecVNodetype {
-
-	public:
-		static const unsigned int VOID = 0;
-		static const unsigned int SREF = 1;
-		static const unsigned int INTVAL = 2;
-		static const unsigned int DBLVAL = 3;
-		static const unsigned int TXTVAL = 4;
-		static const unsigned int FCT = 5;
-
-		static unsigned int getIx(const string& sref);
-		static string getSref(const unsigned int ix);
-	};
-
-	/**
-		* Node
-		*/
-	class Node {
-
-	public:
-		Node(const string& s, const vector<Token*>& tkns, unsigned int ixTkn0, unsigned int ixTkn1, string& err);
-		~Node();
-
-	public:
-		unsigned int ixVNodetype;
-
-		string key; // used for sref, fct
-		int intval;
-		double dblval;
-		string txtval;
-
-		vector<Node*> subs;
-
-	public:
-		void expand();
-		bool has(unsigned int _ixVNodetype, const string& _key);
-		bool logicfct();
-		bool logictree();
-		void fctToLeaves(const string& fctkey);
-		void dump(unsigned int il = 0);
-	};
-
-	/**
-		* VecVState
-		*/
-	class VecVState {
-
-	public:
-		static const unsigned int RESET = 0;
-		static const unsigned int TOKENIZED = 1;
-		static const unsigned int TKNERR = 2;
-		static const unsigned int PARSED = 3;
-		static const unsigned int PRSERR = 4;
-	};
-
-public:
-	Expr();
-	~Expr();
-
-public:
-	string s;
-	vector<Token*> tkns;
-
-	Node* root;
-
-	unsigned int ixVState;
-	string err;
-
-public:
-	void reset();
-
-	bool tokenize(const string& expr);
-	bool parse();
-	bool has(unsigned int ixVNodetype, const string& key);
-	void dump();
+namespace StrMod {
+	string cap(const string& s);
+	string uncap(const string& s);
+	string lc(const string& s);
+	string uc(const string& s);
+	string spcex(const string& s);
+	string esc(const string& s);
+	string dotToUsc(const string& s);
+	string uscToCap(const string& s);
+	string boolToString(const bool b);
+	string timetToString(const time_t rawtime);
+	bool has(const vector<string>& vec, const string& str);
+	void stringToVector(const string& str, vector<string>& vec, const char sep = ';');
+	void stringToDoublevec(const string& str, vector<double>& vec, const char sep = ';');
+	void vectorToString(const vector<string>& vec, string& str, const char sep = ';');
+	bool srefInSrefs(const string& srefs, const string& sref);
+	void refsToVector(const string& refs, vector<ubigint>& vec);
+	string replaceChar(const string& s, const char c, const char d);
+	void findPlhs(const string& s, set<string>& plhs, const bool add = false);
+	string findFirstPlh(const string& s, size_t start);
+	string replacePlh(const string& s, const string& plh, const double val);
+	string replacePlh(const string& s, const string& plh, const string& val);
+	unsigned int getCharcnt(const string& s);
+	string readLine(ifstream& infile, char* buf, size_t buflen);
 };
 
 /**
-	* Refseq
-	*/
-class Refseq {
-
-public:
-	Refseq(const string& sref = "");
-
-public:
-	string sref;
-
-	Mutex mAccess;
-	ubigint ref;
-
-public:
-	ubigint getNewRef();
-};
-
-/**
-  * Scr
+  * Version
   */
-namespace Scr {
-	string scramble(const ubigint ref);
-	ubigint descramble(const string& scrRef);
-	string random();
+class Version {
 
-	extern Rwmutex rwm;
-	extern map<ubigint,string> scr;
-	extern map<string,ubigint> descr;
+public:
+	Version(const string& _s);
+
+public:
+	vector<unsigned int> is;
+
+public:
+	bool defined() const;
+	bool operator<(const Version& comp) const;
+
+	string to_string() const;
 };
+
 #endif

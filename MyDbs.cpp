@@ -292,21 +292,21 @@ MYSQL_BIND MyTable::bindDouble(
 };
 
 MYSQL_STMT* MyTable::createStatement(
-			const string stmtSQL
+			const string& stmtSQL
 			, my_bool getlength
 		) {
 	MYSQL_STMT* result = mysql_stmt_init(dbs);
-	if (!result) throw DbsException("DbsException / MySQL: unable to initialize statement '" + stmtSQL + "'\n");
+	if (!result) throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","MyTable::createStatement()"}, {"sql",stmtSQL}});
 
 	if (mysql_stmt_prepare(result, stmtSQL.c_str(), stmtSQL.length()))
-		throw DbsException("DbsException / MySQL: unable to initialize statement '" + stmtSQL + "'\n");
+				throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","MyTable::createStatement()"}, {"sql",stmtSQL}});
 	if (getlength) mysql_stmt_attr_set(result, STMT_ATTR_UPDATE_MAX_LENGTH, &getlength);
 
 	return(result);
 };
 
 void MyTable::begin() {
-	if (mysql_query(dbs, "BEGIN")) throw DbsException("DbsException / MySQL: failed to begin transaction\n");
+	if (mysql_query(dbs, "BEGIN")) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::begin()"}, {"sql","BEGIN"}});
 };
 
 bool MyTable::commit() {
@@ -319,7 +319,7 @@ bool MyTable::commit() {
 };
 
 void MyTable::rollback() {
-	if (mysql_query(dbs, "ROLLBACK")) throw DbsException("DbsException / MySQL: failed to roll back transaction\n");
+	if (mysql_query(dbs, "ROLLBACK")) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::rollback()"}, {"sql","ROLLBACK"}});
 };
 
 bool MyTable::loadUintBySQL(
@@ -330,10 +330,10 @@ bool MyTable::loadUintBySQL(
 
 	bool retval = false;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw DbsException("DbsException / MySQL: failed to execute query '" + sqlstr + "'\n");
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadUintBySQL()"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw DbsException("DbsException / MySQL: failed to store result! (loadUintBySQL)\n");
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadUintBySQLMy() / store result"}, {"sql",sqlstr}});
 
 	if (mysql_num_rows(dbresult) == 1) {
 		dbrow = mysql_fetch_row(dbresult);
@@ -355,10 +355,10 @@ bool MyTable::loadStringBySQL(
 
 	bool retval = false;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw DbsException("DbsException / MySQL: failed to execute query '" + sqlstr + "'\n");
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadStringBySQL()"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw DbsException("DbsException / MySQL: failed to store result! (loadStringBySQL)\n");
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadStringBySQL() / store result"}, {"sql",sqlstr}});
 
 	if (mysql_num_rows(dbresult) == 1) {
 		dbrow = mysql_fetch_row(dbresult);
@@ -381,10 +381,10 @@ bool MyTable::loadRefBySQL(
 
 	bool retval = false;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw DbsException("DbsException / MySQL: failed to execute query '" + sqlstr + "'\n");
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MySQL"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw DbsException("DbsException / MySQL: failed to store result! (loadRefBySQL)\n");
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadRefBySQL() / store result"}, {"sql",sqlstr}});
 
 	if (mysql_num_rows(dbresult) == 1) {
 		dbrow = mysql_fetch_row(dbresult);
@@ -405,10 +405,10 @@ ubigint MyTable::loadRefsBySQL(
 		) {
 	MYSQL_RES* dbresult; MYSQL_ROW dbrow; ubigint numrow; ubigint numread = 0;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw DbsException("DbsException / MySQL: failed to execute query '" + sqlstr + "'\n");
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadRefsBySQL()"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw DbsException("DbsException / MySQL: failed to store result! (loadRefsBySQL)\n");
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadRefsBySQL() / store result"}, {"sql",sqlstr}});
 
 	numrow = mysql_num_rows(dbresult);
 	if (!append) refs.resize(0);

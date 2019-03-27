@@ -35,13 +35,13 @@ sqlite3_stmt* LiteTable::createStatement(
 	sqlite3_stmt* result = NULL;
 
 	res = sqlite3_prepare_v2(dbs, stmtSQL.c_str(), -1, &result, NULL);
-	if (res != SQLITE_OK) throw DbsException("DbsException / SQLite: unable to initialize statement '" + stmtSQL + "'\n");
+	if (res != SQLITE_OK) throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","LiteTable::createStatement()"}, {"sql",stmtSQL}});
 
 	return(result);
 };
 
 void LiteTable::begin() {
-	if (sqlite3_exec(dbs, "BEGIN", NULL, NULL, NULL) != SQLITE_OK) throw DbsException("DbsException / SQLite: failed to begin transaction\n");
+	if (sqlite3_exec(dbs, "BEGIN", NULL, NULL, NULL) != SQLITE_OK) throw SbeException(SbeException::DBS_QUERY, {{"dbms","LiteTable::begin()"}, {"sql","BEGIN"}});
 };
 
 bool LiteTable::commit() {
@@ -54,7 +54,7 @@ bool LiteTable::commit() {
 };
 
 void LiteTable::rollback() {
-	if (sqlite3_exec(dbs, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) throw DbsException("DbsException / SQLite: failed to roll back transaction\n");
+	if (sqlite3_exec(dbs, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) throw SbeException(SbeException::DBS_QUERY, {{"dbms","LiteTable::rollback()"}, {"sql","ROLLBACK"}});
 };
 
 bool LiteTable::loadUbigintByStmt(

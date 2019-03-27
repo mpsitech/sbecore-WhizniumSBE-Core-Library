@@ -11,7 +11,7 @@
 
 #include <set>
 
-#include <sbecore/Strmod.h>
+#include <sbecore/Types.h>
 
 /**
   * stcchitemref_t

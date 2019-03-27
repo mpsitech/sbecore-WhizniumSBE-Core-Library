@@ -9,6 +9,7 @@
 #ifndef SBECORE_DBSMON_H
 #define SBECORE_DBSMON_H
 
+#include <sbecore/Dbs.h>
 #include <sbecore/Mon.h>
 
 class DbsWzem;

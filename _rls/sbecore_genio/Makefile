@@ -4,7 +4,7 @@
 # date created: 14 Aug 2014
 # modified: 15 Jun 2017
 
-SRCROOT = /home/epsi/src
+SRCROOT = /home/mpsitech/src
 
 CPP = g++
 CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
@@ -20,7 +20,7 @@ INCINSTPATH = /usr/local/include
 LIBINSTPATH = /usr/local/lib
 
 INCPATH = -I$(SRCROOT)
-INCPATH += -I/usr/include/libxml2 -I/usr/include/mysql -I/usr/include/postgresql -I/usr/include
+INCPATH += -I/usr/include/libxml2 -I/usr/include/mariadb -I/usr/include/postgresql -I/usr/include
 INCPATH += -I$(SRCROOT)/apiwzem -I$(SRCROOT)/dbswzem
 
 OBJS = Dbs.o Engtypes.o Mt.o Strmod.o Stub.o Txtrd.o Types.o Xmlio.o

@@ -3,7 +3,7 @@
   * methods for XML tree input/output based on libxml2 (declarations)
   * \author Alexander Wirthmüller
   * \date created: 19 Feb 2007
-  * \date modified: 27 May 2018
+  * \date modified: 28 Dec 2018
   */
 
 #ifndef SBECORE_XMLIO_H
@@ -11,7 +11,11 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#ifdef _WIN32
+	#include <io.h>
+#else
+	#include <unistd.h>
+#endif
 #include <string.h>
 
 #include <iostream>
@@ -30,7 +34,6 @@ using namespace std;
 #include <libxml/xpointer.h>
 
 #include <sbecore/Types.h>
-#include <sbecore/Strmod.h>
 
 /**
 	* Xmlio: set of methods to for XML structure input / output
@@ -71,6 +74,7 @@ namespace Xmlio {
 
 																													//! check if XML data block is present at given path
 	bool checkXPath(xmlXPathContext* docctx, const string& xpath);
+	bool checkXPath(xmlXPathContext* docctx, const string& xpath, unsigned int& lineno);
 	bool checkAltXPaths(xmlXPathContext* docctx, string& goodxpath, const string& basexpath, const string& alt1 = "", const string& alt2 = "", const string& alt3 = "", const string& alt4 = "", const string& alt5 = "", const string& alt6 = "");
 	bool checkUclcXPaths(xmlXPathContext* docctx, string& goodxpath, const string& basexpath, const string& regc);
 	bool checkAttrUclcXpaths(xmlXPathContext* docctx, const string& basexpath, string& goodpath, const string& tag, const string& shorttag, const string& attr, const string& attrval);

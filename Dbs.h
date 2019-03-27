@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 
 #include <string>
 #include <fstream>
@@ -23,7 +22,7 @@
 
 using namespace std;
 
-#include <sbecore/Types.h>
+#include <sbecore/Engtypes.h>
 
 /**
   * VecDbsVDbstype
@@ -37,6 +36,7 @@ namespace VecDbsVDbstype {
 	string getSref(const uint ix);
 };
 
+/// WILL BECOME OBSOLETE!
 /**
   * DbsException
   */

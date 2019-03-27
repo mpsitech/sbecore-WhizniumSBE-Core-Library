@@ -15,9 +15,9 @@
 uint VecDbsVDbstype::getIx(
 			const string& sref
 		) {
-	if (sref.compare("my") == 0) return MY;
-	else if (sref.compare("pg") == 0) return PG;
-	else if (sref.compare("lite") == 0) return LITE;
+	if (sref == "my") return MY;
+	if (sref == "pg") return PG;
+	if (sref == "lite") return LITE;
 
 	return(0);
 };
@@ -26,8 +26,8 @@ string VecDbsVDbstype::getSref(
 			const uint ix
 		) {
 	if (ix == MY) return("my");
-	else if (ix == PG) return("pg");
-	else if (ix == LITE) return("lite");
+	if (ix == PG) return("pg");
+	if (ix == LITE) return("lite");
 
 	return("");
 };
