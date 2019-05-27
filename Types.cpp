@@ -375,6 +375,7 @@ SbeException::SbeException(
 
 string SbeException::getSref() {
 	if (ix == PATHNF) return("pathnf");
+	if (ix == ENGCONN) return("engconn");
 
 	if (ix == XMLIO_BUFPARSE) return("xmlio.bufparse");
 	if (ix == XMLIO_FILEPARSE) return("xmlio.fileparse");

@@ -36,17 +36,4 @@ namespace VecDbsVDbstype {
 	string getSref(const uint ix);
 };
 
-/// WILL BECOME OBSOLETE!
-/**
-  * DbsException
-  */
-struct DbsException {
-	string err;
-	
-	DbsException(
-				string err
-			) {
-		this->err = err;
-	};
-};
 #endif

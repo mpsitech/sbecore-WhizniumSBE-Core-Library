@@ -85,6 +85,7 @@ class SbeException {
 
 public:
 	static const uint PATHNF = 1;
+	static const uint ENGCONN = 2;
 
 	static const uint XMLIO_BUFPARSE = 101;
 	static const uint XMLIO_FILEPARSE = 102;
