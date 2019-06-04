@@ -3,7 +3,7 @@
   * common data types, string manipulation and exception (declarations)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 30 Jan 2019
+  * \date modified: 2 Jun 2019
   */
 
 #ifndef SBECORE_TYPES_H
@@ -160,7 +160,7 @@ namespace StrMod {
 class Version {
 
 public:
-	Version(const string& _s);
+	Version(const string& _s = "");
 
 public:
 	vector<unsigned int> is;
@@ -168,6 +168,11 @@ public:
 public:
 	bool defined() const;
 	bool operator<(const Version& comp) const;
+	bool operator<=(const Version& comp) const;
+	bool operator>(const Version& comp) const;
+	bool operator>=(const Version& comp) const;
+	bool operator==(const Version& comp) const;
+	bool operator!=(const Version& comp) const;
 
 	string to_string() const;
 };

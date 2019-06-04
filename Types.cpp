@@ -3,7 +3,7 @@
   * common data types, string manipulation and exception (implementation)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 30 Jan 2019
+  * \date modified: 2 Jun 2019
   */
 
 #include "Types.h"
@@ -898,6 +898,36 @@ bool Version::operator<(
 	
 	if (is.size() == comp.is.size()) return false; // I. ==
 	else return true; // II.
+};
+
+bool Version::operator<=(
+			const Version& comp
+		) const {
+	return(!operator>(comp));
+};
+
+bool Version::operator>(
+			const Version& comp
+		) const {
+	return(comp.operator<(*this));
+};
+
+bool Version::operator>=(
+			const Version& comp
+		) const {
+	return(!operator<(comp));
+};
+
+bool Version::operator==(
+			const Version& comp
+		) const {
+	return(!operator!=(comp));
+};
+
+bool Version::operator!=(
+			const Version& comp
+		) const {
+	return(operator>(comp) || operator<(comp));
 };
 
 string Version::to_string() const {
