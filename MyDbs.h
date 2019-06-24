@@ -13,6 +13,12 @@
 
 #include <sbecore/Dbs.h>
 
+#if defined(SBECORE_MY)
+	#if MYSQL_VERSION_ID > 80000
+		typedef bool my_bool;
+	#endif
+#endif
+
 /**
   * MyTable
   */

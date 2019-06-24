@@ -10,7 +10,7 @@ SBECORE_MY = 1
 SBECORE_PG = 0
 SBECORE_LITE = 0
 
-SRCROOT = ${WHIZBASE}/src
+SRCROOT = ${WHIZROOT}/src
 
 CPP = g++
 CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
