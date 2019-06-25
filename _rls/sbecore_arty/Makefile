@@ -1,45 +1,45 @@
 # file Makefile
-# make file for Whiznium SBE core library, release sbecore_linux
+# make file for Whiznium SBE core library, release sbecore_arty
 # author Alexander Wirthmueller
 # date created: 14 Aug 2014
-# modified: 24 Jun 2019
+# modified: 25 Jun 2019
 
 SBECORE_PLUS = 1
 SBECORE_MAR = 0
-SBECORE_MY = 1
-SBECORE_PG = 1
-SBECORE_LITE = 0
+SBECORE_MY = 0
+SBECORE_PG = 0
+SBECORE_LITE = 1
 
-SRCROOT = ${WHIZROOT}/src
+SRCROOT = /home/root/src
 
-CPP = g++
-CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
+CPP = ${TCHROOT}/arm-linux-gnueabihf-g++
+CPPFLAGS = --sysroot=${SYSROOT} -std=c++11 -march=armv7 -mfpu=neon -mfloat-abi=hard -g -Wall -Os -pthread
 
-STATLIB = ar
+STATLIB = ${TCHROOT}/arm-linux-gnueabihf-ar
 STATLIBFLAGS = rcs
 STATLIBEXT = a
 
-DYNLIB = g++
+DYNLIB = ${TCHROOT}/arm-linux-gnueabihf-g++
 DYNLIBFLAGS = -shared
 DYNLIBEXT = so
 
-INCINSTPATH = ${WHIZROOT}/src
-LIBINSTPATH = ${WHIZROOT}/lib
+INCINSTPATH = ${SYSROOT}${WHIZROOT}/src
+LIBINSTPATH = ${SYSROOT}${WHIZROOT}/lib
 
-INCPATH = -I${SRCROOT} -I/usr/include/libxml2
+INCPATH = -I=${SRCROOT} -I=/usr/include/libxml2
 ifeq (${SBECORE_PLUS},1)
-	INCPATH += -I${SRCROOT}/apiwzem -I${SRCROOT}/dbswzem
+	INCPATH += -I=${SRCROOT}/apiwzem -I=${SRCROOT}/dbswzem
 endif
 ifeq (${SBECORE_MAR},1)
-	INCPATH += -I/usr/include/mariadb
+	INCPATH += -I=/usr/include/mariadb
 else ifeq (${SBECORE_MY},1)
-	INCPATH += -I/usr/include/mysql
+	INCPATH += -I=/usr/include/mysql
 endif
 ifeq (${SBECORE_PG},1)
-	INCPATH += -I/usr/include/postgresql
+	INCPATH += -I=/usr/include/postgresql
 endif
 ifeq (${SBECORE_LITE},1)
-	INCPATH += -I/usr/include
+	INCPATH += -I=/usr/include
 endif
 
 OBJS = Types.o Xmlio.o
@@ -123,7 +123,7 @@ ${LIB_LITE}:	${OBJS_LITE}
 install:
 	#-mkdir ${INCINSTPATH}/sbecore
 	#chmod 755 ${INCINSTPATH}/sbecore
-	#cp ${SRCROOT}/sbecore/*.h ${INCINSTPATH}/sbecore/
+	#cp ${SYSROOT}${SRCROOT}/sbecore/*.h ${INCINSTPATH}/sbecore/
 	#chmod 644 ${INCINSTPATH}/sbecore/*.h
 	cp ${LIB}.${STATLIBEXT} ${LIBINSTPATH}/
 	cp ${LIB}.${DYNLIBEXT} ${LIBINSTPATH}/
@@ -154,5 +154,5 @@ ifeq (${SBECORE_LITE},1)
 endif
 	chmod 755 ${LIBINSTPATH}/libsbecore*
 
-clean: 
+clean:
 	rm -f *.o
