@@ -10,7 +10,7 @@ SBECORE_MY = 0
 SBECORE_PG = 0
 SBECORE_LITE = 1
 
-SRCROOT = /home/root/src
+SRCROOT = ${WHIZROOT}/src
 
 CPP = ${TCHROOT}/arm-linux-gnueabihf-g++
 CPPFLAGS = --sysroot=${SYSROOT} -std=c++11 -march=armv7 -mfpu=neon -mfloat-abi=hard -g -Wall -Os -pthread
@@ -20,7 +20,7 @@ STATLIBFLAGS = rcs
 STATLIBEXT = a
 
 DYNLIB = ${TCHROOT}/arm-linux-gnueabihf-g++
-DYNLIBFLAGS = -shared
+DYNLIBFLAGS = --sysroot=${SYSROOT} -shared
 DYNLIBEXT = so
 
 INCINSTPATH = ${SYSROOT}${WHIZROOT}/src
