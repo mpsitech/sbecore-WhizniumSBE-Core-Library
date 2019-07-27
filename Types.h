@@ -21,6 +21,7 @@ typedef unsigned long long int ubigint;
 	#include <time.h>
 #endif
 
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>

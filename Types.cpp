@@ -220,37 +220,45 @@ unsigned int Ftm::invdate(
 
 	unsigned int D, M, Y;
 
-	ptr = str.find('-');
-	if (ptr != string::npos) {
-		D = atoi(str.substr(0, ptr).c_str());
-		str = str.substr(ptr+1);
+	time_t now;
 
+	if ((str == "today") || (str == "&today;")) {
+		now = chrono::system_clock::to_time_t(chrono::system_clock::now());
+		retval = now/3600/24;
+
+	} else {
 		ptr = str.find('-');
 		if (ptr != string::npos) {
-			M = atoi(str.substr(0, ptr).c_str());
+			D = atoi(str.substr(0, ptr).c_str());
 			str = str.substr(ptr+1);
 
-			Y = atoi(str.c_str());
+			ptr = str.find('-');
+			if (ptr != string::npos) {
+				M = atoi(str.substr(0, ptr).c_str());
+				str = str.substr(ptr+1);
 
-			D = D-1;
-			if (M > 1) D += 31;
-			if (M > 2) {
-				D += 28;
-				if ((Y%4) == 0) D += 1;
-				if ((Y%100) == 0) D -= 1;
-				if ((Y%400) == 0) D += 1;
+				Y = atoi(str.c_str());
+
+				D = D-1;
+				if (M > 1) D += 31;
+				if (M > 2) {
+					D += 28;
+					if ((Y%4) == 0) D += 1;
+					if ((Y%100) == 0) D -= 1;
+					if ((Y%400) == 0) D += 1;
+				};
+				if (M > 3) D += 31;
+				if (M > 4) D += 30;
+				if (M > 5) D += 31;
+				if (M > 6) D += 30;
+				if (M > 7) D += 31;
+				if (M > 8) D += 31;
+				if (M > 9) D += 30;
+				if (M > 10) D += 31;
+				if (M > 11) D += 30;
+
+				retval = D + (Y-1970)*365 + ((Y-1969)/4) - ((Y-1901)/100) + ((Y-1900+299)/400);
 			};
-			if (M > 3) D += 31;
-			if (M > 4) D += 30;
-			if (M > 5) D += 31;
-			if (M > 6) D += 30;
-			if (M > 7) D += 31;
-			if (M > 8) D += 31;
-			if (M > 9) D += 30;
-			if (M > 10) D += 31;
-			if (M > 11) D += 30;
-
-			retval = D + (Y-1970)*365 + ((Y-1969)/4) - ((Y-1901)/100) + ((Y-1900+299)/400);
 		};
 	};
 
@@ -306,52 +314,60 @@ unsigned int Ftm::invstamp(
 	unsigned int D, M, Y;
 	unsigned int h, m, s;
 
-	ptr = str.find('-');
-	if (ptr != string::npos) {
-		D = atoi(str.substr(0, ptr).c_str());
-		str = str.substr(ptr+1);
+	time_t now;
 
+	if ((str == "now") || (str == "&now;")) {
+		now = chrono::system_clock::to_time_t(chrono::system_clock::now());
+		retval = now;
+
+	} else {
 		ptr = str.find('-');
 		if (ptr != string::npos) {
-			M = atoi(str.substr(0, ptr).c_str());
+			D = atoi(str.substr(0, ptr).c_str());
 			str = str.substr(ptr+1);
 
-			ptr = str.find(' ');
+			ptr = str.find('-');
 			if (ptr != string::npos) {
-				Y = atoi(str.substr(0, ptr).c_str());
+				M = atoi(str.substr(0, ptr).c_str());
 				str = str.substr(ptr+1);
 
-				ptr = str.find(':');
+				ptr = str.find(' ');
 				if (ptr != string::npos) {
-					h = atoi(str.substr(0, ptr).c_str());
+					Y = atoi(str.substr(0, ptr).c_str());
 					str = str.substr(ptr+1);
 
 					ptr = str.find(':');
 					if (ptr != string::npos) {
-						m = atoi(str.substr(0, ptr).c_str());
+						h = atoi(str.substr(0, ptr).c_str());
 						str = str.substr(ptr+1);
 
-						s = atoi(str.c_str());
+						ptr = str.find(':');
+						if (ptr != string::npos) {
+							m = atoi(str.substr(0, ptr).c_str());
+							str = str.substr(ptr+1);
 
-						D = D-1;
-						if (M > 1) D += 31;
-						if (M > 2) {
-							D += 28;
-							if ((Y%4) == 0) D += 1;
-							if ((Y%100) == 0) D -= 1;
-							if ((Y%400) == 0) D += 1;
+							s = atoi(str.c_str());
+
+							D = D-1;
+							if (M > 1) D += 31;
+							if (M > 2) {
+								D += 28;
+								if ((Y%4) == 0) D += 1;
+								if ((Y%100) == 0) D -= 1;
+								if ((Y%400) == 0) D += 1;
+							};
+							if (M > 3) D += 31;
+							if (M > 4) D += 30;
+							if (M > 5) D += 31;
+							if (M > 6) D += 30;
+							if (M > 7) D += 31;
+							if (M > 8) D += 31;
+							if (M > 9) D += 30;
+							if (M > 10) D += 31;
+							if (M > 11) D += 30;
+
+							retval = s + m*60 + h*3600 + D*86400 + (Y-1970)*31536000 + ((Y-1969)/4)*86400 - ((Y-1901)/100)*86400 + ((Y-1900+299)/400)*86400;
 						};
-						if (M > 3) D += 31;
-						if (M > 4) D += 30;
-						if (M > 5) D += 31;
-						if (M > 6) D += 30;
-						if (M > 7) D += 31;
-						if (M > 8) D += 31;
-						if (M > 9) D += 30;
-						if (M > 10) D += 31;
-						if (M > 11) D += 30;
-
-						retval = s + m*60 + h*3600 + D*86400 + (Y-1970)*31536000 + ((Y-1969)/4)*86400 - ((Y-1901)/100)*86400 + ((Y-1900+299)/400)*86400;
 					};
 				};
 			};
