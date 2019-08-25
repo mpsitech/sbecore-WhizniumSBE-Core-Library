@@ -12,14 +12,14 @@ SBECORE_LITE = 1
 
 SRCROOT = ${WHIZROOT}/src
 
-CPP = ${TCHROOT}/arm-angstrom-linux-gnueabi-g++
+CPP = ${TCHROOT}/arm-tdx-linux-gnueabi-g++
 CPPFLAGS = --sysroot=${SYSROOT} -std=c++11 -march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard -g -Wall -Os -pthread -fPIC
 
-STATLIB = ${TCHROOT}/arm-angstrom-linux-gnueabi-ar
+STATLIB = ${TCHROOT}/arm-tdx-linux-gnueabi-ar
 STATLIBFLAGS = rcs
 STATLIBEXT = a
 
-DYNLIB = ${TCHROOT}/arm-angstrom-linux-gnueabi-g++
+DYNLIB = ${TCHROOT}/arm-tdx-linux-gnueabi-g++
 DYNLIBFLAGS = --sysroot=${SYSROOT} -shared
 DYNLIBEXT = so
 
