@@ -13,7 +13,7 @@ SBECORE_LITE = 1
 SRCROOT = ${WHIZROOT}/src
 
 CPP = ${TCHROOT}/arm-linux-gnueabihf-g++
-CPPFLAGS = --sysroot=${SYSROOT} -std=c++11 -mfloat-abi=hard -g -Wall -Os -pthread
+CPPFLAGS = --sysroot=${SYSROOT} -std=c++11 -mfloat-abi=hard -g -Wall -Os -pthread -fPIC
 
 STATLIB = ${TCHROOT}/arm-linux-gnueabihf-ar
 STATLIBFLAGS = rcs

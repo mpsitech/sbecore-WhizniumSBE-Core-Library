@@ -13,7 +13,7 @@ SBECORE_LITE = 0
 SRCROOT = ${WHIZROOT}/src
 
 CPP = g++
-CPPFLAGS = -std=c++11 -g -Wall -pthread -fpic
+CPPFLAGS = -std=c++11 -g -Wall -pthread -fPIC
 
 STATLIB = ar
 STATLIBFLAGS = rcs
