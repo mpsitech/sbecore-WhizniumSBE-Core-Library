@@ -3,7 +3,7 @@
   * monitoring (declarations)
   * \author Alexander Wirthmüller
   * \date created: 24 Jan 2016
-  * \date modified: 26 Jan 2016
+  * \date modified: 29 Apr 2020
   */
 
 #ifndef SBECORE_MON_H
@@ -11,102 +11,101 @@
 
 #include <sbecore/Mttypes.h>
 
-/**
-  * xclstnref_t
-  */
-class xclstnref_t {
+namespace Sbecore {
+	/**
+		* xclstnref_t
+		*/
+	class xclstnref_t {
 
-public:
-	xclstnref_t(const ubigint xjref = 0, const string& srefIxVTarget = "", const string& srefIxVCall = "", const uint ixVJobmask = 0, const ubigint xjrefTrig = 0);
+	public:
+		xclstnref_t(const ubigint xjref = 0, const std::string& srefIxVTarget = "", const std::string& srefIxVCall = "", const uint ixVJobmask = 0, const ubigint xjrefTrig = 0, const Arg& arg = Arg(), const uint ixVSge = 0);
 
-public:
-	ubigint xjref;
-	string srefIxVTarget;
-	string srefIxVCall;
-	uint ixVJobmask;
-	ubigint xjrefTrig;
+	public:
+		ubigint xjref;
+		std::string srefIxVTarget;
+		std::string srefIxVCall;
+		uint ixVJobmask;
+		ubigint xjrefTrig;
+		Arg arg;
+		uint ixVSge;
 
-public:
-	bool operator<(const xclstnref_t& comp) const;
+	public:
+		bool operator<(const xclstnref_t& comp) const;
+	};
+
+	/**
+		* xpresetref_t
+		*/
+	class xpresetref_t {
+
+	public:
+		xpresetref_t(const ubigint xjref = 0, const std::string& srefIxVPreset = "");
+
+	public:
+		ubigint xjref;
+		std::string srefIxVPreset;
+
+	public:
+		bool operator<(const xpresetref_t& comp) const;
+	};
+
+	/**
+		* Mon
+		*/
+	class Mon {
+
+	public:
+		Mon();
+		virtual ~Mon();
+
+	public:
+		Mutex mAccess;
+
+		double t0;
+
+	public:
+		void lockAccess(const std::string& srefObject, const std::string& srefMember);
+		void unlockAccess(const std::string& srefObject, const std::string& srefMember);
+
+		bool isRunning();
+		std::string getSquawk(const std::string& srefLocale);
+
+		double getDt();
+
+		virtual void insertJob(const ubigint supXjref, const std::string& srefIxVJob, const ubigint xjref, const bool Clisrv, const bool srvNotCli, const bool Dcol, const bool Stmgr);
+		virtual void insertClstn(const ubigint xjref, const std::string& srefIxVTarget, const std::string& srefIxVCall, const std::string& srefIxVJobmask, const ubigint xjrefTrig, const Arg& arg, const uint ixVSge, const std::string& srefIxVJactype);
+		virtual void insertPreset(const ubigint xjref, const std::string& srefIxVPreset, const Arg& arg);
+		virtual void insertNode(const ubigint xnref, const std::string& Ip, const usmallint Port, const utinyint Opprcn);
+
+		virtual void eventAddJob(const ubigint supXjref, const std::string& srefIxVJob, const ubigint xjref, const bool Clisrv, const bool srvNotCli);
+		virtual void eventRemoveJob(const ubigint xjref);
+		virtual void eventAddDcol(const ubigint xjref);
+		virtual void eventRemoveDcol(const ubigint xjref);
+		virtual void eventAddStmgr(const ubigint xjref);
+		virtual void eventRemoveStmgr(const ubigint xjref);
+		virtual void eventAddClstn(const ubigint xjref, const std::string& srefIxVTarget, const std::string& srefIxVCall, const std::string& srefIxVJobmask, const ubigint xjrefTrig, const Arg& arg, const uint ixVSge, const std::string& srefIxVJactype);
+		virtual void eventChangeClstnArg(const ubigint xjref, const std::string& srefIxVTarget, const std::string& srefIxVCall, const std::string& srefIxVJobmask, const ubigint xjrefTrig, const Arg& arg, const uint ixVSge, const std::string& srefIxVJactype);
+		virtual void eventRemoveClstn(const ubigint xjref, const std::string& srefIxVTarget, const std::string& srefIxVCall, const std::string& srefIxVJobmask, const ubigint xjrefTrig, const Arg& arg, const uint ixVSge, const std::string& srefIxVJactype);
+		virtual void eventAddPreset(const ubigint xjref, const std::string& srefIxVPreset, const Arg& arg);
+		virtual void eventChangePreset(const ubigint xjref, const std::string& srefIxVPreset, const Arg& arg);
+		virtual void eventRemovePreset(const ubigint xjref, const std::string& srefIxVPreset);
+		virtual void eventAddNode(const ubigint xnref, const std::string& Ip, const usmallint Port, const utinyint Opprcn);
+		virtual void eventRemoveNode(const ubigint xnref);
+		virtual ubigint eventTriggerCall(const ubigint xjref, const std::string& srefIxVCall, const Arg& argInv);
+		virtual void eventHandleCall(const ubigint eref, const ubigint xjref);
+		virtual void eventRetCall(const ubigint eref, const ubigint xjref, const Arg& argRet);
+		virtual void eventFinalizeCall(const ubigint eref);
+		virtual void eventHandleReqCmd(const ubigint xjref, const std::string& Cmd);
+		virtual ubigint eventHandleReqDpchapp(const ubigint xjref, const std::string& srefIxVDpch, const std::string& srefsMask, const std::string& Content);
+		virtual void eventReplyReqDpchapp(const ubigint eref, const ubigint xjref, const std::string& srefIxVDpch, const std::string& srefsMask, const std::string& Content);
+		virtual void eventHandleReqUpload(const ubigint xjref, const std::string& Filename);
+		virtual ubigint eventHandleReqDownload(const ubigint xjref);
+		virtual void eventReplyReqDownload(const ubigint eref, const ubigint xjref, const std::string Filename);
+		virtual void eventHandleReqDpchret(const ubigint xjref, const std::string& srefIxVDpch, const std::string& Content, const ubigint xoref);
+		virtual void eventHandleReqMethod(const ubigint xjref, const std::string& srefIxVFeatgroup, const std::string& srefIxVMethod);
+		virtual void eventHandleReqTimer(const ubigint xjref, const std::string& xsref);
+		virtual void eventSubmitDpch(const ubigint xjref, const std::string& srefIxVDpch, const std::string& srefsMask, const std::string& Content);
+		virtual void eventAddInv(const ubigint xjref, const std::string& srefIxVDpch, const std::string& Content, const ubigint xoref);
+	};
 };
-
-/**
-  * xpresetref_t
-  */
-class xpresetref_t {
-
-public:
-	xpresetref_t(const ubigint xjref = 0, const string& srefIxVPreset = "");
-
-public:
-	ubigint xjref;
-	string srefIxVPreset;
-
-public:
-	bool operator<(const xpresetref_t& comp) const;
-};
-
-/**
-  * Mon
-  */
-class Mon {
-
-public:
-	Mon();
-	virtual ~Mon();
-
-public:
-	Mutex mAccess;
-
-	double t0;
-
-public:
-	void lockAccess(const string& srefObject, const string& srefMember);
-	void unlockAccess(const string& srefObject, const string& srefMember);
-
-	bool isRunning();
-	string getSquawk(const string& srefLocale);
-
-	double getDt();
-
-	virtual void insertJob(const ubigint supXjref, const string& srefIxVJob, const ubigint xjref, const bool Master, const bool Slave, const bool Dcol, const bool Stmgr);
-	virtual void insertClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	virtual void insertPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
-	virtual void insertNode(const ubigint xnref, const string& Ip, const usmallint Port, const utinyint Opprcn);
-
-	virtual void eventAddJob(const ubigint supXjref, const string& srefIxVJob, const ubigint xjref);
-	virtual void eventRemoveJob(const ubigint xjref);
-	virtual void eventAddDcol(const ubigint xjref);
-	virtual void eventRemoveDcol(const ubigint xjref);
-	virtual void eventAddStmgr(const ubigint xjref);
-	virtual void eventRemoveStmgr(const ubigint xjref);
-	virtual void eventAddClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	virtual void eventChangeClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref, const string& argMask, const string& srefIxVJactype);
-	virtual void eventRemoveClstn(const ubigint xjref, const string& srefIxVCall, const string& srefIxVTarget, const string& srefIxVJobmask, const ubigint trgXjref);
-	virtual void eventAddPreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
-	virtual void eventChangePreset(const ubigint xjref, const string& srefIxVPreset, const string& arg);
-	virtual void eventRemovePreset(const ubigint xjref, const string& srefIxVPreset);
-	virtual void eventAddNode(const ubigint xnref, const string& Ip, const usmallint Port, const utinyint Opprcn);
-	virtual void eventRemoveNode(const ubigint xnref);
-	virtual ubigint eventTriggerCall(const ubigint xjref, const string& srefIxVCall, const string& argInv);
-	virtual void eventHandleCall(const ubigint eref, const ubigint xjref);
-	virtual void eventRetCall(const ubigint eref, const ubigint xjref, const string& argRet);
-	virtual void eventFinalizeCall(const ubigint eref);
-	virtual void eventHandleReqCmd(const ubigint xjref, const string& Cmd);
-	virtual ubigint eventHandleReqRegular(const ubigint xjref, const string& srefIxVDpch, const string& srefsMask, const string& Content);
-	virtual void eventReplyReqRegular(const ubigint eref, const ubigint xjref, const string& srefIxVDpch, const string& srefsMask, const string& Content);
-	virtual void eventHandleReqUpload(const ubigint xjref, const string& Filename);
-	virtual ubigint eventHandleReqDownload(const ubigint xjref);
-	virtual void eventReplyReqDownload(const ubigint eref, const ubigint xjref, const string Filename);
-	virtual void eventHandleReqRet(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);
-	virtual void eventHandleReqMethod(const ubigint xjref, const string& srefIxVFeatgroup, const string& srefIxVMethod);
-	virtual void eventHandleReqTimer(const ubigint xjref, const string& xsref);
-	virtual void eventSubmitDpch(const ubigint xjref, const string& srefIxVDpch, const string& srefsMask, const string& Content);
-	virtual void eventAddInv(const ubigint xjref, const string& srefIxVDpch, const string& Content, const ubigint xoref);
-	virtual void eventBecomeMaster(const ubigint xjref);
-	virtual void eventGiveupMaster(const ubigint xjref);
-	virtual void eventBecomeSlave(const ubigint xjref);
-	virtual void eventGiveupSlave(const ubigint xjref);
-};
-
 #endif

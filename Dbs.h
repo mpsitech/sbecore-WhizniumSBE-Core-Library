@@ -3,7 +3,7 @@
   * database access code globals (declarations)
   * \author Alexander Wirthmüller
   * \date created: 1 Jan 2009
-  * \date modified: 10 Aug 2014
+  * \date modified: 22 Apr 2020
   */
 
 #ifndef SBECORE_DBS_H
@@ -20,20 +20,20 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
-
 #include <sbecore/Engtypes.h>
 
-/**
-  * VecDbsVDbstype
-  */
-namespace VecDbsVDbstype {
-	const uint MY = 1;
-	const uint PG = 2;
-	const uint LITE = 3;
+namespace Sbecore {
+	/**
+		* VecDbsVDbstype
+		*/
+	namespace VecDbsVDbstype {
+		const uint MY = 1;
+		const uint PG = 2;
+		const uint LITE = 3;
 
-	uint getIx(const string& sref);
-	string getSref(const uint ix);
+		uint getIx(const std::string& sref);
+		std::string getSref(const uint ix);
+	};
 };
 
 #endif

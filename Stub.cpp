@@ -3,16 +3,18 @@
   * stub cache functionality (implementation)
   * \author Alexander Wirthmüller
   * \date created: 6 Oct 2015
-  * \date modified: 9 Oct 2015
+  * \date modified: 22 Apr 2020
   */
 
 #include "Stub.h"
+
+using namespace std;
 
 /******************************************************************************
  class stcchitemref_t
  ******************************************************************************/
 
-stcchitemref_t::stcchitemref_t(
+Sbecore::stcchitemref_t::stcchitemref_t(
 			const uint ixVStub
 			, const ubigint ref
 			, const uint ixVLocale
@@ -22,7 +24,7 @@ stcchitemref_t::stcchitemref_t(
 	this->ixVLocale = ixVLocale;
 };
 
-bool stcchitemref_t::operator<(
+bool Sbecore::stcchitemref_t::operator<(
 			const stcchitemref_t& comp
 		) const {
 	if (ixVStub < comp.ixVStub) return true;
@@ -40,7 +42,7 @@ bool stcchitemref_t::operator<(
  class Stcchitem
  ******************************************************************************/
 
-Stcchitem::Stcchitem(
+Sbecore::Stcchitem::Stcchitem(
 			const stcchitemref_t& stref
 			, const string& stub
 		) {
@@ -52,13 +54,13 @@ Stcchitem::Stcchitem(
  class Stcch
  ******************************************************************************/
 
-Stcch::Stcch(
+Sbecore::Stcch::Stcch(
 			const bool transact
 		) {
 	this->transact = transact;
 };
 
-Stcchitem* Stcch::addStit(
+Sbecore::Stcchitem* Sbecore::Stcch::addStit(
 			const stcchitemref_t& stref
 			, const string& stub
 		) {
@@ -79,7 +81,7 @@ Stcchitem* Stcch::addStit(
 	return stit;
 };
 
-Stcchitem* Stcch::getStitByStref(
+Sbecore::Stcchitem* Sbecore::Stcch::getStitByStref(
 			const stcchitemref_t& stref
 		) {
 	Stcchitem* stit = NULL;
@@ -92,15 +94,15 @@ Stcchitem* Stcch::getStitByStref(
 	return stit;
 };
 
-void Stcch::clear() {
-	for (auto it=nodes.begin();it!=nodes.end();it++) delete it->second;
+void Sbecore::Stcch::clear() {
+	for (auto it = nodes.begin(); it != nodes.end(); it++) delete it->second;
 	nodes.clear();
 
 	icsVStub.clear();
 	icsVStubNew.clear();
 };
 
-void Stcch::link(
+void Sbecore::Stcch::link(
 			const stcchitemref_t& strefSup
 			, const stcchitemref_t& strefSub
 		) {
@@ -118,7 +120,7 @@ void Stcch::link(
 	};
 };
 
-void Stcch::unlink(
+void Sbecore::Stcch::unlink(
 			const stcchitemref_t& strefSup
 			, const stcchitemref_t& strefSub
 		) {
@@ -136,13 +138,13 @@ void Stcch::unlink(
 	};
 };
 
-void Stcch::begin() {
+void Sbecore::Stcch::begin() {
 	if (transact) icsVStubNew.clear();
 };
 
-void Stcch::commit() {
+void Sbecore::Stcch::commit() {
 	if (transact) {
-		for (auto it=icsVStubNew.begin();it!=icsVStubNew.end();it++) icsVStub.insert(*it);
+		for (auto it = icsVStubNew.begin(); it != icsVStubNew.end(); it++) icsVStub.insert(*it);
 		icsVStubNew.clear();
 	};
 };
@@ -151,7 +153,7 @@ void Stcch::commit() {
  namespace Stub::VecVNonetype
  ******************************************************************************/
 
-uint Stub::VecVNonetype::getIx(
+uint Sbecore::Stub::VecVNonetype::getIx(
 			const string& sref
 		) {
 	string s = StrMod::lc(sref);
@@ -164,7 +166,7 @@ uint Stub::VecVNonetype::getIx(
 	return(0);
 };
 
-string Stub::VecVNonetype::getSref(
+string Sbecore::Stub::VecVNonetype::getSref(
 			const uint ix
 		) {
 	if (ix == VOID) return("void");

@@ -3,23 +3,25 @@
   * methods for XML tree input/output based on libxml2 (implementation)
   * \author Alexander Wirthmüller
   * \date created: 19 Feb 2007
-  * \date modified: 27 May 2018
+  * \date modified: 29 Apr 2020
   */
 
 #include "Xmlio.h"
+
+using namespace std;
 
 /******************************************************************************
  namespace Xmlio
  ******************************************************************************/
 
-bool Xmlio::has(
+bool Sbecore::Xmlio::has(
 			set<uint>& items
 			, const uint item
 		) {
 	return(items.find(item) != items.end());
 };
 
-bool Xmlio::hasAll(
+bool Sbecore::Xmlio::hasAll(
 			set<uint>& items
 			, const set<uint>& _items
 		) {
@@ -27,7 +29,7 @@ bool Xmlio::hasAll(
 	return true;
 };
 
-bool Xmlio::hasAny(
+bool Sbecore::Xmlio::hasAny(
 			set<uint>& items
 			, const set<uint>& _items
 		) {
@@ -35,14 +37,14 @@ bool Xmlio::hasAny(
 	return false;
 };
 
-void Xmlio::add(
+void Sbecore::Xmlio::add(
 			set<uint>& items
 			, const uint item
 		) {
 	items.insert(item);
 };
 
-string Xmlio::fromUTF8(
+string Sbecore::Xmlio::fromUTF8(
 			const string& s
 		) {
 	// convert UTF-8 to ISO-8859-1 (ISO Latin 1)
@@ -67,7 +69,7 @@ string Xmlio::fromUTF8(
 	return(retval);
 };
 
-string Xmlio::toUTF8(
+string Sbecore::Xmlio::toUTF8(
 			const string& s
 		) {
 	// convert ISO-8859-1 (ISO Latin 1) to UTF-8
@@ -92,7 +94,7 @@ string Xmlio::toUTF8(
 	return(retval);
 };
 
-void Xmlio::fromBase64(
+void Sbecore::Xmlio::fromBase64(
 			const char* inbuf
 			, unsigned int inbuflen
 			, unsigned char** outbuf
@@ -106,14 +108,14 @@ void Xmlio::fromBase64(
 	*outbuf = NULL;
 	outbuflen = 0;
 
-	for (unsigned int i=inbuflen;i>0;i--) {
+	for (unsigned int i = inbuflen; i > 0; i--) {
 		if ((inbuf[i-1] == '\n') || (inbuf[i-1] == '\r') || (inbuf[i-1] == '\t') || (inbuf[i-1] == ' ')) {
 		} else if (inbuf[i-1] == '=') outbuflen--;
 		else break;
 	};
 
 	ix = 0;
-	for (unsigned int i=0;i<inbuflen;i++) if ((inbuf[i] == '\n') || (inbuf[i] == '\r') || (inbuf[i] == '\t') || (inbuf[i] == ' ')) ix++;
+	for (unsigned int i = 0; i < inbuflen; i++) if ((inbuf[i] == '\n') || (inbuf[i] == '\r') || (inbuf[i] == '\t') || (inbuf[i] == ' ')) ix++;
 	inbuflen -= ix;
 
 	cnt = inbuflen/4;
@@ -124,7 +126,7 @@ void Xmlio::fromBase64(
 
 		ix = 0;
 
-		for (unsigned int i=0;i<cnt;i++) {
+		for (unsigned int i = 0; i < cnt; i++) {
 			while ((inbuf[ix] == '\n') || (inbuf[ix] == '\r') || (inbuf[ix] == '\t') || (inbuf[ix] == ' ')) ix++;
 			quad[0] = inbuf[ix++];
 			while ((inbuf[ix] == '\n') || (inbuf[ix] == '\r') || (inbuf[ix] == '\t') || (inbuf[ix] == ' ')) ix++;
@@ -134,7 +136,7 @@ void Xmlio::fromBase64(
 			while ((inbuf[ix] == '\n') || (inbuf[ix] == '\r') || (inbuf[ix] == '\t') || (inbuf[ix] == ' ')) ix++;
 			quad[3] = inbuf[ix++];
 
-			for (unsigned int j=0;j<4;j++) {
+			for (unsigned int j = 0; j < 4; j++) {
 				if ((quad[j] >= 'A') && (quad[j] <= 'Z')) quad[j] = quad[j] - 'A';
 				else if ((quad[j] >= 'a') && (quad[j] <= 'z')) quad[j] = quad[j] - 'a' + 26;
 				else if ((quad[j] >= '0') && (quad[j] <= '9')) quad[j] = quad[j] - '0' + 52;
@@ -172,7 +174,7 @@ void Xmlio::fromBase64(
 	};
 };
 
-void Xmlio::toBase64(
+void Sbecore::Xmlio::toBase64(
 			const unsigned char* inbuf
 			, unsigned int inbuflen
 			, char** outbuf
@@ -194,7 +196,7 @@ void Xmlio::toBase64(
 
 	ix = 0;
 
-	for (unsigned int i=0;i<cnt;i++) {
+	for (unsigned int i = 0; i < cnt; i++) {
 		trip[0] = inbuf[ix++];
 		if ((rem == 0) || ((i+1) < cnt)) {
 			trip[1] = inbuf[ix++];
@@ -218,7 +220,7 @@ void Xmlio::toBase64(
 		quad[3] = (trip[2] & 0x3f);
 */
 
-		for (unsigned int j=0;j<4;j++) {
+		for (unsigned int j = 0; j < 4; j++) {
 			if ((quad[j] >= 0) && (quad[j] <= 25)) quad[j] = quad[j] + 'A';
 			else if ((quad[j] >= 26) && (quad[j] <= 51)) quad[j] = quad[j] - 26 + 'a';
 			else if ((quad[j] >= 52) && (quad[j] <= 61)) quad[j] = quad[j] - 52 + '0';
@@ -234,22 +236,22 @@ void Xmlio::toBase64(
 	if ((rem == 1) || (rem == 2)) (*outbuf)[outbuflen-1] = '=';
 };
 
-bool Xmlio::bigendian() {
+bool Sbecore::Xmlio::bigendian() {
 	unsigned short int var = 255;
 	char* buf = ((char*) &var);
 	
 	return(buf[0] == 0);
 };
 
-void Xmlio::invertBuffer(
+void Sbecore::Xmlio::invertBuffer(
 			unsigned char* buf
 			, const unsigned int len
 			, const unsigned int varlen
 		) {
 	char c;
 
-	for (unsigned int i=0;i<len;i++) {
-		for (unsigned int j=0;j<varlen/2;j++) {
+	for (unsigned int i = 0; i < len; i++) {
+		for (unsigned int j = 0; j < varlen/2; j++) {
 			c = buf[i*varlen+j];
 			buf[i*varlen+j] = buf[i*varlen+(varlen-j-1)];
 			buf[i*varlen+(varlen-j-1)] = c;
@@ -257,7 +259,7 @@ void Xmlio::invertBuffer(
 	};
 };
 
-void Xmlio::parseFile(
+void Sbecore::Xmlio::parseFile(
 			const string& fullpath
 			, xmlDoc** doc
 			, xmlXPathContext** docctx
@@ -274,9 +276,9 @@ void Xmlio::parseFile(
 	*docctx = xmlXPathNewContext(*doc);
 };
 
-void Xmlio::parseBuffer(
+void Sbecore::Xmlio::parseBuffer(
 			char* buf
-			, int len
+			, size_t length
 			, xmlDoc** doc
 			, xmlXPathContext** docctx
 			, const bool rmvns
@@ -307,7 +309,7 @@ void Xmlio::parseBuffer(
 
 	bool match;
 
-	//cout << string(buf, len) << endl;
+	//cout << string(buf, length) << endl;
 
 	if (rmvns) {
 		// - remove header and xmlns attributes in all nodes:
@@ -318,13 +320,13 @@ void Xmlio::parseBuffer(
 		// tokenize
 		ptr = 0;
 
-		while (ptr < len) {
-			for (unsigned int i=0;i<keys.size();i++) {
+		while (ptr < length) {
+			for (unsigned int i = 0; i < keys.size(); i++) {
 				match = false;
 
-				if ((ptr+keys[i].length()) < len) {
+				if ((ptr+keys[i].length()) < length) {
 					match = true;
-					for (unsigned int j=0;j<keys[i].length();j++) {
+					for (unsigned int j = 0; j < keys[i].length(); j++) {
 						if (buf[ptr+j] != keys[i][j]) {
 							match = false;
 							break;
@@ -344,7 +346,7 @@ void Xmlio::parseBuffer(
 		};
 
 		// identify sections to skip
-		for (unsigned int i=0;i<ptrs.size();i++) {
+		for (unsigned int i = 0; i < ptrs.size(); i++) {
 			ptr = ptrs[i];
 			tkn = tkns[i];
 
@@ -374,27 +376,27 @@ void Xmlio::parseBuffer(
 		// stuff buffer
 		shift = 0;
 
-		for (unsigned int i=0;i<ptrsSkipstart.size();i++) {
+		for (unsigned int i = 0; i < ptrsSkipstart.size(); i++) {
 			ptrSkipstart = ptrsSkipstart[i];
 			ptrSkipstop = ptrsSkipstop[i];
 
 			shift += ptrSkipstop-ptrSkipstart;
 
 			if ((i+1) < ptrsSkipstart.size()) memmove(&(buf[ptrSkipstop-shift]), &(buf[ptrSkipstop]), ptrsSkipstart[i+1]-ptrSkipstop);
-			else memmove(&(buf[ptrSkipstop-shift]), &(buf[ptrSkipstop]), len-ptrSkipstop);
+			else memmove(&(buf[ptrSkipstop-shift]), &(buf[ptrSkipstop]), length-ptrSkipstop);
 		};
 
-		len = len-shift;
+		length = length - shift;
 		//cout << "reduction in length: " << shift << endl;
 	};
 
-	*doc = xmlParseMemory(buf, len);
+	*doc = xmlParseMemory(buf, length);
 	if (!*doc) throw SbeException(SbeException::XMLIO_BUFPARSE, {});
 	
 	*docctx = xmlXPathNewContext(*doc);
 };
 
-void Xmlio::closeParsed(
+void Sbecore::Xmlio::closeParsed(
 			xmlDoc* doc
 			, xmlXPathContext* docctx
 		) {
@@ -402,7 +404,7 @@ void Xmlio::closeParsed(
 	xmlFreeDoc(doc);
 };
 
-void Xmlio::startwriteFile(
+void Sbecore::Xmlio::startwriteFile(
 			const string& fullpath
 			, xmlTextWriter** wr
 		) {
@@ -411,14 +413,14 @@ void Xmlio::startwriteFile(
 	xmlTextWriterStartDocument(*wr, NULL, "UTF-8", NULL);
 };
 
-void Xmlio::closewriteFile(
+void Sbecore::Xmlio::closewriteFile(
 			xmlTextWriter* wr
 		) {
 	xmlTextWriterEndDocument(wr);
 	xmlFreeTextWriter(wr);
 };
 
-void Xmlio::startwriteBuffer(
+void Sbecore::Xmlio::startwriteBuffer(
 			xmlTextWriter** wr
 			, xmlBuffer** buf
 		) {
@@ -430,14 +432,14 @@ void Xmlio::startwriteBuffer(
 	xmlTextWriterStartDocument(*wr, NULL, "UTF-8", NULL);
 };
 
-void Xmlio::closewriteBuffer(
+void Sbecore::Xmlio::closewriteBuffer(
 			xmlTextWriter* wr
 		) {
 	xmlTextWriterEndDocument(wr);
 	xmlFreeTextWriter(wr);
 };
 
-bool Xmlio::checkXPath(
+bool Sbecore::Xmlio::checkXPath(
 			xmlXPathContext* docctx															//! documant XPath context
 			, const string& xpath																//! XPath location (absolute)
 		) {
@@ -452,7 +454,7 @@ bool Xmlio::checkXPath(
 	return(retval);
 };
 
-bool Xmlio::checkXPath(
+bool Sbecore::Xmlio::checkXPath(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, unsigned int& lineno
@@ -471,7 +473,7 @@ bool Xmlio::checkXPath(
 	return(retval);
 };
 
-bool Xmlio::checkAltXPaths(
+bool Sbecore::Xmlio::checkAltXPaths(
 			xmlXPathContext* docctx
 			, string& goodxpath
 			, const string& basexpath
@@ -522,7 +524,7 @@ bool Xmlio::checkAltXPaths(
 	return false;
 };
 
-bool Xmlio::checkUclcXPaths(
+bool Sbecore::Xmlio::checkUclcXPaths(
 			xmlXPathContext* docctx
 			, string& goodxpath
 			, const string& basexpath
@@ -550,7 +552,7 @@ bool Xmlio::checkUclcXPaths(
 	return false;
 };
 
-bool Xmlio::checkAttrUclcXpaths(
+bool Sbecore::Xmlio::checkAttrUclcXpaths(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, string& goodpath
@@ -570,7 +572,7 @@ bool Xmlio::checkAttrUclcXpaths(
 	return(checkAltXPaths(docctx, goodpath, basexpath, alt1, alt2, alt3, alt4, alt5, alt6));
 };
 
-string Xmlio::extractRoot(
+string Sbecore::Xmlio::extractRoot(
 			xmlDoc* doc
 		) {
 	string retval;
@@ -582,9 +584,9 @@ string Xmlio::extractRoot(
 	return retval;
 };
 
-// NOTE: the following methods 'bool Xmlio::extractXxx()' should only be called in case xpath is proven to be valid
+// NOTE: the following methods 'bool Sbecore::Xmlio::extractXxx()' should only be called in case xpath is proven to be valid
 
-void Xmlio::extractBool(
+void Sbecore::Xmlio::extractBool(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, bool& val
@@ -604,7 +606,7 @@ void Xmlio::extractBool(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractTinyint(
+void Sbecore::Xmlio::extractTinyint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, tinyint& val
@@ -627,7 +629,7 @@ void Xmlio::extractTinyint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUtinyint(
+void Sbecore::Xmlio::extractUtinyint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, utinyint& val
@@ -650,7 +652,7 @@ void Xmlio::extractUtinyint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractSmallint(
+void Sbecore::Xmlio::extractSmallint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, smallint& val
@@ -673,7 +675,7 @@ void Xmlio::extractSmallint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUsmallint(
+void Sbecore::Xmlio::extractUsmallint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, usmallint& val
@@ -696,7 +698,7 @@ void Xmlio::extractUsmallint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractInt(
+void Sbecore::Xmlio::extractInt(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, int& val
@@ -716,7 +718,7 @@ void Xmlio::extractInt(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUint(
+void Sbecore::Xmlio::extractUint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, uint& val
@@ -739,7 +741,7 @@ void Xmlio::extractUint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractBigint(
+void Sbecore::Xmlio::extractBigint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, bigint& val
@@ -759,7 +761,7 @@ void Xmlio::extractBigint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUbigint(
+void Sbecore::Xmlio::extractUbigint(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, ubigint& val
@@ -782,7 +784,7 @@ void Xmlio::extractUbigint(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractFloat(
+void Sbecore::Xmlio::extractFloat(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, float& val
@@ -802,7 +804,7 @@ void Xmlio::extractFloat(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractDouble(
+void Sbecore::Xmlio::extractDouble(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, double& val
@@ -822,7 +824,7 @@ void Xmlio::extractDouble(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractString(
+void Sbecore::Xmlio::extractString(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, string& val
@@ -842,7 +844,33 @@ void Xmlio::extractString(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUtinyintvec(
+void Sbecore::Xmlio::extractBoolvec(
+			xmlXPathContext* docctx
+			, const string& xpath
+			, vector<bool>& vec
+		) {
+	xmlXPathObject* obj;
+	xmlChar* nodebuf;
+
+	string str;
+
+	vec.resize(0);
+
+	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
+	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
+
+	if (nodebuf) {
+		str.assign((char*) nodebuf);
+		xmlFree(nodebuf);
+
+		vec.resize(str.length());
+		for (unsigned int i = 0; i < vec.size(); i++) vec[i] = (str[i] == '1');
+	};
+
+	xmlXPathFreeObject(obj);
+};
+
+void Sbecore::Xmlio::extractUtinyintvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<utinyint>& vec
@@ -874,7 +902,7 @@ void Xmlio::extractUtinyintvec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUsmallintvec(
+void Sbecore::Xmlio::extractUsmallintvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<usmallint>& vec
@@ -912,7 +940,7 @@ void Xmlio::extractUsmallintvec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractIntvec(
+void Sbecore::Xmlio::extractIntvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<int>& vec
@@ -950,7 +978,7 @@ void Xmlio::extractIntvec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUintvec(
+void Sbecore::Xmlio::extractUintvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<uint>& vec
@@ -988,7 +1016,7 @@ void Xmlio::extractUintvec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractUbigintvec(
+void Sbecore::Xmlio::extractUbigintvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<ubigint>& vec
@@ -1026,7 +1054,7 @@ void Xmlio::extractUbigintvec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractFloatvec(
+void Sbecore::Xmlio::extractFloatvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<float>& vec
@@ -1064,7 +1092,7 @@ void Xmlio::extractFloatvec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractFloatmat(
+void Sbecore::Xmlio::extractFloatmat(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, Floatmat& mat
@@ -1076,7 +1104,7 @@ void Xmlio::extractFloatmat(
 	if ((mat.M*mat.N) != mat.vec.size()) mat = Floatmat();
 };
 
-void Xmlio::extractDoublevec(
+void Sbecore::Xmlio::extractDoublevec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<double>& vec
@@ -1114,7 +1142,7 @@ void Xmlio::extractDoublevec(
 	xmlXPathFreeObject(obj);
 };
 
-void Xmlio::extractDoublemat(
+void Sbecore::Xmlio::extractDoublemat(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, Doublemat& mat
@@ -1126,7 +1154,7 @@ void Xmlio::extractDoublemat(
 	if ((mat.M*mat.N) != mat.vec.size()) mat = Doublemat();
 };
 
-void Xmlio::extractStringvec(
+void Sbecore::Xmlio::extractStringvec(
 			xmlXPathContext* docctx
 			, const string& xpath
 			, vector<string>& vec
@@ -1150,7 +1178,7 @@ void Xmlio::extractStringvec(
 	xmlXPathFreeObject(obj);
 };
 
-bool Xmlio::extractBoolUclc(
+bool Sbecore::Xmlio::extractBoolUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1167,7 +1195,7 @@ bool Xmlio::extractBoolUclc(
 	return false;
 };
 
-bool Xmlio::extractTinyintUclc(
+bool Sbecore::Xmlio::extractTinyintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1184,7 +1212,7 @@ bool Xmlio::extractTinyintUclc(
 	return false;
 };
 
-bool Xmlio::extractUtinyintUclc(
+bool Sbecore::Xmlio::extractUtinyintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1201,7 +1229,7 @@ bool Xmlio::extractUtinyintUclc(
 	return false;
 };
 
-bool Xmlio::extractSmallintUclc(
+bool Sbecore::Xmlio::extractSmallintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1218,7 +1246,7 @@ bool Xmlio::extractSmallintUclc(
 	return false;
 };
 
-bool Xmlio::extractUsmallintUclc(
+bool Sbecore::Xmlio::extractUsmallintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1235,7 +1263,7 @@ bool Xmlio::extractUsmallintUclc(
 	return false;
 };
 
-bool Xmlio::extractIntUclc(
+bool Sbecore::Xmlio::extractIntUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1252,7 +1280,7 @@ bool Xmlio::extractIntUclc(
 	return false;
 };
 
-bool Xmlio::extractUintUclc(
+bool Sbecore::Xmlio::extractUintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1269,7 +1297,7 @@ bool Xmlio::extractUintUclc(
 	return false;
 };
 
-bool Xmlio::extractBigintUclc(
+bool Sbecore::Xmlio::extractBigintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1286,7 +1314,7 @@ bool Xmlio::extractBigintUclc(
 	return false;
 };
 
-bool Xmlio::extractUbigintUclc(
+bool Sbecore::Xmlio::extractUbigintUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1303,7 +1331,7 @@ bool Xmlio::extractUbigintUclc(
 	return false;
 };
 
-bool Xmlio::extractFloatUclc(
+bool Sbecore::Xmlio::extractFloatUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1320,7 +1348,7 @@ bool Xmlio::extractFloatUclc(
 	return false;
 };
 
-bool Xmlio::extractDoubleUclc(
+bool Sbecore::Xmlio::extractDoubleUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1337,7 +1365,7 @@ bool Xmlio::extractDoubleUclc(
 	return false;
 };
 
-bool Xmlio::extractStringUclc(
+bool Sbecore::Xmlio::extractStringUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1354,7 +1382,24 @@ bool Xmlio::extractStringUclc(
 	return false;
 };
 
-bool Xmlio::extractUtinyintvecUclc(
+bool Sbecore::Xmlio::extractBoolvecUclc(
+			xmlXPathContext* docctx
+			, const string& basexpath
+			, const string& tag
+			, const string& shorttag
+			, vector<bool>& vec
+		) {
+	string goodpath;
+
+	if (checkAltXPaths(docctx, goodpath, basexpath, tag, shorttag, StrMod::uc(tag), StrMod::uc(shorttag), StrMod::lc(tag), StrMod::lc(shorttag))) {
+		extractBoolvec(docctx, goodpath, vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Xmlio::extractUtinyintvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1371,7 +1416,7 @@ bool Xmlio::extractUtinyintvecUclc(
 	return false;
 };
 
-bool Xmlio::extractUsmallintvecUclc(
+bool Sbecore::Xmlio::extractUsmallintvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1388,7 +1433,7 @@ bool Xmlio::extractUsmallintvecUclc(
 	return false;
 };
 
-bool Xmlio::extractIntvecUclc(
+bool Sbecore::Xmlio::extractIntvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1405,7 +1450,7 @@ bool Xmlio::extractIntvecUclc(
 	return false;
 };
 
-bool Xmlio::extractUintvecUclc(
+bool Sbecore::Xmlio::extractUintvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1422,7 +1467,7 @@ bool Xmlio::extractUintvecUclc(
 	return false;
 };
 
-bool Xmlio::extractUbigintvecUclc(
+bool Sbecore::Xmlio::extractUbigintvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1439,7 +1484,7 @@ bool Xmlio::extractUbigintvecUclc(
 	return false;
 };
 
-bool Xmlio::extractFloatvecUclc(
+bool Sbecore::Xmlio::extractFloatvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1456,7 +1501,7 @@ bool Xmlio::extractFloatvecUclc(
 	return false;
 };
 
-bool Xmlio::extractFloatmatUclc(
+bool Sbecore::Xmlio::extractFloatmatUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1473,7 +1518,7 @@ bool Xmlio::extractFloatmatUclc(
 	return false;
 };
 
-bool Xmlio::extractDoublevecUclc(
+bool Sbecore::Xmlio::extractDoublevecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1490,7 +1535,7 @@ bool Xmlio::extractDoublevecUclc(
 	return false;
 };
 
-bool Xmlio::extractDoublematUclc(
+bool Sbecore::Xmlio::extractDoublematUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1507,7 +1552,7 @@ bool Xmlio::extractDoublematUclc(
 	return false;
 };
 
-bool Xmlio::extractStringvecUclc(
+bool Sbecore::Xmlio::extractStringvecUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1524,7 +1569,7 @@ bool Xmlio::extractStringvecUclc(
 	return false;
 };
 
-bool Xmlio::extractBoolAttrUclc(
+bool Sbecore::Xmlio::extractBoolAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1543,7 +1588,7 @@ bool Xmlio::extractBoolAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractTinyintAttrUclc(
+bool Sbecore::Xmlio::extractTinyintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1562,7 +1607,7 @@ bool Xmlio::extractTinyintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUtinyintAttrUclc(
+bool Sbecore::Xmlio::extractUtinyintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1581,7 +1626,7 @@ bool Xmlio::extractUtinyintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractSmallintAttrUclc(
+bool Sbecore::Xmlio::extractSmallintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1600,7 +1645,7 @@ bool Xmlio::extractSmallintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUsmallintAttrUclc(
+bool Sbecore::Xmlio::extractUsmallintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1619,7 +1664,7 @@ bool Xmlio::extractUsmallintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractIntAttrUclc(
+bool Sbecore::Xmlio::extractIntAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1638,7 +1683,7 @@ bool Xmlio::extractIntAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUintAttrUclc(
+bool Sbecore::Xmlio::extractUintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1657,7 +1702,7 @@ bool Xmlio::extractUintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractBigintAttrUclc(
+bool Sbecore::Xmlio::extractBigintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1676,7 +1721,7 @@ bool Xmlio::extractBigintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUbigintAttrUclc(
+bool Sbecore::Xmlio::extractUbigintAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1695,7 +1740,7 @@ bool Xmlio::extractUbigintAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractFloatAttrUclc(
+bool Sbecore::Xmlio::extractFloatAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1714,7 +1759,7 @@ bool Xmlio::extractFloatAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractDoubleAttrUclc(
+bool Sbecore::Xmlio::extractDoubleAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1733,7 +1778,7 @@ bool Xmlio::extractDoubleAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractStringAttrUclc(
+bool Sbecore::Xmlio::extractStringAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1752,7 +1797,26 @@ bool Xmlio::extractStringAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUtinyintvecAttrUclc(
+bool Sbecore::Xmlio::extractBoolvecAttrUclc(
+			xmlXPathContext* docctx
+			, const string& basexpath
+			, const string& tag
+			, const string& shorttag
+			, const string& attr
+			, const string& attrval
+			, vector<bool>& vec
+		) {
+	string goodpath;
+
+	if (checkAttrUclcXpaths(docctx, basexpath, goodpath, tag, shorttag, attr, attrval)) {
+		extractBoolvec(docctx, goodpath, vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Xmlio::extractUtinyintvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1771,7 +1835,7 @@ bool Xmlio::extractUtinyintvecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUsmallintvecAttrUclc(
+bool Sbecore::Xmlio::extractUsmallintvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1790,7 +1854,7 @@ bool Xmlio::extractUsmallintvecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractIntvecAttrUclc(
+bool Sbecore::Xmlio::extractIntvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1809,7 +1873,7 @@ bool Xmlio::extractIntvecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUintvecAttrUclc(
+bool Sbecore::Xmlio::extractUintvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1828,7 +1892,7 @@ bool Xmlio::extractUintvecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractUbigintvecAttrUclc(
+bool Sbecore::Xmlio::extractUbigintvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1847,7 +1911,7 @@ bool Xmlio::extractUbigintvecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractFloatvecAttrUclc(
+bool Sbecore::Xmlio::extractFloatvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1866,7 +1930,7 @@ bool Xmlio::extractFloatvecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractFloatmatAttrUclc(
+bool Sbecore::Xmlio::extractFloatmatAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1885,7 +1949,7 @@ bool Xmlio::extractFloatmatAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractDoublevecAttrUclc(
+bool Sbecore::Xmlio::extractDoublevecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1904,7 +1968,7 @@ bool Xmlio::extractDoublevecAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractDoublematAttrUclc(
+bool Sbecore::Xmlio::extractDoublematAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1923,7 +1987,7 @@ bool Xmlio::extractDoublematAttrUclc(
 	return false;
 };
 
-bool Xmlio::extractStringvecAttrUclc(
+bool Sbecore::Xmlio::extractStringvecAttrUclc(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1942,7 +2006,7 @@ bool Xmlio::extractStringvecAttrUclc(
 	return false;
 };
 
-void Xmlio::extractList(
+void Sbecore::Xmlio::extractList(
 			xmlXPathContext* docctx
 			, const string& basexpath
 			, const string& tag
@@ -1968,7 +2032,7 @@ void Xmlio::extractList(
 	if (obj) {
 		if (obj->nodesetval) {
 			// collect indices
-			for (int i=0;i<obj->nodesetval->nodeNr;i++) {
+			for (int i = 0; i < obj->nodesetval->nodeNr; i++) {
 				node = obj->nodesetval->nodeTab[i];
 
 				if (node->type == XML_ATTRIBUTE_NODE) {
@@ -1993,7 +2057,7 @@ void Xmlio::extractList(
 	if (obj) {
 		if (obj->nodesetval) {
 			// collect nums
-			for (int i=0;i<obj->nodesetval->nodeNr;i++) {
+			for (int i = 0; i < obj->nodesetval->nodeNr; i++) {
 				node = obj->nodesetval->nodeTab[i];
 
 				if (node->type == XML_ATTRIBUTE_NODE) {
@@ -2013,8 +2077,8 @@ void Xmlio::extractList(
 	};
 
 	// order by indices ascending
-	for (unsigned int i=0;i<ics.size();i++) {
-		for (unsigned int j=i+1;j<ics.size();j++) {
+	for (unsigned int i = 0; i < ics.size(); i++) {
+		for (unsigned int j = i + 1; j < ics.size(); j++) {
 			if (ics[j] < ics[i]) {
 				ix = ics[i];
 				ics[i] = ics[j];
@@ -2029,7 +2093,7 @@ void Xmlio::extractList(
 	};
 };
 
-void Xmlio::writeBase64(
+void Sbecore::Xmlio::writeBase64(
 			xmlTextWriter* wr
 			, const char* _buf
 			, const unsigned int len
@@ -2049,7 +2113,7 @@ void Xmlio::writeBase64(
 	};
 };
 
-void Xmlio::writeBool(
+void Sbecore::Xmlio::writeBool(
 			xmlTextWriter* wr
 			, const string& tag
 			, bool val
@@ -2057,7 +2121,7 @@ void Xmlio::writeBool(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST StrMod::boolToString(val).c_str());
 };
 
-void Xmlio::writeTinyint(
+void Sbecore::Xmlio::writeTinyint(
 			xmlTextWriter* wr
 			, const string& tag
 			, tinyint val
@@ -2065,7 +2129,7 @@ void Xmlio::writeTinyint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeUtinyint(
+void Sbecore::Xmlio::writeUtinyint(
 			xmlTextWriter* wr
 			, const string& tag
 			, utinyint val
@@ -2073,7 +2137,7 @@ void Xmlio::writeUtinyint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeSmallint(
+void Sbecore::Xmlio::writeSmallint(
 			xmlTextWriter* wr
 			, const string& tag
 			, smallint val
@@ -2081,7 +2145,7 @@ void Xmlio::writeSmallint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeUsmallint(
+void Sbecore::Xmlio::writeUsmallint(
 			xmlTextWriter* wr
 			, const string& tag
 			, usmallint val
@@ -2089,7 +2153,7 @@ void Xmlio::writeUsmallint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeInt(
+void Sbecore::Xmlio::writeInt(
 			xmlTextWriter* wr
 			, const string& tag
 			, int val
@@ -2097,7 +2161,7 @@ void Xmlio::writeInt(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeUint(
+void Sbecore::Xmlio::writeUint(
 			xmlTextWriter* wr
 			, const string& tag
 			, uint val
@@ -2105,7 +2169,7 @@ void Xmlio::writeUint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeBigint(
+void Sbecore::Xmlio::writeBigint(
 			xmlTextWriter* wr
 			, const string& tag
 			, bigint val
@@ -2113,7 +2177,7 @@ void Xmlio::writeBigint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeUbigint(
+void Sbecore::Xmlio::writeUbigint(
 			xmlTextWriter* wr
 			, const string& tag
 			, ubigint val
@@ -2121,7 +2185,7 @@ void Xmlio::writeUbigint(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeFloat(
+void Sbecore::Xmlio::writeFloat(
 			xmlTextWriter* wr
 			, const string& tag
 			, float val
@@ -2129,7 +2193,7 @@ void Xmlio::writeFloat(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeDouble(
+void Sbecore::Xmlio::writeDouble(
 			xmlTextWriter* wr
 			, const string& tag
 			, double val
@@ -2137,7 +2201,7 @@ void Xmlio::writeDouble(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST to_string(val).c_str());
 };
 
-void Xmlio::writeString(
+void Sbecore::Xmlio::writeString(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& val
@@ -2145,7 +2209,19 @@ void Xmlio::writeString(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST toUTF8(val).c_str());
 };
 
-void Xmlio::writeUtinyintvec(
+void Sbecore::Xmlio::writeBoolvec(
+			xmlTextWriter* wr
+			, const string& tag
+			, const vector<bool>& vec
+		) {
+	string str(vec.size(), '0');
+
+	for (unsigned int i = 0; i < vec.size(); i++) if (vec[i]) str[i] = '1';
+
+	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST toUTF8(str).c_str());
+};
+
+void Sbecore::Xmlio::writeUtinyintvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<utinyint>& vec
@@ -2155,7 +2231,7 @@ void Xmlio::writeUtinyintvec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUsmallintvec(
+void Sbecore::Xmlio::writeUsmallintvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<usmallint>& vec
@@ -2167,7 +2243,7 @@ void Xmlio::writeUsmallintvec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeIntvec(
+void Sbecore::Xmlio::writeIntvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<int>& vec
@@ -2179,7 +2255,7 @@ void Xmlio::writeIntvec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUintvec(
+void Sbecore::Xmlio::writeUintvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<uint>& vec
@@ -2191,7 +2267,7 @@ void Xmlio::writeUintvec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUbigintvec(
+void Sbecore::Xmlio::writeUbigintvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<ubigint>& vec
@@ -2203,7 +2279,7 @@ void Xmlio::writeUbigintvec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeFloatvec(
+void Sbecore::Xmlio::writeFloatvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<float>& vec
@@ -2215,7 +2291,7 @@ void Xmlio::writeFloatvec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeFloatmat(
+void Sbecore::Xmlio::writeFloatmat(
 			xmlTextWriter* wr
 			, const string& tag
 			, const Floatmat& mat
@@ -2239,7 +2315,7 @@ void Xmlio::writeFloatmat(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeDoublevec(
+void Sbecore::Xmlio::writeDoublevec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<double>& vec
@@ -2251,7 +2327,7 @@ void Xmlio::writeDoublevec(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeDoublemat(
+void Sbecore::Xmlio::writeDoublemat(
 			xmlTextWriter* wr
 			, const string& tag
 			, const Doublemat& mat
@@ -2275,14 +2351,14 @@ void Xmlio::writeDoublemat(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeStringvec(
+void Sbecore::Xmlio::writeStringvec(
 			xmlTextWriter* wr
 			, const string& tag
 			, const vector<string>& vec
 		) {
 	string s;
 
-	for (unsigned int i=0;i<vec.size();i++) {
+	for (unsigned int i = 0; i < vec.size(); i++) {
 		if (i != 0) s = s + ";";
 		s = s + vec[i];
 	};
@@ -2290,7 +2366,7 @@ void Xmlio::writeStringvec(
 	xmlTextWriterWriteElement(wr, BAD_CAST tag.c_str(), BAD_CAST toUTF8(s).c_str());
 };
 
-void Xmlio::writeBoolAttr(
+void Sbecore::Xmlio::writeBoolAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2303,7 +2379,7 @@ void Xmlio::writeBoolAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeTinyintAttr(
+void Sbecore::Xmlio::writeTinyintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2316,7 +2392,7 @@ void Xmlio::writeTinyintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUtinyintAttr(
+void Sbecore::Xmlio::writeUtinyintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2329,7 +2405,7 @@ void Xmlio::writeUtinyintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeSmallintAttr(
+void Sbecore::Xmlio::writeSmallintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2342,7 +2418,7 @@ void Xmlio::writeSmallintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUsmallintAttr(
+void Sbecore::Xmlio::writeUsmallintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2355,7 +2431,7 @@ void Xmlio::writeUsmallintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeIntAttr(
+void Sbecore::Xmlio::writeIntAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2368,7 +2444,7 @@ void Xmlio::writeIntAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUintAttr(
+void Sbecore::Xmlio::writeUintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2381,7 +2457,7 @@ void Xmlio::writeUintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeBigintAttr(
+void Sbecore::Xmlio::writeBigintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2394,7 +2470,7 @@ void Xmlio::writeBigintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUbigintAttr(
+void Sbecore::Xmlio::writeUbigintAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2407,7 +2483,7 @@ void Xmlio::writeUbigintAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeFloatAttr(
+void Sbecore::Xmlio::writeFloatAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2420,7 +2496,7 @@ void Xmlio::writeFloatAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeDoubleAttr(
+void Sbecore::Xmlio::writeDoubleAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2433,7 +2509,7 @@ void Xmlio::writeDoubleAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeStringAttr(
+void Sbecore::Xmlio::writeStringAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2446,7 +2522,24 @@ void Xmlio::writeStringAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUtinyintvecAttr(
+void Sbecore::Xmlio::writeBoolvecAttr(
+			xmlTextWriter* wr
+			, const string& tag
+			, const string& attr
+			, const string& attrval
+			, const vector<bool>& vec
+		) {
+	string str(vec.size(), '0');
+
+	for (unsigned int i = 0; i < vec.size(); i++) if (vec[i]) str[i] = '1';
+
+	xmlTextWriterStartElement(wr, BAD_CAST tag.c_str());
+		xmlTextWriterWriteAttribute(wr, BAD_CAST attr.c_str(), BAD_CAST attrval.c_str());
+		xmlTextWriterWriteString(wr, BAD_CAST toUTF8(str).c_str());
+	xmlTextWriterEndElement(wr);
+};
+
+void Sbecore::Xmlio::writeUtinyintvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2459,7 +2552,7 @@ void Xmlio::writeUtinyintvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUsmallintvecAttr(
+void Sbecore::Xmlio::writeUsmallintvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2474,7 +2567,7 @@ void Xmlio::writeUsmallintvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeIntvecAttr(
+void Sbecore::Xmlio::writeIntvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2489,7 +2582,7 @@ void Xmlio::writeIntvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUintvecAttr(
+void Sbecore::Xmlio::writeUintvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2504,7 +2597,7 @@ void Xmlio::writeUintvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeUbigintvecAttr(
+void Sbecore::Xmlio::writeUbigintvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2519,7 +2612,7 @@ void Xmlio::writeUbigintvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeFloatvecAttr(
+void Sbecore::Xmlio::writeFloatvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2534,7 +2627,7 @@ void Xmlio::writeFloatvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeFloatmatAttr(
+void Sbecore::Xmlio::writeFloatmatAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2555,7 +2648,7 @@ void Xmlio::writeFloatmatAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeDoublevecAttr(
+void Sbecore::Xmlio::writeDoublevecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2570,7 +2663,7 @@ void Xmlio::writeDoublevecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeDoublematAttr(
+void Sbecore::Xmlio::writeDoublematAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2591,7 +2684,7 @@ void Xmlio::writeDoublematAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-void Xmlio::writeStringvecAttr(
+void Sbecore::Xmlio::writeStringvecAttr(
 			xmlTextWriter* wr
 			, const string& tag
 			, const string& attr
@@ -2600,7 +2693,7 @@ void Xmlio::writeStringvecAttr(
 		) {
 	string s;
 
-	for (unsigned int i=0;i<vec.size();i++) {
+	for (unsigned int i = 0; i < vec.size(); i++) {
 		if (i != 0) s = s + ";";
 		s = s + vec[i];
 	};
@@ -2611,7 +2704,7 @@ void Xmlio::writeStringvecAttr(
 	xmlTextWriterEndElement(wr);
 };
 
-float Xmlio::compareFloat(
+float Sbecore::Xmlio::compareFloat(
 			const float a
 			, const float b
 		) {
@@ -2627,7 +2720,7 @@ float Xmlio::compareFloat(
 	};
 };
 
-double Xmlio::compareDouble(
+double Sbecore::Xmlio::compareDouble(
 			const double a
 			, const double b
 		) {
@@ -2643,7 +2736,27 @@ double Xmlio::compareDouble(
 	};
 };
 
-bool Xmlio::compareUtinyintvec(
+bool Sbecore::Xmlio::compareBoolvec(
+			const vector<bool>& a
+			, const vector<bool>& b
+		) {
+	bool retval = false;
+
+	if (a.size() == b.size()) {
+		retval = true;
+
+		for (unsigned int i = 0; i < a.size(); i++) {
+			if (a[i] != b[i]) {
+				retval = false;
+				break;
+			};
+		};
+	};
+
+	return retval;
+};
+
+bool Sbecore::Xmlio::compareUtinyintvec(
 			const vector<utinyint>& a
 			, const vector<utinyint>& b
 		) {
@@ -2652,7 +2765,7 @@ bool Xmlio::compareUtinyintvec(
 	if (a.size() == b.size()) {
 		retval = true;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			if (a[i] != b[i]) {
 				retval = false;
 				break;
@@ -2663,7 +2776,7 @@ bool Xmlio::compareUtinyintvec(
 	return retval;
 };
 
-bool Xmlio::compareUsmallintvec(
+bool Sbecore::Xmlio::compareUsmallintvec(
 			const vector<usmallint>& a
 			, const vector<usmallint>& b
 		) {
@@ -2672,7 +2785,7 @@ bool Xmlio::compareUsmallintvec(
 	if (a.size() == b.size()) {
 		retval = true;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			if (a[i] != b[i]) {
 				retval = false;
 				break;
@@ -2683,7 +2796,7 @@ bool Xmlio::compareUsmallintvec(
 	return retval;
 };
 
-bool Xmlio::compareIntvec(
+bool Sbecore::Xmlio::compareIntvec(
 			const vector<int>& a
 			, const vector<int>& b
 		) {
@@ -2692,7 +2805,7 @@ bool Xmlio::compareIntvec(
 	if (a.size() == b.size()) {
 		retval = true;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			if (a[i] != b[i]) {
 				retval = false;
 				break;
@@ -2703,7 +2816,7 @@ bool Xmlio::compareIntvec(
 	return retval;
 };
 
-bool Xmlio::compareUintvec(
+bool Sbecore::Xmlio::compareUintvec(
 			const vector<uint>& a
 			, const vector<uint>& b
 		) {
@@ -2712,7 +2825,7 @@ bool Xmlio::compareUintvec(
 	if (a.size() == b.size()) {
 		retval = true;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			if (a[i] != b[i]) {
 				retval = false;
 				break;
@@ -2723,7 +2836,7 @@ bool Xmlio::compareUintvec(
 	return retval;
 };
 
-float Xmlio::compareFloatvec(
+float Sbecore::Xmlio::compareFloatvec(
 			const vector<float>& a
 			, const vector<float>& b
 		) {
@@ -2733,7 +2846,7 @@ float Xmlio::compareFloatvec(
 	if (a.size() == b.size()) {
 		retval = 0.0;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			delta = compareFloat(a[i], b[i]);
 			if (delta > retval) retval = delta;
 		};
@@ -2742,7 +2855,7 @@ float Xmlio::compareFloatvec(
 	return retval;
 };
 
-float Xmlio::compareFloatmat(
+float Sbecore::Xmlio::compareFloatmat(
 			const Floatmat& a
 			, const Floatmat& b
 		) {
@@ -2750,7 +2863,7 @@ float Xmlio::compareFloatmat(
 	else return 1.0e9;
 };
 
-double Xmlio::compareDoublevec(
+double Sbecore::Xmlio::compareDoublevec(
 			const vector<double>& a
 			, const vector<double>& b
 		) {
@@ -2760,7 +2873,7 @@ double Xmlio::compareDoublevec(
 	if (a.size() == b.size()) {
 		retval = 0.0;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			delta = compareDouble(a[i], b[i]);
 			if (delta > retval) retval = delta;
 		};
@@ -2769,7 +2882,7 @@ double Xmlio::compareDoublevec(
 	return retval;
 };
 
-double Xmlio::compareDoublemat(
+double Sbecore::Xmlio::compareDoublemat(
 			const Doublemat& a
 			, const Doublemat& b
 		) {
@@ -2777,7 +2890,7 @@ double Xmlio::compareDoublemat(
 	else return 1.0e9;
 };
 
-bool Xmlio::compareStringvec(
+bool Sbecore::Xmlio::compareStringvec(
 			const vector<string>& a
 			, const vector<string>& b
 		) {
@@ -2786,7 +2899,7 @@ bool Xmlio::compareStringvec(
 	if (a.size() == b.size()) {
 		retval = true;
 
-		for (unsigned int i=0;i<a.size();i++) {
+		for (unsigned int i = 0; i < a.size(); i++) {
 			if (a[i] != b[i]) {
 				retval = false;
 				break;
@@ -2797,86 +2910,86 @@ bool Xmlio::compareStringvec(
 	return retval;
 };
 
-bool Xmlio::find(
+bool Sbecore::Xmlio::find(
 			const set<uint>& mask
 			, const uint item
 		) {
 	return(mask.find(item) != mask.end());
 };
 
-void Xmlio::insert(
+void Sbecore::Xmlio::insert(
 			set<uint>& items
 			, const uint item
 		) {
 	items.insert(item);
 };
 
-void Xmlio::insert(
+void Sbecore::Xmlio::insert(
 			set<uint>& items
 			, const set<uint>& _items
 		) {
-	for (auto it=_items.begin();it!=_items.end();it++) insert(items, *it);
+	for (auto it = _items.begin(); it != _items.end(); it++) insert(items, *it);
 };
 
-void Xmlio::push_back(
+void Sbecore::Xmlio::push_back(
 			vector<uint>& ics
 			, const uint ix
 		) {
 	ics.push_back(ix);
 };
 
-void Xmlio::push_back(
+void Sbecore::Xmlio::push_back(
 			vector<uint>& ics
 			, const vector<uint>& _ics
 		) {
-	for (auto it=_ics.begin();it!=_ics.end();it++) push_back(ics, *it);
+	for (auto it = _ics.begin(); it != _ics.end(); it++) push_back(ics, *it);
 };
 
 /******************************************************************************
- class Xmlio::Block
+ class Sbecore::Xmlio::Block
  ******************************************************************************/
 
-Xmlio::Block::Block() {
+Sbecore::Xmlio::Block::Block() {
 };
 
-Xmlio::Block::~Block() {
+Sbecore::Xmlio::Block::~Block() {
 };
 
-bool Xmlio::Block::has(
+bool Sbecore::Xmlio::Block::has(
 			const uint item
 		) {
 	return(mask.find(item) != mask.end());
 };
 
-bool Xmlio::Block::hasAll(
+bool Sbecore::Xmlio::Block::hasAll(
 			const set<uint>& items
 		) {
 	for (set<uint>::iterator it=items.begin();it!=items.end();it++) if (!has(*it)) return false;
 	return true;
 };
 
-bool Xmlio::Block::hasAny(
+bool Sbecore::Xmlio::Block::hasAny(
 			const set<uint>& items
 		) {
 	for (set<uint>::iterator it=items.begin();it!=items.end();it++) if (has(*it)) return true;
 	return false;
 };
 
-void Xmlio::Block::add(
+void Sbecore::Xmlio::Block::add(
 			const uint item
 		) {
 	mask.insert(item);
 };
 
-void Xmlio::Block::clear() {
+void Sbecore::Xmlio::Block::clear() {
 	mask.clear();
 };
 
 /******************************************************************************
- class Xmlio::Feeditem
+ class Sbecore::Xmlio::Feeditem
  ******************************************************************************/
 
-Xmlio::Feeditem::Feeditem(
+Sbecore::Xmlio::Feeditem::Feeditem(
 			const bool Avail
 			, const uint ix
 			, const ubigint ref
@@ -2894,19 +3007,19 @@ Xmlio::Feeditem::Feeditem(
 	this->Title3 = Title3;
 };
 
-bool Xmlio::Feeditem::operator==(
+bool Sbecore::Xmlio::Feeditem::operator==(
 			const Feeditem& comp
 		) {
 	return ( (Avail == comp.Avail) && (ix == comp.ix) && (ref == comp.ref) && (sref == comp.sref) && (Title1 == comp.Title1) && (Title2 == comp.Title2) && (Title3 == comp.Title3) );
 };
 
-bool Xmlio::Feeditem::operator!=(
+bool Sbecore::Xmlio::Feeditem::operator!=(
 			const Feeditem& comp
 		) {
 	return(!operator==(comp));
 };
 
-void Xmlio::Feeditem::cap(
+void Sbecore::Xmlio::Feeditem::cap(
 			const bool tit1
 			, const bool tit2
 			, const bool tit3
@@ -2916,7 +3029,7 @@ void Xmlio::Feeditem::cap(
 	if (tit3) Title3 = StrMod::cap(Title3);
 };
 
-bool Xmlio::Feeditem::readXML(
+bool Sbecore::Xmlio::Feeditem::readXML(
 			xmlXPathContext* docctx
 			, string basexpath
 			, bool addbasetag
@@ -2941,7 +3054,7 @@ bool Xmlio::Feeditem::readXML(
 	return basefound;
 };
 
-void Xmlio::Feeditem::writeXML(
+void Sbecore::Xmlio::Feeditem::writeXML(
 			xmlTextWriter* wr
 			, unsigned int num
 			, string difftag
@@ -2967,16 +3080,16 @@ void Xmlio::Feeditem::writeXML(
 };
 
 /******************************************************************************
- class Xmlio::Feed
+ class Sbecore::Xmlio::Feed
  ******************************************************************************/
 
-Xmlio::Feed::Feed(
+Sbecore::Xmlio::Feed::Feed(
 			const string& tag
 		) {
 	this->tag = tag;
 };
 
-Xmlio::Feed::Feed(
+Sbecore::Xmlio::Feed::Feed(
 			const Feed& src
 		) {
 	Feeditem* item;
@@ -2984,26 +3097,26 @@ Xmlio::Feed::Feed(
 	tag = src.tag;
 
 	clear();
-	for (unsigned int i=0;i<src.size();i++) {
+	for (unsigned int i = 0; i < src.size(); i++) {
 		item = new Feeditem(*(src.nodes[i]));
 		nodes.push_back(item);
 	};
 };
 
-Xmlio::Feed::~Feed() {
+Sbecore::Xmlio::Feed::~Feed() {
 	clear();
 };
 
-void Xmlio::Feed::clear() {
-	for (unsigned int i=0;i<size();i++) delete nodes[i];
+void Sbecore::Xmlio::Feed::clear() {
+	for (unsigned int i = 0; i < size(); i++) delete nodes[i];
 	nodes.resize(0);
 };
 
-unsigned int Xmlio::Feed::size() const {
+unsigned int Sbecore::Xmlio::Feed::size() const {
 	return(nodes.size());
 };
 
-void Xmlio::Feed::appendIxSrefTitles(
+void Sbecore::Xmlio::Feed::appendIxSrefTitles(
 			const uint ix
 			, const string& sref
 			, const string& Title1
@@ -3015,7 +3128,7 @@ void Xmlio::Feed::appendIxSrefTitles(
 	nodes.push_back(item);
 };
 
-void Xmlio::Feed::appendIxRefSrefTitles(
+void Sbecore::Xmlio::Feed::appendIxRefSrefTitles(
 			const uint ix
 			, const ubigint ref
 			, const string& sref
@@ -3028,7 +3141,7 @@ void Xmlio::Feed::appendIxRefSrefTitles(
 	nodes.push_back(item);
 };
 
-void Xmlio::Feed::appendRefTitles(
+void Sbecore::Xmlio::Feed::appendRefTitles(
 			const ubigint ref
 			, const string& Title1
 			, const string& Title2
@@ -3039,7 +3152,7 @@ void Xmlio::Feed::appendRefTitles(
 	nodes.push_back(item);
 };
 
-void Xmlio::Feed::appendRefSrefTitles(
+void Sbecore::Xmlio::Feed::appendRefSrefTitles(
 			const ubigint ref
 			, const string& sref
 			, const string& Title1
@@ -3052,7 +3165,7 @@ void Xmlio::Feed::appendRefSrefTitles(
 };
 
 
-void Xmlio::Feed::appendTitles(
+void Sbecore::Xmlio::Feed::appendTitles(
 			const string& Title1
 			, const string& Title2
 			, const string& Title3
@@ -3062,12 +3175,12 @@ void Xmlio::Feed::appendTitles(
 	nodes.push_back(item);
 };
 
-Xmlio::Feeditem* Xmlio::Feed::operator[](
+Sbecore::Xmlio::Feeditem* Sbecore::Xmlio::Feed::operator[](
 			const uint ix
 		) {
 	Feeditem* retval = NULL;
 
-	for (unsigned int i=0;i<size();i++) {
+	for (unsigned int i = 0; i < size(); i++) {
 		if (nodes[i]->ix == ix) {
 			retval = nodes[i];
 			break;
@@ -3077,7 +3190,7 @@ Xmlio::Feeditem* Xmlio::Feed::operator[](
 	return retval;
 };
 
-Xmlio::Feeditem* Xmlio::Feed::getByNum(
+Sbecore::Xmlio::Feeditem* Sbecore::Xmlio::Feed::getByNum(
 			const uint num
 		) {
 	if ( (num <= size()) && (num > 0) ) {
@@ -3087,12 +3200,12 @@ Xmlio::Feeditem* Xmlio::Feed::getByNum(
 	};
 };
 
-uint Xmlio::Feed::getNumByIx(
+Sbecore::uint Sbecore::Xmlio::Feed::getNumByIx(
 			const uint ix
 		) {
 	uint retval = 0;
 
-	for (unsigned int i=0;i<size();i++) {
+	for (unsigned int i = 0; i < size(); i++) {
 		if (nodes[i]->ix == ix) {
 			retval = i + 1;
 			break;
@@ -3102,12 +3215,12 @@ uint Xmlio::Feed::getNumByIx(
 	return retval;
 };
 
-uint Xmlio::Feed::getNumByRef(
+Sbecore::uint Sbecore::Xmlio::Feed::getNumByRef(
 			const ubigint ref
 		) {
 	uint retval = 0;
 
-	for (unsigned int i=0;i<size();i++) {
+	for (unsigned int i = 0; i < size(); i++) {
 		if (nodes[i]->ref == ref) {
 			retval = i + 1;
 			break;
@@ -3117,12 +3230,12 @@ uint Xmlio::Feed::getNumByRef(
 	return retval;
 };
 
-uint Xmlio::Feed::getNumBySref(
+Sbecore::uint Sbecore::Xmlio::Feed::getNumBySref(
 			const string& sref
 		) {
 	uint retval = 0;
 
-	for (unsigned int i=0;i<size();i++) {
+	for (unsigned int i = 0; i < size(); i++) {
 		if (nodes[i]->sref == sref) {
 			retval = i + 1;
 			break;
@@ -3132,28 +3245,28 @@ uint Xmlio::Feed::getNumBySref(
 	return retval;
 };
 
-uint Xmlio::Feed::getIxByNum(
+Sbecore::uint Sbecore::Xmlio::Feed::getIxByNum(
 			const uint num
 		) {
 	Feeditem* item = getByNum(num);
 	if (item) return item->ix; else return 0;
 };
 
-ubigint Xmlio::Feed::getRefByNum(
+Sbecore::ubigint Sbecore::Xmlio::Feed::getRefByNum(
 			const uint num
 		) {
 	Feeditem* item = getByNum(num);
 	if (item) return item->ref; else return 0;
 };
 
-string Xmlio::Feed::getSrefByNum(
+string Sbecore::Xmlio::Feed::getSrefByNum(
 			const uint num
 		) {
 	Feeditem* item = getByNum(num);
 	if (item) return item->sref; else return "";
 };
 
-Xmlio::Feed& Xmlio::Feed::operator=(
+Sbecore::Xmlio::Feed& Sbecore::Xmlio::Feed::operator=(
 			const Feed& src
 		) {
 	Feeditem* item;
@@ -3162,7 +3275,7 @@ Xmlio::Feed& Xmlio::Feed::operator=(
 		tag = src.tag;
 
 		clear();
-		for (unsigned int i=0;i<src.size();i++) {
+		for (unsigned int i = 0; i < src.size(); i++) {
 			item = new Feeditem(*(src.nodes[i]));
 			nodes.push_back(item);
 		};
@@ -3171,7 +3284,7 @@ Xmlio::Feed& Xmlio::Feed::operator=(
 	return(*this);
 };
 
-bool Xmlio::Feed::operator==(
+bool Sbecore::Xmlio::Feed::operator==(
 			const Feed& comp
 		) {
 	bool retval;
@@ -3179,7 +3292,7 @@ bool Xmlio::Feed::operator==(
 	retval = (size() == comp.size());
 
 	if (retval) {
-		for (unsigned int i=0;i<size();i++) {
+		for (unsigned int i = 0; i < size(); i++) {
 			retval = ( *(nodes[i]) == *(comp.nodes[i]) );
 
 			if (!retval) break;
@@ -3189,21 +3302,21 @@ bool Xmlio::Feed::operator==(
 	return retval;
 };
 
-bool Xmlio::Feed::operator!=(
+bool Sbecore::Xmlio::Feed::operator!=(
 			const Feed& comp
 		) {
 	return(!operator==(comp));
 };
 
-void Xmlio::Feed::cap(
+void Sbecore::Xmlio::Feed::cap(
 			const bool tit1
 			, const bool tit2
 			, const bool tit3
 		) {
-	for (unsigned int i=0;i<size();i++) nodes[i]->cap(tit1, tit2, tit3);
+	for (unsigned int i = 0; i < size(); i++) nodes[i]->cap(tit1, tit2, tit3);
 };
 
-bool Xmlio::Feed::readXML(
+bool Sbecore::Xmlio::Feed::readXML(
 			xmlXPathContext* docctx
 			, string basexpath
 			, bool addbasetag
@@ -3226,7 +3339,7 @@ bool Xmlio::Feed::readXML(
 
 	clear();
 
-	for (unsigned int i=0;i<ics.size();i++) {
+	for (unsigned int i = 0; i < ics.size(); i++) {
 		item = new Feeditem();
 
 		if (shorttags[i]) s = basexpath + "/Fi[@num='" + to_string(ics[i]) + "']";
@@ -3239,7 +3352,7 @@ bool Xmlio::Feed::readXML(
 	return basefound;
 };
 
-void Xmlio::Feed::writeXML(
+void Sbecore::Xmlio::Feed::writeXML(
 			xmlTextWriter* wr
 			, string difftag
 		) {
@@ -3249,6 +3362,6 @@ void Xmlio::Feed::writeXML(
 
 	// XML output
 	xmlTextWriterStartElement(wr, BAD_CAST difftag.c_str());
-		for (unsigned int i=0;i<nodes.size();i++) if (nodes[i]->Avail) nodes[i]->writeXML(wr, i+1);
+		for (unsigned int i = 0; i < nodes.size(); i++) if (nodes[i]->Avail) nodes[i]->writeXML(wr, i+1);
 	xmlTextWriterEndElement(wr);
 };

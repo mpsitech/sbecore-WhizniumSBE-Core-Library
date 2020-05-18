@@ -3,55 +3,90 @@
   * monitoring (implementation)
   * \author Alexander Wirthmüller
   * \date created: 24 Jan 2016
-  * \date modified: 26 Jan 2016
+  * \date modified: 29 Apr 2020
   */
 
 #include "Mon.h"
+
+using namespace std;
 
 /******************************************************************************
  class xclstnref_t
  ******************************************************************************/
 
-xclstnref_t::xclstnref_t(
+Sbecore::xclstnref_t::xclstnref_t(
 			const ubigint xjref
 			, const string& srefIxVTarget
 			, const string& srefIxVCall
 			, const uint ixVJobmask
 			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 		) {
 	this->xjref = xjref;
 	this->srefIxVTarget = srefIxVTarget;
 	this->srefIxVCall = srefIxVCall;
 	this->ixVJobmask = ixVJobmask;
 	this->xjrefTrig = xjrefTrig;
+	this->arg = arg;
+	this->ixVSge = ixVSge;
 };
 
-bool xclstnref_t::operator<(
+bool Sbecore::xclstnref_t::operator<(
 			const xclstnref_t& comp
 		) const {
+	// rigged < operator to allow finding existing arg
+
 	if (xjref < comp.xjref) return true;
-	else if (xjref > comp.xjref) return false;
+	if (xjref != comp.xjref) return false;
 
 	if (srefIxVTarget < comp.srefIxVTarget) return true;
-	else if (srefIxVTarget > comp.srefIxVTarget) return false;
+	if (srefIxVTarget != comp.srefIxVTarget) return false;
 
 	if (srefIxVCall < comp.srefIxVCall) return true;
-	else if (srefIxVCall > comp.srefIxVCall) return false;
+	if (srefIxVCall != comp.srefIxVCall) return false;
 
 	if (ixVJobmask < comp.ixVJobmask) return true;
-	else if (ixVJobmask > comp.ixVJobmask) return false;
+	if (ixVJobmask != comp.ixVJobmask) return false;
 
 	if (xjrefTrig < comp.xjrefTrig) return true;
-	else if (xjrefTrig > comp.xjrefTrig) return false;
+	if (xjrefTrig != comp.xjrefTrig) return false;
 
-	return false;
+	if ((arg.mask != 0) || (comp.arg.mask != 0)) {
+		if (arg.mask < comp.arg.mask) return true;
+		if (arg.mask != comp.arg.mask) return false;
+
+		// compare individual components of arg; find functionality available for IX, REF and SREF only
+		if (arg.mask & Arg::IX) {
+			if ((arg.ix == 0) || (comp.arg.ix == 0)) return false;
+			if (arg.ix < comp.arg.ix) return true;
+			if (arg.ix != comp.arg.ix) return false;
+		};
+
+		if (arg.mask & Arg::REF) {
+			if ((arg.ref == 0) || (comp.arg.ref == 0)) return false;
+			if (arg.ref < comp.arg.ref) return true;
+			if (arg.ref != comp.arg.ref) return false;
+		};
+
+		if (arg.mask & Arg::SREF) {
+			if ((arg.sref == "") || (comp.arg.sref == "")) return false;
+			if (arg.sref < comp.arg.sref) return true;
+			if (arg.sref != comp.arg.sref) return false;
+		};
+
+		if (arg < comp.arg) return true;
+		if (arg != comp.arg) return false;
+	};
+
+	return(ixVSge < comp.ixVSge);
 };
 
 /******************************************************************************
  class xpresetref_t
  ******************************************************************************/
 
-xpresetref_t::xpresetref_t(
+Sbecore::xpresetref_t::xpresetref_t(
 			const ubigint xjref
 			, const string& srefIxVPreset
 		) {
@@ -59,14 +94,14 @@ xpresetref_t::xpresetref_t(
 	this->srefIxVPreset = srefIxVPreset;
 };
 
-bool xpresetref_t::operator<(
+bool Sbecore::xpresetref_t::operator<(
 			const xpresetref_t& comp
 		) const {
 	if (xjref < comp.xjref) return true;
-	else if (xjref > comp.xjref) return false;
+	if (xjref != comp.xjref) return false;
 
 	if (srefIxVPreset < comp.srefIxVPreset) return true;
-	else if (srefIxVPreset > comp.srefIxVPreset) return false;
+	if (srefIxVPreset != comp.srefIxVPreset) return false;
 
 	return false;
 };
@@ -75,34 +110,34 @@ bool xpresetref_t::operator<(
  class Mon
  ******************************************************************************/
 
-Mon::Mon() :
+Sbecore::Mon::Mon() :
 			mAccess("mAccess", "Mon", "Mon")
 		{
 	t0 = 0.0;
 };
 
-Mon::~Mon() {
+Sbecore::Mon::~Mon() {
 };
 
-void Mon::lockAccess(
+void Sbecore::Mon::lockAccess(
 			const string& srefObject
 			, const string& srefMember
 		) {
 	mAccess.lock(srefObject, srefMember);
 };
 
-void Mon::unlockAccess(
+void Sbecore::Mon::unlockAccess(
 			const string& srefObject
 			, const string& srefMember
 		) {
 	mAccess.unlock(srefObject, srefMember);
 };
 
-bool Mon::isRunning() {
+bool Sbecore::Mon::isRunning() {
 	return(t0 != 0.0);
 };
 
-string Mon::getSquawk(
+string Sbecore::Mon::getSquawk(
 			const string& srefLocale
 		) {
 	string s = StrMod::lc(srefLocale);
@@ -120,7 +155,7 @@ string Mon::getSquawk(
 	return s;
 };
 
-double Mon::getDt() {
+double Sbecore::Mon::getDt() {
 	timeval t;
 
 	gettimeofday(&t, NULL);
@@ -128,36 +163,37 @@ double Mon::getDt() {
 	return((1.0*t.tv_sec + 1e-6*t.tv_usec) - t0);
 };
 
-void Mon::insertJob(
+void Sbecore::Mon::insertJob(
 			const ubigint supXjref
 			, const string& srefIxVJob
 			, const ubigint xjref
-			, const bool Master
-			, const bool Slave
+			, const bool Clisrv
+			, const bool srvNotCli
 			, const bool Dcol
 			, const bool Stmgr
 		) {
 };
 
-void Mon::insertClstn(
+void Sbecore::Mon::insertClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 };
 
-void Mon::insertPreset(
+void Sbecore::Mon::insertPreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 };
 
-void Mon::insertNode(
+void Sbecore::Mon::insertNode(
 			const ubigint xnref
 			, const string& Ip
 			, const usmallint Port
@@ -165,90 +201,97 @@ void Mon::insertNode(
 		) {
 };
 
-void Mon::eventAddJob(
+void Sbecore::Mon::eventAddJob(
 			const ubigint supXjref
 			, const string& srefIxVJob
 			, const ubigint xjref
+			, const bool Clisrv
+			, const bool srvNotCli
 		) {
 };
 
-void Mon::eventRemoveJob(
+void Sbecore::Mon::eventRemoveJob(
 			const ubigint xjref
 		) {
 };
 
-void Mon::eventAddDcol(
+void Sbecore::Mon::eventAddDcol(
 			const ubigint xjref
 		) {
 };
 
-void Mon::eventRemoveDcol(
+void Sbecore::Mon::eventRemoveDcol(
 			const ubigint xjref
 		) {
 };
 
-void Mon::eventAddStmgr(
+void Sbecore::Mon::eventAddStmgr(
 			const ubigint xjref
 		) {
 };
 
-void Mon::eventRemoveStmgr(
+void Sbecore::Mon::eventRemoveStmgr(
 			const ubigint xjref
 		) {
 };
 
-void Mon::eventAddClstn(
+void Sbecore::Mon::eventAddClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 };
 
-void Mon::eventChangeClstn(
+void Sbecore::Mon::eventChangeClstnArg(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 };
 
-void Mon::eventRemoveClstn(
+void Sbecore::Mon::eventRemoveClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
+			, const string& srefIxVJactype
 		) {
 };
 
-void Mon::eventAddPreset(
+void Sbecore::Mon::eventAddPreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 };
 
-void Mon::eventChangePreset(
+void Sbecore::Mon::eventChangePreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 };
 
-void Mon::eventRemovePreset(
+void Sbecore::Mon::eventRemovePreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
 		) {
 };
 
-void Mon::eventAddNode(
+void Sbecore::Mon::eventAddNode(
 			const ubigint xnref
 			, const string& Ip
 			, const usmallint Port
@@ -256,44 +299,44 @@ void Mon::eventAddNode(
 		) {
 };
 
-void Mon::eventRemoveNode(
+void Sbecore::Mon::eventRemoveNode(
 			const ubigint xnref
 		) {
 };
 
-ubigint Mon::eventTriggerCall(
+Sbecore::ubigint Sbecore::Mon::eventTriggerCall(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const string& argInv
+			, const Arg& argInv
 		) {
 	return 0;
 };
 
-void Mon::eventHandleCall(
+void Sbecore::Mon::eventHandleCall(
 			const ubigint eref
 			, const ubigint xjref
 		) {
 };
 
-void Mon::eventRetCall(
+void Sbecore::Mon::eventRetCall(
 			const ubigint eref
 			, const ubigint xjref
-			, const string& argRet
+			, const Arg& argRet
 		) {
 };
 
-void Mon::eventFinalizeCall(
+void Sbecore::Mon::eventFinalizeCall(
 			const ubigint eref
 		) {
 };
 
-void Mon::eventHandleReqCmd(
+void Sbecore::Mon::eventHandleReqCmd(
 			const ubigint xjref
 			, const string& Cmd
 		) {
 };
 
-ubigint Mon::eventHandleReqRegular(
+Sbecore::ubigint Sbecore::Mon::eventHandleReqDpchapp(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& srefsMask
@@ -302,7 +345,7 @@ ubigint Mon::eventHandleReqRegular(
 	return 0;
 };
 
-void Mon::eventReplyReqRegular(
+void Sbecore::Mon::eventReplyReqDpchapp(
 			const ubigint eref
 			, const ubigint xjref
 			, const string& srefIxVDpch
@@ -311,26 +354,26 @@ void Mon::eventReplyReqRegular(
 		) {
 };
 
-void Mon::eventHandleReqUpload(
+void Sbecore::Mon::eventHandleReqUpload(
 			const ubigint xjref
 			, const string& Filename
 		) {
 };
 
-ubigint Mon::eventHandleReqDownload(
+Sbecore::ubigint Sbecore::Mon::eventHandleReqDownload(
 			const ubigint xjref
 		) {
 	return 0;
 };
 
-void Mon::eventReplyReqDownload(
+void Sbecore::Mon::eventReplyReqDownload(
 			const ubigint eref
 			, const ubigint xjref
 			, const string Filename
 		) {
 };
 
-void Mon::eventHandleReqRet(
+void Sbecore::Mon::eventHandleReqDpchret(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& Content
@@ -338,20 +381,20 @@ void Mon::eventHandleReqRet(
 		) {
 };
 
-void Mon::eventHandleReqMethod(
+void Sbecore::Mon::eventHandleReqMethod(
 			const ubigint xjref
 			, const string& srefIxVFeatgroup
 			, const string& srefIxVMethod
 		) {
 };
 
-void Mon::eventHandleReqTimer(
+void Sbecore::Mon::eventHandleReqTimer(
 			const ubigint xjref
 			, const string& xsref
 		) {
 };
 
-void Mon::eventSubmitDpch(
+void Sbecore::Mon::eventSubmitDpch(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& srefsMask
@@ -359,30 +402,10 @@ void Mon::eventSubmitDpch(
 		) {
 };
 
-void Mon::eventAddInv(
+void Sbecore::Mon::eventAddInv(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& Content
 			, const ubigint xoref
-		) {
-};
-
-void Mon::eventBecomeMaster(
-			const ubigint xjref
-		) {
-};
-
-void Mon::eventGiveupMaster(
-			const ubigint xjref
-		) {
-};
-
-void Mon::eventBecomeSlave(
-			const ubigint xjref
-		) {
-};
-
-void Mon::eventGiveupSlave(
-			const ubigint xjref
 		) {
 };

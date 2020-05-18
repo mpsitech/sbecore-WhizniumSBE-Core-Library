@@ -3,24 +3,27 @@
   * monitoring via API (implementation)
   * \author Alexander Wirthmüller
   * \date created: 25 Jan 2016
-  * \date modified: 26 Jan 2016
+  * \date modified: 22 Apr 2020
   */
 
 #include "ApiMon.h"
 
 #include "ApiWzem.h"
 
+using namespace std;
+using namespace Sbecore;
+
 /******************************************************************************
  class ApiMon
  ******************************************************************************/
 
-ApiMon::ApiMon() : Mon() {
+Sbecore::ApiMon::ApiMon() : Mon() {
 };
 
-ApiMon::~ApiMon() {
+Sbecore::ApiMon::~ApiMon() {
 };
 
-void ApiMon::init(
+void Sbecore::ApiMon::init(
 			const string& _Version
 			, const string& _ip
 			, const uint _port
@@ -29,45 +32,46 @@ void ApiMon::init(
 		) {
 };
 
-void ApiMon::term() {
+void Sbecore::ApiMon::term() {
 };
 
-void ApiMon::start() {
+void Sbecore::ApiMon::start() {
 };
 
-void ApiMon::stop() {
+void Sbecore::ApiMon::stop() {
 };
 
-void ApiMon::insertJob(
+void Sbecore::ApiMon::insertJob(
 			const ubigint supXjref
 			, const string& srefIxVJob
 			, const ubigint xjref
-			, const bool Master
-			, const bool Slave
+			, const bool Clisrv
+			, const bool srvNotCli
 			, const bool Dcol
 			, const bool Stmgr
 		) {
 };
 
-void ApiMon::insertClstn(
+void Sbecore::ApiMon::insertClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 };
 
-void ApiMon::insertPreset(
+void Sbecore::ApiMon::insertPreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 };
 
-void ApiMon::insertNode(
+void Sbecore::ApiMon::insertNode(
 			const ubigint xnref
 			, const string& Ip
 			, const usmallint Port
@@ -75,90 +79,97 @@ void ApiMon::insertNode(
 		) {
 };
 
-void ApiMon::eventAddJob(
+void Sbecore::ApiMon::eventAddJob(
 			const ubigint supXjref
 			, const string& srefIxVJob
 			, const ubigint xjref
+			, const bool Clisrv
+			, const bool srvNotCli
 		) {
 };
 
-void ApiMon::eventRemoveJob(
+void Sbecore::ApiMon::eventRemoveJob(
 			const ubigint xjref
 		) {
 };
 
-void ApiMon::eventAddDcol(
+void Sbecore::ApiMon::eventAddDcol(
 			const ubigint xjref
 		) {
 };
 
-void ApiMon::eventRemoveDcol(
+void Sbecore::ApiMon::eventRemoveDcol(
 			const ubigint xjref
 		) {
 };
 
-void ApiMon::eventAddStmgr(
+void Sbecore::ApiMon::eventAddStmgr(
 			const ubigint xjref
 		) {
 };
 
-void ApiMon::eventRemoveStmgr(
+void Sbecore::ApiMon::eventRemoveStmgr(
 			const ubigint xjref
 		) {
 };
 
-void ApiMon::eventAddClstn(
+void Sbecore::ApiMon::eventAddClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 };
 
-void ApiMon::eventChangeClstn(
+void Sbecore::ApiMon::eventChangeClstnArg(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 };
 
-void ApiMon::eventRemoveClstn(
+void Sbecore::ApiMon::eventRemoveClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
+			, const string& srefIxVJactype
 		) {
 };
 
-void ApiMon::eventAddPreset(
+void Sbecore::ApiMon::eventAddPreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 };
 
-void ApiMon::eventChangePreset(
+void Sbecore::ApiMon::eventChangePreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 };
 
-void ApiMon::eventRemovePreset(
+void Sbecore::ApiMon::eventRemovePreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
 		) {
 };
 
-void ApiMon::eventAddNode(
+void Sbecore::ApiMon::eventAddNode(
 			const ubigint xnref
 			, const string& Ip
 			, const usmallint Port
@@ -166,44 +177,44 @@ void ApiMon::eventAddNode(
 		) {
 };
 
-void ApiMon::eventRemoveNode(
+void Sbecore::ApiMon::eventRemoveNode(
 			const ubigint xnref
 		) {
 };
 
-ubigint ApiMon::eventTriggerCall(
+Sbecore::ubigint Sbecore::ApiMon::eventTriggerCall(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const string& argInv
+			, const Arg& argInv
 		) {
 	return 0;
 };
 
-void ApiMon::eventHandleCall(
+void Sbecore::ApiMon::eventHandleCall(
 			const ubigint eref
 			, const ubigint xjref
 		) {
 };
 
-void ApiMon::eventRetCall(
+void Sbecore::ApiMon::eventRetCall(
 			const ubigint eref
 			, const ubigint xjref
-			, const string& argRet
+			, const Arg& argRet
 		) {
 };
 
-void ApiMon::eventFinalizeCall(
+void Sbecore::ApiMon::eventFinalizeCall(
 			const ubigint eref
 		) {
 };
 
-void ApiMon::eventHandleReqCmd(
+void Sbecore::ApiMon::eventHandleReqCmd(
 			const ubigint xjref
 			, const string& Cmd
 		) {
 };
 
-ubigint ApiMon::eventHandleReqRegular(
+Sbecore::ubigint Sbecore::ApiMon::eventHandleReqDpchapp(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& srefsMask
@@ -212,7 +223,7 @@ ubigint ApiMon::eventHandleReqRegular(
 	return 0;
 };
 
-void ApiMon::eventReplyReqRegular(
+void Sbecore::ApiMon::eventReplyReqDpchapp(
 			const ubigint eref
 			, const ubigint xjref
 			, const string& srefIxVDpch
@@ -221,26 +232,26 @@ void ApiMon::eventReplyReqRegular(
 		) {
 };
 
-void ApiMon::eventHandleReqUpload(
+void Sbecore::ApiMon::eventHandleReqUpload(
 			const ubigint xjref
 			, const string& Filename
 		) {
 };
 
-ubigint ApiMon::eventHandleReqDownload(
+Sbecore::ubigint Sbecore::ApiMon::eventHandleReqDownload(
 			const ubigint xjref
 		) {
 	return 0;
 };
 
-void ApiMon::eventReplyReqDownload(
+void Sbecore::ApiMon::eventReplyReqDownload(
 			const ubigint eref
 			, const ubigint xjref
 			, const string Filename
 		) {
 };
 
-void ApiMon::eventHandleReqRet(
+void Sbecore::ApiMon::eventHandleReqDpchret(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& Content
@@ -248,20 +259,20 @@ void ApiMon::eventHandleReqRet(
 		) {
 };
 
-void ApiMon::eventHandleReqMethod(
+void Sbecore::ApiMon::eventHandleReqMethod(
 			const ubigint xjref
 			, const string& srefIxVFeatgroup
 			, const string& srefIxVMethod
 		) {
 };
 
-void ApiMon::eventHandleReqTimer(
+void Sbecore::ApiMon::eventHandleReqTimer(
 			const ubigint xjref
 			, const string& xsref
 		) {
 };
 
-void ApiMon::eventSubmitDpch(
+void Sbecore::ApiMon::eventSubmitDpch(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& srefsMask
@@ -269,30 +280,10 @@ void ApiMon::eventSubmitDpch(
 		) {
 };
 
-void ApiMon::eventAddInv(
+void Sbecore::ApiMon::eventAddInv(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& Content
 			, const ubigint xoref
-		) {
-};
-
-void ApiMon::eventBecomeMaster(
-			const ubigint xjref
-		) {
-};
-
-void ApiMon::eventGiveupMaster(
-			const ubigint xjref
-		) {
-};
-
-void ApiMon::eventBecomeSlave(
-			const ubigint xjref
-		) {
-};
-
-void ApiMon::eventGiveupSlave(
-			const ubigint xjref
 		) {
 };

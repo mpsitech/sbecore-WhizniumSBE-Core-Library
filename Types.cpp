@@ -3,16 +3,185 @@
   * common data types, string manipulation and exception (implementation)
   * \author Alexander Wirthmüller
   * \date created: 10 Aug 2014
-  * \date modified: 2 Jun 2019
+  * \date modified: 29 Apr 2020
   */
 
 #include "Types.h"
+
+using namespace std;
+
+/******************************************************************************
+ class Arg
+ ******************************************************************************/
+
+Sbecore::Arg::Arg(
+			const uint ix
+			, const ubigint ref
+			, const vector<ubigint>& refs
+			, const string& sref
+			, const int intval
+			, const double dblval
+			, const bool boolval
+			, const string& txtval
+			, const ubigint mask
+		) {
+	this->mask = mask;
+
+	if (mask & IX) this->ix = ix; else this->ix = 0;
+	if (mask & REF) this->ref = ref; else this->ref = 0;
+	if (mask & REFS) this->refs = refs; else this->refs.resize(0);
+	if (mask & SREF) this->sref = sref;
+	if (mask & INTVAL) this->intval = intval; else this->intval = 0;
+	if (mask & DBLVAL) this->dblval = dblval; else this->dblval = 0.0;
+	if (mask & BOOLVAL) this->boolval = boolval; else this->boolval = false;
+	if (mask & TXTVAL) this->txtval = txtval;
+};
+
+bool Sbecore::Arg::operator==(
+			const Arg& comp
+		) const {
+	// ignore components which are not covered by mask
+	return( (mask == comp.mask) && !((mask & IX) && (ix != comp.ix)) && !((mask & REF) && (ref != comp.ref)) && !((mask & REFS) && (refs != comp.refs))
+				&& !((mask & SREF) && (sref != comp.sref)) && !((mask & INTVAL) && (intval != comp.intval)) && !((mask & DBLVAL) && (dblval != comp.dblval))
+				&& !((mask & BOOLVAL) && (boolval != comp.boolval)) && !((mask & TXTVAL) && (txtval != comp.txtval)) );
+};
+
+bool Sbecore::Arg::operator!=(
+			const Arg& comp
+		) const {
+	return(!operator==(comp));
+};
+
+bool Sbecore::Arg::operator<(
+			const Arg& comp
+		) const {
+	if (mask < comp.mask) return true;
+	if (mask != comp.mask) return false;
+
+	// ignore components which are not covered by mask
+	if (mask & IX) {
+		if (ix < comp.ix) return true;
+		if (ix != comp.ix) return false;
+	};
+
+	if (mask & REF) {
+		if (ref < comp.ref) return true;
+		if (ref != comp.ref) return false;
+	};
+
+	if (mask & REFS) {
+		if (refs.size() < comp.refs.size()) return true;
+		if (refs.size() != comp.refs.size()) return false;
+
+		for (unsigned int i = 0; i < refs.size(); i++) {
+			if (refs[i] < comp.refs[i]) return true;
+			if (refs[i] != comp.refs[i]) return false;
+		};
+	};
+
+	if (mask & SREF) {
+		if (sref < comp.sref) return true;
+		if (sref != comp.sref) return false;
+	};
+
+	if (mask & INTVAL) {
+		if (intval < comp.intval) return true;
+		if (intval != comp.intval) return false;
+	};
+
+	if (mask & DBLVAL) {
+		if (dblval < comp.dblval) return true;
+		if (dblval != comp.dblval) return false;
+	};
+
+	if (mask & BOOLVAL) {
+		if (!boolval && comp.boolval) return true;
+		if (boolval && !comp.boolval) return false;
+	};
+
+	if (mask & TXTVAL) {
+		if (txtval < comp.txtval) return true;
+		if (txtval != comp.txtval) return false;
+	};
+
+	return false;
+};
+
+void Sbecore::Arg::clearContent() {
+	// reset members while keeping mask intact
+	ix = 0;
+	ref = 0;
+	refs.clear();
+	sref = "";
+	intval = 0;
+	dblval = 0.0;
+	boolval = false;
+	txtval = "";
+};
+
+string Sbecore::Arg::getMaskSrefs() const {
+	string retval;
+
+	vector<string> ss;
+
+	if (mask & IX) ss.push_back("ix");
+	if (mask & REF) ss.push_back("ref");
+	if (mask & REFS) ss.push_back("refs");
+	if (mask & SREF) ss.push_back("sref");
+	if (mask & INTVAL) ss.push_back("intval");
+	if (mask & DBLVAL) ss.push_back("dblval");
+	if (mask & BOOLVAL) ss.push_back("boolval");
+	if (mask & TXTVAL) ss.push_back("txtval");
+
+	for (unsigned int i = 0; i < ss.size(); i++) {
+		if (retval != "") retval += ";";
+		retval += ss[i];
+	};
+
+	return(retval);
+};
+
+string Sbecore::Arg::to_string() const {
+	string retval;
+
+	vector<string> ss;
+	string s;
+
+	if (mask & IX) ss.push_back("ix=" + std::to_string(ix));
+	if (mask & REF) ss.push_back("ref=" + std::to_string(ref));
+	if (mask & REFS) {
+		s = "refs={";
+		for (unsigned int i = 0; i < refs.size(); i++) {
+			if (i != 0) s += ",";
+			s += std::to_string(refs[i]);
+		};
+		s += "}";
+		ss.push_back(s);
+	};
+	if (mask & SREF) ss.push_back("sref='" + sref + "'");
+	if (mask & INTVAL) ss.push_back("intval=" + std::to_string(intval));
+	if (mask & BOOLVAL) {
+		if (!boolval) ss.push_back("boolval=false");
+		else ss.push_back("boolval=true");
+	};
+	if (mask & TXTVAL) ss.push_back("txtval='" + txtval + "'");
+
+	if (ss.size() == 0) retval = "(empty)";
+	else {
+		for (unsigned int i = 0; i < ss.size(); i++) {
+			if (retval != "") retval += ";";
+			retval += ss[i];
+		};
+	};
+
+	return(retval);
+};
 
 /******************************************************************************
  class Doublemat
  ******************************************************************************/
 
-Doublemat::Doublemat() {
+Sbecore::Doublemat::Doublemat() {
 	M = 0;
 	N = 0;
 };
@@ -21,7 +190,7 @@ Doublemat::Doublemat() {
  class Floatmat
  ******************************************************************************/
 
-Floatmat::Floatmat() {
+Sbecore::Floatmat::Floatmat() {
 	M = 0;
 	N = 0;
 };
@@ -30,7 +199,7 @@ Floatmat::Floatmat() {
  namespace Ftm
  ******************************************************************************/
 
-string Ftm::date(
+string Sbecore::Ftm::date(
 			const unsigned int dateval
 		) {
 	// dateval is system time / (3600*24) ; turn into '1-1-2010' (ex.)
@@ -52,7 +221,7 @@ string Ftm::date(
 #endif
 };
 
-string Ftm::time(
+string Sbecore::Ftm::time(
 			const int timeval
 		) {
 	// timeval is second count ; turn into '9:34:07' (ex.)
@@ -84,7 +253,7 @@ string Ftm::time(
 	return(retval);
 };
 
-string Ftm::timeOfDay(
+string Sbecore::Ftm::timeOfDay(
 			const unsigned int stampval
 		) {
 	// is system time ; turn into '9:34:07' (ex.)
@@ -119,7 +288,7 @@ string Ftm::timeOfDay(
 	return(retval);
 };
 
-string Ftm::stamp(
+string Sbecore::Ftm::stamp(
 			const unsigned int stampval
 		) {
 	// is system time ; turn into '1-1-2010 9:34:07' (ex.)
@@ -158,7 +327,7 @@ string Ftm::stamp(
 	return(retval);
 };
 
-string Ftm::hmsstamp(
+string Sbecore::Ftm::hmsstamp(
 			const unsigned int stampval
 		) {
 	// is system time ; turn into '1-1-2010_9h34m07s' (ex.)
@@ -197,7 +366,7 @@ string Ftm::hmsstamp(
 return(retval);
 };
 
-string Ftm::usecstamp(
+string Sbecore::Ftm::usecstamp(
 			const double stampval
 		) {
 	// is system time ; turn into '1-1-2010 9:34:07 12345' (ex.)
@@ -209,7 +378,7 @@ string Ftm::usecstamp(
 	return(Ftm::stamp(stampval) + " " + to_string(lround(usec)));
 };
 
-unsigned int Ftm::invdate(
+unsigned int Sbecore::Ftm::invdate(
 			const string& dateval
 		) {
 	// turn '1-1-2010' into system date (ex.)
@@ -265,7 +434,7 @@ unsigned int Ftm::invdate(
 	return retval;
 };
 
-int Ftm::invtime(
+int Sbecore::Ftm::invtime(
 			const string& timeval
 		) {
 	// turn '-0:34:07' into second count (ex.)
@@ -302,7 +471,7 @@ int Ftm::invtime(
 	return retval;
 };
 
-unsigned int Ftm::invstamp(
+unsigned int Sbecore::Ftm::invstamp(
 			const string& stampval
 		) {
 	// turn '1-1-2010 9:34:07' into system time (ex.)
@@ -378,10 +547,10 @@ unsigned int Ftm::invstamp(
 };
 
 /******************************************************************************
- class SbeException
+ class Sbecore::SbeException
  ******************************************************************************/
 
-SbeException::SbeException(
+Sbecore::SbeException::SbeException(
 			const uint ix
 			, const map<string,string>& vals
 		) {
@@ -389,7 +558,7 @@ SbeException::SbeException(
 	this->vals = vals;
 };
 
-string SbeException::getSref() {
+string Sbecore::SbeException::getSref() {
 	if (ix == PATHNF) return("pathnf");
 	if (ix == ENGCONN) return("engconn");
 
@@ -422,7 +591,7 @@ string SbeException::getSref() {
 	return("");
 };
 
-string SbeException::getSquawk(
+string Sbecore::SbeException::getSquawk(
 			uint (*getIx)(const string&)
 			, string (*getTitle)(const uint, const uint)
 			, const uint ixVLocale
@@ -444,7 +613,7 @@ string SbeException::getSquawk(
 
 	retval += getTitle(getIx(getSref()), ixVLocale);
 	
-	for (it=vals.begin();it!=vals.end();it++) retval = StrMod::replacePlh(retval, it->first, it->second);
+	for (it = vals.begin(); it != vals.end(); it++) retval = StrMod::replacePlh(retval, it->first, it->second);
 
 	return retval;
 };
@@ -453,7 +622,7 @@ string SbeException::getSquawk(
  namespace StrMod
  ******************************************************************************/
 
-string StrMod::cap(
+string Sbecore::StrMod::cap(
 			const string& s
 		) {
 	string retval = s;
@@ -469,7 +638,7 @@ string StrMod::cap(
 	return(retval);
 };
 
-string StrMod::uncap(
+string Sbecore::StrMod::uncap(
 			const string& s
 		) {
 	string retval = s;
@@ -485,25 +654,25 @@ string StrMod::uncap(
 	return(retval);
 };
 
-string StrMod::lc(
+string Sbecore::StrMod::lc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i=0;i<s.length();i++) retval[i] = tolower(retval[i]);
+	for (unsigned int i = 0; i<s.length(); i++) retval[i] = tolower(retval[i]);
 
 	return(retval);
 };
 
-string StrMod::uc(
+string Sbecore::StrMod::uc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i=0;i<s.length();i++) retval[i] = toupper(retval[i]);
+	for (unsigned int i = 0; i<s.length(); i++) retval[i] = toupper(retval[i]);
 
 	return(retval);
 };
 
-string StrMod::spcex(
+string Sbecore::StrMod::spcex(
 			const string& s
 		) {
 	string retval = s;
@@ -514,7 +683,7 @@ string StrMod::spcex(
 	return(retval);
 };
 
-string StrMod::esc(
+string Sbecore::StrMod::esc(
 			const string& s
 		) {
 	string retval = s;
@@ -530,16 +699,16 @@ string StrMod::esc(
 	return(retval);
 };
 
-string StrMod::dotToUsc(
+string Sbecore::StrMod::dotToUsc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i=0;i<s.length();i++) if ((retval[i] == '-') || (retval[i] == '.')) retval[i] = '_';
+	for (unsigned int i = 0; i<s.length(); i++) if ((retval[i] == '-') || (retval[i] == '.')) retval[i] = '_';
 
 	return(retval);
 };
 
-string StrMod::uscToCap(
+string Sbecore::StrMod::uscToCap(
 			const string& s
 		) {
 	string retval = s;
@@ -557,14 +726,14 @@ string StrMod::uscToCap(
 	return(retval);
 };
 
-string StrMod::boolToString(
+string Sbecore::StrMod::boolToString(
 			const bool b
 		) {
 	if (b) return("true");
 	else return("false");
 };
 
-string StrMod::timetToString(
+string Sbecore::StrMod::timetToString(
 			const time_t rawtime
 		) {
 	string retval;
@@ -631,13 +800,13 @@ string StrMod::timetToString(
 	return(retval);
 };
 
-bool StrMod::has(
+bool Sbecore::StrMod::has(
 			const vector<string>& vec
 			, const string& str
 		) {
 	bool found = false;
 
-	for (unsigned int i=0;i<vec.size();i++) {
+	for (unsigned int i = 0; i<vec.size(); i++) {
 		if (vec[i] == str) {
 			found = true;
 			break;
@@ -647,7 +816,7 @@ bool StrMod::has(
 	return found;
 };
 
-void StrMod::stringToVector(
+void Sbecore::StrMod::stringToVector(
 			const string& str
 			, vector<string>& vec
 			, const char sep
@@ -661,7 +830,7 @@ void StrMod::stringToVector(
 
 	vec.resize(0);
 
-	for (unsigned int i=0;i<len;i++) {
+	for (unsigned int i = 0; i<len; i++) {
 		c = str[i];
 
 		if (c == '&') {
@@ -678,10 +847,10 @@ void StrMod::stringToVector(
 	if (start < len) vec.push_back(str.substr(start));
 	else if (start == len) if (len != 0) if (str[start-1] == sep) vec.push_back("");
 
-	for (unsigned int i=0;i<vec.size();i++) vec[i] = spcex(vec[i]);
+	for (unsigned int i = 0; i < vec.size(); i++) vec[i] = spcex(vec[i]);
 };
 
-void StrMod::stringToDoublevec(
+void Sbecore::StrMod::stringToDoublevec(
 			const string& str
 			, vector<double>& vec
 			, const char sep
@@ -691,21 +860,21 @@ void StrMod::stringToDoublevec(
 	stringToVector(str, _vec, sep);
 
 	vec.resize(_vec.size());
-	for (unsigned int i=0;i<_vec.size();i++) vec[i] = atof(_vec[i].c_str());
+	for (unsigned int i = 0; i<_vec.size(); i++) vec[i] = atof(_vec[i].c_str());
 };
 
-void StrMod::vectorToString(
+void Sbecore::StrMod::vectorToString(
 			const vector<string>& vec
 			, string& str
 			, const char sep
 		) {
 	str = "";
-	for (unsigned int i=0;i<vec.size();i++) str += sep + vec[i];
+	for (unsigned int i = 0; i<vec.size(); i++) str += sep + vec[i];
 
 	if (str.length() > 0) str = str.substr(1);
 };
 
-bool StrMod::srefInSrefs(
+bool Sbecore::StrMod::srefInSrefs(
 			const string& srefs
 			, const string& sref
 		) {
@@ -752,7 +921,7 @@ bool StrMod::srefInSrefs(
 	return isin;
 };
 
-void StrMod::refsToVector(
+void Sbecore::StrMod::refsToVector(
 			const string& refs
 			, vector<ubigint>& vec
 		) {
@@ -762,10 +931,10 @@ void StrMod::refsToVector(
 
 	vec.resize(0);
 
-	for (unsigned int i=0;i<strvec.size();i++) vec.push_back(atoll(strvec[i].c_str()));
+	for (unsigned int i = 0; i<strvec.size(); i++) vec.push_back(atoll(strvec[i].c_str()));
 };
 
-string StrMod::replaceChar(
+string Sbecore::StrMod::replaceChar(
 			const string& s
 			, const char c
 			, const char d
@@ -777,7 +946,7 @@ string StrMod::replaceChar(
 	return retval;
 };
 
-void StrMod::findPlhs(
+void Sbecore::StrMod::findPlhs(
 			const string& s
 			, set<string>& plhs
 			, const bool add
@@ -794,7 +963,7 @@ void StrMod::findPlhs(
 	};
 };
 
-string StrMod::findFirstPlh(
+string Sbecore::StrMod::findFirstPlh(
 			const string& s
 			, size_t start
 		) {
@@ -812,7 +981,7 @@ string StrMod::findFirstPlh(
 	return retval;
 };
 
-string StrMod::replacePlh(
+string Sbecore::StrMod::replacePlh(
 			const string& s
 			, const string& plh
 			, const double val
@@ -820,7 +989,7 @@ string StrMod::replacePlh(
 	return(replacePlh(s, plh, to_string(val)));
 };
 
-string StrMod::replacePlh(
+string Sbecore::StrMod::replacePlh(
 			const string& s
 			, const string& plh
 			, const string& val
@@ -838,7 +1007,7 @@ string StrMod::replacePlh(
 	return retval;
 };
 
-unsigned int StrMod::getCharcnt(
+unsigned int Sbecore::StrMod::getCharcnt(
 			const string& s
 		) {
 	unsigned int retval = s.length();
@@ -856,7 +1025,7 @@ unsigned int StrMod::getCharcnt(
 	return retval;
 };
 
-string StrMod::readLine(
+string Sbecore::StrMod::readLine(
 			ifstream& infile
 			, char* buf
 			, const size_t buflen
@@ -880,7 +1049,7 @@ string StrMod::readLine(
  class Version
  ******************************************************************************/
 
-Version::Version(
+Sbecore::Version::Version(
 			const string& _s
 		) {
 	vector<string> ss;
@@ -891,21 +1060,21 @@ Version::Version(
 
 	StrMod::stringToVector(s, ss, '.');
 
-	for (unsigned int i=0;i<ss.size();i++) is.push_back(atoi(ss[i].c_str()));
+	for (unsigned int i = 0; i < ss.size(); i++) is.push_back(atoi(ss[i].c_str()));
 };
 
-bool Version::defined() const {
+bool Sbecore::Version::defined() const {
 	return(is.size() > 0);
 };
 
-bool Version::operator<(
+bool Sbecore::Version::operator<(
 			const Version& comp
 		) const {
 	// I. 3.0 < 3.1
 	// II. 5.1 < 5.1.7
 	// III. 5.1.7 < 5.2
 
-	for (unsigned int i=0;i<is.size();i++) {
+	for (unsigned int i = 0; i < is.size(); i++) {
 		if (i < comp.is.size()) {
 			if (is[i] < comp.is[i]) return true;
 			else if (is[i] > comp.is[i]) return false;
@@ -916,40 +1085,40 @@ bool Version::operator<(
 	else return true; // II.
 };
 
-bool Version::operator<=(
+bool Sbecore::Version::operator<=(
 			const Version& comp
 		) const {
 	return(!operator>(comp));
 };
 
-bool Version::operator>(
+bool Sbecore::Version::operator>(
 			const Version& comp
 		) const {
 	return(comp.operator<(*this));
 };
 
-bool Version::operator>=(
+bool Sbecore::Version::operator>=(
 			const Version& comp
 		) const {
 	return(!operator<(comp));
 };
 
-bool Version::operator==(
+bool Sbecore::Version::operator==(
 			const Version& comp
 		) const {
 	return(!operator!=(comp));
 };
 
-bool Version::operator!=(
+bool Sbecore::Version::operator!=(
 			const Version& comp
 		) const {
 	return(operator>(comp) || operator<(comp));
 };
 
-string Version::to_string() const {
+string Sbecore::Version::to_string() const {
 	string retval = "-";
 
-	for (unsigned int i=0;i<is.size();i++) {
+	for (unsigned int i = 0; i < is.size(); i++) {
 		if (i == 0) retval = std::to_string(is[0]);
 		else retval += "." + std::to_string(is[i]);
 	};

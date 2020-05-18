@@ -3,30 +3,33 @@
   * monitoring to database (implementation)
   * \author Alexander Wirthmüller
   * \date created: 24 Jan 2016
-  * \date modified: 18 Feb 2016
+  * \date modified: 30 Apr 2020
   */
 
 #include "DbsMon.h"
 
 #include "DbsWzem.h"
 
+using namespace std;
+using namespace Sbecore;
+
 /******************************************************************************
  class DbsMon
  ******************************************************************************/
 
-DbsMon::DbsMon() : Mon() {
+Sbecore::DbsMon::DbsMon() : Mon() {
 	dbswzem = new DbsWzem();
 
 	prd = NULL;
 };
 
-DbsMon::~DbsMon() {
+Sbecore::DbsMon::~DbsMon() {
 	if (prd) stop();
 
 	delete dbswzem;
 };
 
-void DbsMon::start(
+void Sbecore::DbsMon::start(
 			const string& Version
 			, const uint ixDbsVDbstype
 			, const string& dbspath
@@ -62,7 +65,7 @@ void DbsMon::start(
 	unlockAccess("DbsMon", "start");
 };
 
-void DbsMon::stop() {
+void Sbecore::DbsMon::stop() {
 	lockAccess("DbsMon", "stop");
 
 	if (prd) {
@@ -87,12 +90,12 @@ void DbsMon::stop() {
 	unlockAccess("DbsMon", "stop");
 };
 
-void DbsMon::insertJob(
+void Sbecore::DbsMon::insertJob(
 			const ubigint supXjref
 			, const string& srefIxVJob
 			, const ubigint xjref
-			, const bool Master
-			, const bool Slave
+			, const bool Clisrv
+			, const bool srvNotCli
 			, const bool Dcol
 			, const bool Stmgr
 		) {
@@ -106,23 +109,23 @@ void DbsMon::insertJob(
 	auto it = refsJob.find(supXjref);
 	if (it != refsJob.end()) supRefWzemMJob = it->second;
 
-	ref = dbswzem->tblwzemmjob->insertNewRec(NULL, 0.0, 0.0, prd->ref, supRefWzemMJob, srefIxVJob, xjref, Master, Slave, Dcol, Stmgr);
+	ref = dbswzem->tblwzemmjob->insertNewRec(NULL, 0.0, 0.0, prd->ref, supRefWzemMJob, srefIxVJob, xjref, Clisrv, srvNotCli, Dcol, Stmgr);
 	refsJob[xjref] = ref;
 
-	dbswzem->tblwzemjmjob->insertNewRec(NULL, ref, 0.0, 0.0, Master, Slave);
 	dbswzem->tblwzemjmjobdcol->insertNewRec(NULL, ref, 0.0, 0.0, Dcol);
 	dbswzem->tblwzemjmjobstmgr->insertNewRec(NULL, ref, 0.0, 0.0, Stmgr);
 
 	unlockAccess("DbsMon", "insertJob");
 };
 
-void DbsMon::insertClstn(
+void Sbecore::DbsMon::insertClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 	if (!prd) return;
@@ -137,22 +140,22 @@ void DbsMon::insertClstn(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		it = refsJob.find(trgXjref);
+		it = refsJob.find(xjrefTrig);
 		if (it != refsJob.end()) trgRefWzemMJob = it->second;
 
-		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVCall, VecWzemVMClstnTarget::getIx(srefIxVTarget), VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgRefWzemMJob, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
-		refsClstn[xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref)] = ref;
+		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVCall, VecWzemVMClstnTarget::getIx(srefIxVTarget), VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgRefWzemMJob, VecWzemWMClstnArgmask::getIx(arg.getMaskSrefs()), arg.to_string(), to_string(ixVSge), VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		refsClstn[xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), xjrefTrig, arg, ixVSge)] = ref;
 
-		dbswzem->tblwzemjmclstn->insertNewRec(NULL, ref, 0.0, 0.0, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		dbswzem->tblwzemjmclstn->insertNewRec(NULL, ref, 0.0, 0.0, arg.to_string());
 	};
 
 	unlockAccess("DbsMon", "insertClstn");
 };
 
-void DbsMon::insertPreset(
+void Sbecore::DbsMon::insertPreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 	if (!prd) return;
 	lockAccess("DbsMon", "insertPreset");
@@ -165,16 +168,16 @@ void DbsMon::insertPreset(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		ref = dbswzem->tblwzemmpreset->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVPreset, arg);
+		ref = dbswzem->tblwzemmpreset->insertNewRec(NULL, 0.0, 0.0, refWzemMJob, srefIxVPreset, arg.to_string());
 		refsPreset[xpresetref_t(xjref, srefIxVPreset)] = ref;
 
-		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, ref, 0.0, 0.0, arg);
+		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, ref, 0.0, 0.0, arg.to_string());
 	};
 
 	unlockAccess("DbsMon", "insertPreset");
 };
 
-void DbsMon::insertNode(
+void Sbecore::DbsMon::insertNode(
 			const ubigint xnref
 			, const string& Ip
 			, const usmallint Port
@@ -191,10 +194,12 @@ void DbsMon::insertNode(
 	unlockAccess("DbsMon", "insertNode");
 };
 
-void DbsMon::eventAddJob(
+void Sbecore::DbsMon::eventAddJob(
 			const ubigint supXjref
 			, const string& srefIxVJob
 			, const ubigint xjref
+			, const bool Clisrv
+			, const bool srvNotCli
 		) {
 	if (!prd) return;
 	lockAccess("DbsMon", "eventAddJob");
@@ -208,10 +213,9 @@ void DbsMon::eventAddJob(
 	auto it = refsJob.find(supXjref);
 	if (it != refsJob.end()) supRefWzemMJob = it->second;
 
-	ref = dbswzem->tblwzemmjob->insertNewRec(NULL, dt, 0.0, prd->ref, supRefWzemMJob, srefIxVJob, xjref, false, false, false, false);
+	ref = dbswzem->tblwzemmjob->insertNewRec(NULL, dt, 0.0, prd->ref, supRefWzemMJob, srefIxVJob, xjref, Clisrv, srvNotCli, false, false);
 	refsJob[xjref] = ref;
 
-	dbswzem->tblwzemjmjob->insertNewRec(NULL, ref, dt, 0.0, false, false);
 	dbswzem->tblwzemjmjobdcol->insertNewRec(NULL, ref, dt, 0.0, false);
 	dbswzem->tblwzemjmjobstmgr->insertNewRec(NULL, ref, dt, 0.0, false);
 
@@ -220,7 +224,7 @@ void DbsMon::eventAddJob(
 	unlockAccess("DbsMon", "eventAddJob");
 };
 
-void DbsMon::eventRemoveJob(
+void Sbecore::DbsMon::eventRemoveJob(
 			const ubigint xjref
 		) {
 	if (!prd) return;
@@ -255,7 +259,7 @@ void DbsMon::eventRemoveJob(
 	unlockAccess("DbsMon", "eventRemoveJob");
 };
 
-void DbsMon::eventAddDcol(
+void Sbecore::DbsMon::eventAddDcol(
 			const ubigint xjref
 		) {
 	if (!prd) return;
@@ -279,7 +283,7 @@ void DbsMon::eventAddDcol(
 	unlockAccess("DbsMon", "eventAddDcol");
 };
 
-void DbsMon::eventRemoveDcol(
+void Sbecore::DbsMon::eventRemoveDcol(
 			const ubigint xjref
 		) {
 	if (!prd) return;
@@ -316,7 +320,7 @@ void DbsMon::eventRemoveDcol(
 	unlockAccess("DbsMon", "eventRemoveDcol");
 };
 
-void DbsMon::eventAddStmgr(
+void Sbecore::DbsMon::eventAddStmgr(
 			const ubigint xjref
 		) {
 	if (!prd) return;
@@ -340,7 +344,7 @@ void DbsMon::eventAddStmgr(
 	unlockAccess("DbsMon", "eventAddStmgr");
 };
 
-void DbsMon::eventRemoveStmgr(
+void Sbecore::DbsMon::eventRemoveStmgr(
 			const ubigint xjref
 		) {
 	if (!prd) return;
@@ -377,13 +381,14 @@ void DbsMon::eventRemoveStmgr(
 	unlockAccess("DbsMon", "eventRemoveStmgr");
 };
 
-void DbsMon::eventAddClstn(
+void Sbecore::DbsMon::eventAddClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 	if (!prd) return;
@@ -400,13 +405,13 @@ void DbsMon::eventAddClstn(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		it = refsJob.find(trgXjref);
+		it = refsJob.find(xjrefTrig);
 		if (it != refsJob.end()) tjbRefWzemMJob = it->second;
 
-		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVCall, VecWzemVMClstnTarget::getIx(srefIxVTarget), VecWzemVMClstnJobmask::getIx(srefIxVJobmask), tjbRefWzemMJob, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
-		refsClstn[xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref)] = ref;
+		ref = dbswzem->tblwzemmclstn->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVCall, VecWzemVMClstnTarget::getIx(srefIxVTarget), VecWzemVMClstnJobmask::getIx(srefIxVJobmask), tjbRefWzemMJob, VecWzemWMClstnArgmask::getIx(arg.getMaskSrefs()), arg.to_string(), to_string(ixVSge), VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		refsClstn[xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), xjrefTrig, arg, ixVSge)] = ref;
 
-		dbswzem->tblwzemjmclstn->insertNewRec(NULL, ref, dt, 0.0, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		dbswzem->tblwzemjmclstn->insertNewRec(NULL, ref, dt, 0.0, arg.to_string());
 
 		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDCLSTN, 0, prd->ref, 0, dt, 0, ref, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 	};
@@ -414,21 +419,24 @@ void DbsMon::eventAddClstn(
 	unlockAccess("DbsMon", "eventAddClstn");
 };
 
-void DbsMon::eventChangeClstn(
+void Sbecore::DbsMon::eventChangeClstnArg(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
-			, const string& argMask
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 			, const string& srefIxVJactype
 		) {
 	if (!prd) return;
-	lockAccess("DbsMon", "eventChangeClstn");
+	lockAccess("DbsMon", "eventChangeClstnArg");
 
 	double dt = getDt();
 
 	ubigint ref;
+
+	Arg argFind;
 
 	ubigint refWzemMClstn = 0;
 	WzemMClstn* cln = NULL;
@@ -437,15 +445,18 @@ void DbsMon::eventChangeClstn(
 
 	ubigint refWzemCEvent = 0;
 
-	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref));
+	argFind = arg;
+	argFind.clearContent();
+
+	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), xjrefTrig, argFind, ixVSge));
 	if (it != refsClstn.end()) refWzemMClstn = it->second;
 
 	if (dbswzem->tblwzemmclstn->loadRecByRef(refWzemMClstn, &cln)) {
 		dbswzem->executeQuery("UPDATE TblWzemJMClstn SET x1Stopu = " + to_string(dt) + " WHERE refWzemMClstn = " + to_string(refWzemMClstn) + " AND x1Stopu = 0.0");
 
-		dbswzem->tblwzemjmclstn->insertNewRec(NULL, refWzemMClstn, dt, 0.0, argMask, VecWzemVMClstnJactype::getIx(srefIxVJactype));
+		dbswzem->tblwzemjmclstn->insertNewRec(NULL, refWzemMClstn, dt, 0.0, arg.to_string());
 
-		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGECLSTN, 0, prd->ref, 0, dt, 0, refWzemMClstn, cln->refWzemMJob, 0, 0, 0, "", "", "", "", "");
+		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGECLSTNARG, 0, prd->ref, 0, dt, 0, refWzemMClstn, cln->refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		if (dbswzem->tblwzemmevent->loadRecBySQL("SELECT * FROM TblWzemMEvent WHERE refWzemMPeriod = " + to_string(prd->ref) + " AND refWzemMClstn = " + to_string(cln->ref) + " ORDER BY startu ASC LIMIT 1", &evt)) {
 			if (evt->refWzemCEvent == 0) {
@@ -464,15 +475,18 @@ void DbsMon::eventChangeClstn(
 		delete cln;
 	};
 
-	unlockAccess("DbsMon", "eventChangeClstn");
+	unlockAccess("DbsMon", "eventChangeClstnArg");
 };
 
-void DbsMon::eventRemoveClstn(
+void Sbecore::DbsMon::eventRemoveClstn(
 			const ubigint xjref
-			, const string& srefIxVCall
 			, const string& srefIxVTarget
+			, const string& srefIxVCall
 			, const string& srefIxVJobmask
-			, const ubigint trgXjref
+			, const ubigint xjrefTrig
+			, const Arg& arg
+			, const uint ixVSge
+			, const string& srefIxVJactype
 		) {
 	if (!prd) return;
 	lockAccess("DbsMon", "eventRemoveClstn");
@@ -488,7 +502,7 @@ void DbsMon::eventRemoveClstn(
 
 	ubigint refWzemCEvent = 0;
 
-	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), trgXjref));
+	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, VecWzemVMClstnJobmask::getIx(srefIxVJobmask), xjrefTrig, arg, ixVSge));
 	if (it != refsClstn.end()) refWzemMClstn = it->second;
 
 	if (dbswzem->tblwzemmclstn->loadRecByRef(refWzemMClstn, &cln)) {
@@ -518,10 +532,10 @@ void DbsMon::eventRemoveClstn(
 	unlockAccess("DbsMon", "eventRemoveClstn");
 };
 
-void DbsMon::eventAddPreset(
+void Sbecore::DbsMon::eventAddPreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 	if (!prd) return;
 	lockAccess("DbsMon", "eventAddPreset");
@@ -536,10 +550,10 @@ void DbsMon::eventAddPreset(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		ref = dbswzem->tblwzemmpreset->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVPreset, arg);
+		ref = dbswzem->tblwzemmpreset->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVPreset, arg.to_string());
 		refsPreset[xpresetref_t(xjref, srefIxVPreset)] = ref;
 
-		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, ref, dt, 0.0, arg);
+		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, ref, dt, 0.0, arg.to_string());
 
 		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::ADDPRESET, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, ref, "", "", "", "", "");
 	};
@@ -548,10 +562,10 @@ void DbsMon::eventAddPreset(
 };
 
 
-void DbsMon::eventChangePreset(
+void Sbecore::DbsMon::eventChangePreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
-			, const string& arg
+			, const Arg& arg
 		) {
 	if (!prd) return;
 	lockAccess("DbsMon", "eventChangePreset");
@@ -573,7 +587,7 @@ void DbsMon::eventChangePreset(
 	if (dbswzem->tblwzemmpreset->loadRecByRef(refWzemMPreset, &pst)) {
 		dbswzem->executeQuery("UPDATE TblWzemJMPresetArg SET x1Stopu = " + to_string(dt) + " WHERE refWzemMPreset = " + to_string(refWzemMPreset) + " AND x1Stopu = 0.0");
 
-		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, refWzemMPreset, dt, 0.0, arg);
+		dbswzem->tblwzemjmpresetarg->insertNewRec(NULL, refWzemMPreset, dt, 0.0, arg.to_string());
 
 		ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::CHANGEPRESET, 0, prd->ref, 0, dt, 0, 0, pst->refWzemMJob, 0, 0, refWzemMPreset, "", "", "", "", "");
 
@@ -597,7 +611,7 @@ void DbsMon::eventChangePreset(
 	unlockAccess("DbsMon", "eventChangePreset");
 };
 
-void DbsMon::eventRemovePreset(
+void Sbecore::DbsMon::eventRemovePreset(
 			const ubigint xjref
 			, const string& srefIxVPreset
 		) {
@@ -645,7 +659,7 @@ void DbsMon::eventRemovePreset(
 	unlockAccess("DbsMon", "eventRemovePreset");
 };
 
-void DbsMon::eventAddNode(
+void Sbecore::DbsMon::eventAddNode(
 			const ubigint xnref
 			, const string& Ip
 			, const usmallint Port
@@ -666,7 +680,7 @@ void DbsMon::eventAddNode(
 	unlockAccess("DbsMon", "eventAddNode");
 };
 
-void DbsMon::eventRemoveNode(
+void Sbecore::DbsMon::eventRemoveNode(
 			const ubigint xnref
 		) {
 	if (!prd) return;
@@ -701,10 +715,10 @@ void DbsMon::eventRemoveNode(
 	unlockAccess("DbsMon", "eventRemoveNode");
 };
 
-ubigint DbsMon::eventTriggerCall(
+Sbecore::ubigint Sbecore::DbsMon::eventTriggerCall(
 			const ubigint xjref
 			, const string& srefIxVCall
-			, const string& argInv
+			, const Arg& argInv
 		) {
 	if (!prd) return 0;
 	lockAccess("DbsMon", "eventTriggerCall");
@@ -721,7 +735,7 @@ ubigint DbsMon::eventTriggerCall(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		ref = dbswzem->tblwzemmcall->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVCall, argInv, "");
+		ref = dbswzem->tblwzemmcall->insertNewRec(NULL, dt, 0.0, refWzemMJob, srefIxVCall, argInv.to_string(), "");
 
 		dbswzem->tblwzemjmcallargret->insertNewRec(NULL, ref, dt, 0.0, "");
 
@@ -734,7 +748,7 @@ ubigint DbsMon::eventTriggerCall(
 	return eref;
 };
 
-void DbsMon::eventHandleCall(
+void Sbecore::DbsMon::eventHandleCall(
 			const ubigint eref
 			, const ubigint xjref
 		) {
@@ -779,10 +793,10 @@ void DbsMon::eventHandleCall(
 	unlockAccess("DbsMon", "eventHandleCall");
 };
 
-void DbsMon::eventRetCall(
+void Sbecore::DbsMon::eventRetCall(
 			const ubigint eref
 			, const ubigint xjref
-			, const string& argRet
+			, const Arg& argRet
 		) {
 	if (!prd) return;
 	lockAccess("DbsMon", "eventRetCall");
@@ -808,7 +822,7 @@ void DbsMon::eventRetCall(
 		if (dbswzem->tblwzemmevent->loadRecByRef(refWzemMEvent, &evt)) {
 			dbswzem->executeQuery("UPDATE TblWzemJMCallArgRet SET x1Stopu = " + to_string(dt) + " WHERE refWzemMCall = " + to_string(evt->refWzemMCall) + " AND x1Stopu = 0.0");
 
-			dbswzem->tblwzemjmcallargret->insertNewRec(NULL, evt->refWzemMCall, dt, 0.0, argRet);
+			dbswzem->tblwzemjmcallargret->insertNewRec(NULL, evt->refWzemMCall, dt, 0.0, argRet.to_string());
 
 			ref = dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::RETCALL, 0, prd->ref, 0, dt, evt->refWzemMCall, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
@@ -830,7 +844,7 @@ void DbsMon::eventRetCall(
 };
 
 
-void DbsMon::eventFinalizeCall(
+void Sbecore::DbsMon::eventFinalizeCall(
 			const ubigint eref
 		) {
 	if (!prd) return;
@@ -877,7 +891,7 @@ void DbsMon::eventFinalizeCall(
 	unlockAccess("DbsMon", "eventFinalizeCall");
 };
 
-void DbsMon::eventHandleReqCmd(
+void Sbecore::DbsMon::eventHandleReqCmd(
 			const ubigint xjref
 			, const string& Cmd
 		) {
@@ -896,14 +910,14 @@ void DbsMon::eventHandleReqCmd(
 	unlockAccess("DbsMon", "eventHandleReqCmd");
 };
 
-ubigint DbsMon::eventHandleReqRegular(
+Sbecore::ubigint Sbecore::DbsMon::eventHandleReqDpchapp(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& srefsMask
 			, const string& Content
 		) {
 	if (!prd) return 0;
-	lockAccess("DbsMon", "eventHandleReqRegular");
+	lockAccess("DbsMon", "eventHandleReqDpchapp");
 
 	double dt = getDt();
 
@@ -918,7 +932,7 @@ ubigint DbsMon::eventHandleReqRegular(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQREGULAR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQDPCHAPP, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		eref = evt->ref;
 		refsEvent[eref] = eref;
@@ -931,12 +945,12 @@ ubigint DbsMon::eventHandleReqRegular(
 		delete evt;
 	};
 
-	unlockAccess("DbsMon", "eventHandleReqRegular");
+	unlockAccess("DbsMon", "eventHandleReqDpchapp");
 
 	return eref;
 };
 
-void DbsMon::eventReplyReqRegular(
+void Sbecore::DbsMon::eventReplyReqDpchapp(
 			const ubigint eref
 			, const ubigint xjref
 			, const string& srefIxVDpch
@@ -944,7 +958,7 @@ void DbsMon::eventReplyReqRegular(
 			, const string& Content
 		) {
 	if (!prd) return;
-	lockAccess("DbsMon", "eventReplyReqRegular");
+	lockAccess("DbsMon", "eventReplyReqDpchapp");
 
 	double dt = getDt();
 
@@ -960,7 +974,7 @@ void DbsMon::eventReplyReqRegular(
 	if (it != refsJob.end()) refWzemMJob = it->second;
 
 	if (refWzemMJob != 0) {
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::REPLYREQREGULAR, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::REPLYREQDPCHAPP, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
 
 		ref = dbswzem->tblwzemmdpch->insertNewRec(NULL, evt->ref, srefIxVDpch, srefsMask, Content);
 		evt->refWzemMDpch = ref;
@@ -980,10 +994,10 @@ void DbsMon::eventReplyReqRegular(
 		delete evt;
 	};
 
-	unlockAccess("DbsMon", "eventReplyReqRegular");
+	unlockAccess("DbsMon", "eventReplyReqDpchapp");
 };
 
-void DbsMon::eventHandleReqUpload(
+void Sbecore::DbsMon::eventHandleReqUpload(
 			const ubigint xjref
 			, const string& Filename
 		) {
@@ -1002,7 +1016,7 @@ void DbsMon::eventHandleReqUpload(
 	unlockAccess("DbsMon", "eventHandleReqUpload");
 };
 
-ubigint DbsMon::eventHandleReqDownload(
+Sbecore::ubigint Sbecore::DbsMon::eventHandleReqDownload(
 			const ubigint xjref
 		) {
 	if (!prd) return 0;
@@ -1031,7 +1045,7 @@ ubigint DbsMon::eventHandleReqDownload(
 	return eref;
 };
 
-void DbsMon::eventReplyReqDownload(
+void Sbecore::DbsMon::eventReplyReqDownload(
 			const ubigint eref
 			, const ubigint xjref
 			, const string Filename
@@ -1067,14 +1081,14 @@ void DbsMon::eventReplyReqDownload(
 	unlockAccess("DbsMon", "eventReplyReqDownload");
 };
 
-void DbsMon::eventHandleReqRet(
+void Sbecore::DbsMon::eventHandleReqDpchret(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& Content
 			, const ubigint xoref
 		) {
 	if (!prd) return;
-	lockAccess("DbsMon", "eventHandleReqRet");
+	lockAccess("DbsMon", "eventHandleReqDpchret");
 
 	double dt = getDt();
 
@@ -1093,7 +1107,7 @@ void DbsMon::eventHandleReqRet(
 	if (dbswzem->tblwzemmop->loadRecByRef(refWzemMOp, &opx)) {
 		opx->x1Stopu = dt;
 
-		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQRET, 0, prd->ref, 0, dt, 0, 0, opx->refWzemMJob, 0, refWzemMOp, 0, "", "", "", "", "");
+		dbswzem->tblwzemmevent->insertNewRec(&evt, VecWzemVMEventBasetype::HANDLEREQDPCHRET, 0, prd->ref, 0, dt, 0, 0, opx->refWzemMJob, 0, refWzemMOp, 0, "", "", "", "", "");
 
 		ref = dbswzem->tblwzemmdpch->insertNewRec(NULL, evt->ref, srefIxVDpch, "all", Content);
 		evt->refWzemMDpch = ref;
@@ -1112,10 +1126,10 @@ void DbsMon::eventHandleReqRet(
 		delete opx;
 	};
 
-	unlockAccess("DbsMon", "eventHandleReqRet");
+	unlockAccess("DbsMon", "eventHandleReqDpchret");
 };
 
-void DbsMon::eventHandleReqMethod(
+void Sbecore::DbsMon::eventHandleReqMethod(
 			const ubigint xjref
 			, const string& srefIxVFeatgroup
 			, const string& srefIxVMethod
@@ -1135,7 +1149,7 @@ void DbsMon::eventHandleReqMethod(
 	unlockAccess("DbsMon", "eventHandleReqMethod");
 };
 
-void DbsMon::eventHandleReqTimer(
+void Sbecore::DbsMon::eventHandleReqTimer(
 			const ubigint xjref
 			, const string& xsref
 		) {
@@ -1154,7 +1168,7 @@ void DbsMon::eventHandleReqTimer(
 	unlockAccess("DbsMon", "eventHandleReqTimer");
 };
 
-void DbsMon::eventSubmitDpch(
+void Sbecore::DbsMon::eventSubmitDpch(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& srefsMask
@@ -1188,7 +1202,7 @@ void DbsMon::eventSubmitDpch(
 	unlockAccess("DbsMon", "eventSubmitDpch");
 };
 
-void DbsMon::eventAddInv(
+void Sbecore::DbsMon::eventAddInv(
 			const ubigint xjref
 			, const string& srefIxVDpch
 			, const string& Content
@@ -1223,100 +1237,4 @@ void DbsMon::eventAddInv(
 	};
 
 	unlockAccess("DbsMon", "eventAddInv");
-};
-
-void DbsMon::eventBecomeMaster(
-			const ubigint xjref
-		) {
-	if (!prd) return;
-	lockAccess("DbsMon", "eventBecomeMaster");
-
-	double dt = getDt();
-
-	ubigint refWzemMJob = 0;
-
-	auto it = refsJob.find(xjref);
-	if (it != refsJob.end()) refWzemMJob = it->second;
-
-	if (refWzemMJob != 0) {
-		dbswzem->executeQuery("UPDATE TblWzemJMJob SET x1Stopu = " + to_string(dt) + " WHERE refWzemMJob = " + to_string(refWzemMJob) + " AND x1Stopu = 0.0");
-
-		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, true, false);
-
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::BECOMEMASTER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
-	};
-
-	unlockAccess("DbsMon", "eventBecomeMaster");
-};
-
-void DbsMon::eventGiveupMaster(
-			const ubigint xjref
-		) {
-	if (!prd) return;
-	lockAccess("DbsMon", "eventGiveupMaster");
-
-	double dt = getDt();
-
-	ubigint refWzemMJob = 0;
-
-	auto it = refsJob.find(xjref);
-	if (it != refsJob.end()) refWzemMJob = it->second;
-
-	if (refWzemMJob != 0) {
-		dbswzem->executeQuery("UPDATE TblWzemJMJob SET x1Stopu = " + to_string(dt) + " WHERE refWzemMJob = " + to_string(refWzemMJob) + " AND x1Stopu = 0.0");
-
-		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, false, false);
-
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::GIVEUPMASTER, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
-	};
-
-	unlockAccess("DbsMon", "eventGiveupMaster");
-};
-
-void DbsMon::eventBecomeSlave(
-			const ubigint xjref
-		) {
-	if (!prd) return;
-	lockAccess("DbsMon", "eventBecomeSlave");
-
-	double dt = getDt();
-
-	ubigint refWzemMJob = 0;
-
-	auto it = refsJob.find(xjref);
-	if (it != refsJob.end()) refWzemMJob = it->second;
-
-	if (refWzemMJob != 0) {
-		dbswzem->executeQuery("UPDATE TblWzemJMJob SET x1Stopu = " + to_string(dt) + " WHERE refWzemMJob = " + to_string(refWzemMJob) + " AND x1Stopu = 0.0");
-
-		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, false, true);
-
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::BECOMESLAVE, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
-	};
-
-	unlockAccess("DbsMon", "eventBecomeSlave");
-};
-
-void DbsMon::eventGiveupSlave(
-			const ubigint xjref
-		) {
-	if (!prd) return;
-
-	lockAccess("DbsMon", "eventGiveupSlave");
-	double dt = getDt();
-
-	ubigint refWzemMJob = 0;
-
-	auto it = refsJob.find(xjref);
-	if (it != refsJob.end()) refWzemMJob = it->second;
-
-	if (refWzemMJob != 0) {
-		dbswzem->executeQuery("UPDATE TblWzemJMJob SET x1Stopu = " + to_string(dt) + " WHERE refWzemMJob = " + to_string(refWzemMJob) + " AND x1Stopu = 0.0");
-
-		dbswzem->tblwzemjmjob->insertNewRec(NULL, refWzemMJob, dt, 0.0, false, true);
-
-		dbswzem->tblwzemmevent->insertNewRec(NULL, VecWzemVMEventBasetype::GIVEUPSLAVE, 0, prd->ref, 0, dt, 0, 0, refWzemMJob, 0, 0, 0, "", "", "", "", "");
-	};
-
-	unlockAccess("DbsMon", "eventGiveupSlave");
 };

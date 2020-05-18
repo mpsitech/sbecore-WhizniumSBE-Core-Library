@@ -8,11 +8,13 @@
 
 #include "Dbs.h"
 
+using namespace std;
+
 /******************************************************************************
  namespace VecDbsVDbstype
  ******************************************************************************/
 
-uint VecDbsVDbstype::getIx(
+uint Sbecore::VecDbsVDbstype::getIx(
 			const string& sref
 		) {
 	if (sref == "my") return MY;
@@ -22,7 +24,7 @@ uint VecDbsVDbstype::getIx(
 	return(0);
 };
 
-string VecDbsVDbstype::getSref(
+string Sbecore::VecDbsVDbstype::getSref(
 			const uint ix
 		) {
 	if (ix == MY) return("my");

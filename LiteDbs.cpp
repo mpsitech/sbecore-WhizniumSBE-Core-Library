@@ -3,32 +3,34 @@
   * database access code globals for SQLite (implementation)
   * \author Alexander Wirthmüller
   * \date created: 1 Jan 2009
-  * \date modified: 10 Aug 2014
+  * \date modified: 22 Apr 2020
   */
 
 #include "LiteDbs.h"
+
+using namespace std;
 
 /******************************************************************************
  class LiteTable
  ******************************************************************************/
 
-LiteTable::LiteTable() {
+Sbecore::LiteTable::LiteTable() {
 };
 
-LiteTable::~LiteTable() {
+Sbecore::LiteTable::~LiteTable() {
 };
 
-void LiteTable::init(
+void Sbecore::LiteTable::init(
 			sqlite3* _dbs
 		) {
 	dbs = _dbs;
 	initStatements();
 };
 
-void LiteTable::initStatements() {
+void Sbecore::LiteTable::initStatements() {
 };
 
-sqlite3_stmt* LiteTable::createStatement(
+sqlite3_stmt* Sbecore::LiteTable::createStatement(
 			const string stmtSQL
 		) {
 	int res;
@@ -40,11 +42,11 @@ sqlite3_stmt* LiteTable::createStatement(
 	return(result);
 };
 
-void LiteTable::begin() {
+void Sbecore::LiteTable::begin() {
 	if (sqlite3_exec(dbs, "BEGIN", NULL, NULL, NULL) != SQLITE_OK) throw SbeException(SbeException::DBS_QUERY, {{"dbms","LiteTable::begin()"}, {"sql","BEGIN"}});
 };
 
-bool LiteTable::commit() {
+bool Sbecore::LiteTable::commit() {
 	if (sqlite3_exec(dbs, "COMMIT", NULL, NULL, NULL) != SQLITE_OK) {
 		rollback();
 		return false;
@@ -53,32 +55,11 @@ bool LiteTable::commit() {
 	return true;
 };
 
-void LiteTable::rollback() {
+void Sbecore::LiteTable::rollback() {
 	if (sqlite3_exec(dbs, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) throw SbeException(SbeException::DBS_QUERY, {{"dbms","LiteTable::rollback()"}, {"sql","ROLLBACK"}});
 };
 
-bool LiteTable::loadUbigintByStmt(
-			sqlite3_stmt* stmt
-			, ubigint& val
-		) {
-	int res;
-
-	bool retval = false;
-
-	res = sqlite3_step(stmt);
-	if (res == SQLITE_ROW) {
-		val = sqlite3_column_int64(stmt, 0);
-
-		res = sqlite3_step(stmt);
-		if (res == SQLITE_DONE) retval = true;
-	};
-
-	sqlite3_reset(stmt);
-
-	return retval;
-};
-
-bool LiteTable::loadUintByStmt(
+bool Sbecore::LiteTable::loadUintByStmt(
 			sqlite3_stmt* stmt
 			, uint& val
 		) {
@@ -99,7 +80,7 @@ bool LiteTable::loadUintByStmt(
 	return retval;
 };
 
-bool LiteTable::loadStringByStmt(
+bool Sbecore::LiteTable::loadStringByStmt(
 			sqlite3_stmt* stmt
 			, string& val
 		) {
@@ -120,7 +101,7 @@ bool LiteTable::loadStringByStmt(
 	return retval;
 };
 
-bool LiteTable::loadRefByStmt(
+bool Sbecore::LiteTable::loadRefByStmt(
 			sqlite3_stmt* stmt
 			, ubigint& ref
 		) {
@@ -141,7 +122,7 @@ bool LiteTable::loadRefByStmt(
 	return retval;
 };
 
-ubigint LiteTable::loadRefsByStmt(
+Sbecore::ubigint Sbecore::LiteTable::loadRefsByStmt(
 			sqlite3_stmt* stmt
 			, const bool append
 			, vector<ubigint>& refs

@@ -3,7 +3,7 @@
   * stub cache functionality (declarations)
   * \author Alexander Wirthmüller
   * \date created: 6 Oct 2015
-  * \date modified: 9 Oct 2015
+  * \date modified: 22 Apr 2020
   */
 
 #ifndef SBECORE_STUB_H
@@ -13,84 +13,85 @@
 
 #include <sbecore/Types.h>
 
-/**
-  * stcchitemref_t
-  */
-class stcchitemref_t {
-
-public:
-	stcchitemref_t(const uint ixVStub = 0, const ubigint ref = 0, const uint ixVLocale = 0);
-
-public:
-	uint ixVStub;
-	ubigint ref;
-	uint ixVLocale;
-
-public:
-	bool operator<(const stcchitemref_t& comp) const;
-};
-
-/**
-  * Stcchitem
-  */
-class Stcchitem {
-
-public:
-	Stcchitem(const stcchitemref_t& stref, const string& stub = "");
-
-public:
-	stcchitemref_t stref;
-	string stub;
-
-	set<stcchitemref_t> strefsSup;
-	set<stcchitemref_t> strefsSub;
-};
-
-/**
-  * Stcch
-  */
-class Stcch {
-
-public:
-	Stcch(const bool transact);
-
-public:
-	bool transact;
-
-	multimap<stcchitemref_t,Stcchitem*> nodes;
-
-	set<uint> icsVStub;
-	set<uint> icsVStubNew;
-
-public:
-	Stcchitem* addStit(const stcchitemref_t& stref, const string& stub = "");
-	Stcchitem* getStitByStref(const stcchitemref_t& stref);
-
-	void clear();
-
-	void link(const stcchitemref_t& strefSup, const stcchitemref_t& strefSub);
-	void unlink(const stcchitemref_t& strefSup, const stcchitemref_t& strefSub);
-
-	void begin();
-	void commit();
-};
-
-/**
-  * Stub
-  */
-namespace Stub {
+namespace Sbecore {
 	/**
-		* VecVNonetype
+		* stcchitemref_t
 		*/
-	namespace VecVNonetype {
-		const uint VOID = 1;
-		const uint DASH = 2;
-		const uint FULL = 3;
-		const uint SHORT = 4;
+	class stcchitemref_t {
 
-		uint getIx(const string& sref);
-		string getSref(const uint ix);
+	public:
+		stcchitemref_t(const uint ixVStub = 0, const ubigint ref = 0, const uint ixVLocale = 0);
+
+	public:
+		uint ixVStub;
+		ubigint ref;
+		uint ixVLocale;
+
+	public:
+		bool operator<(const stcchitemref_t& comp) const;
+	};
+
+	/**
+		* Stcchitem
+		*/
+	class Stcchitem {
+
+	public:
+		Stcchitem(const stcchitemref_t& stref, const std::string& stub = "");
+
+	public:
+		stcchitemref_t stref;
+		std::string stub;
+
+		std::set<stcchitemref_t> strefsSup;
+		std::set<stcchitemref_t> strefsSub;
+	};
+
+	/**
+		* Stcch
+		*/
+	class Stcch {
+
+	public:
+		Stcch(const bool transact);
+
+	public:
+		bool transact;
+
+		std::multimap<stcchitemref_t,Stcchitem*> nodes;
+
+		std::set<uint> icsVStub;
+		std::set<uint> icsVStubNew;
+
+	public:
+		Stcchitem* addStit(const stcchitemref_t& stref, const std::string& stub = "");
+		Stcchitem* getStitByStref(const stcchitemref_t& stref);
+
+		void clear();
+
+		void link(const stcchitemref_t& strefSup, const stcchitemref_t& strefSub);
+		void unlink(const stcchitemref_t& strefSup, const stcchitemref_t& strefSub);
+
+		void begin();
+		void commit();
+	};
+
+	/**
+		* Stub
+		*/
+	namespace Stub {
+		/**
+			* VecVNonetype
+			*/
+		namespace VecVNonetype {
+			const uint VOID = 1;
+			const uint DASH = 2;
+			const uint FULL = 3;
+			const uint SHORT = 4;
+
+			uint getIx(const std::string& sref);
+			std::string getSref(const uint ix);
+		};
 	};
 };
-
 #endif

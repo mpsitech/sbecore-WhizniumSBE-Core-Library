@@ -3,171 +3,166 @@
   * engine data types (implementation)
   * \author Alexander Wirthmüller
   * \date created: 6 Oct 2015
-  * \date modified: 6 Oct 2015
+  * \date modified: 29 Apr 2020
   */
 
 #include "Engtypes.h"
 
-/******************************************************************************
- class Arg
- ******************************************************************************/
-
-Arg::Arg(
-			const uint ix
-			, const ubigint ref
-			, const vector<ubigint>& refs
-			, const string& sref
-			, const int intval
-			, const double dblval
-			, const bool boolval
-			, const string& txtval
-			, const ubigint mask
-		) {
-	this->mask = mask;
-
-	if (mask & IX) this->ix = ix; else this->ix = 0;
-	if (mask & REF) this->ref = ref; else this->ref = 0;
-	if (mask & REFS) this->refs = refs; else this->refs.resize(0);
-	if (mask & SREF) this->sref = sref;
-	if (mask & INTVAL) this->intval = intval; else this->intval = 0;
-	if (mask & DBLVAL) this->dblval = dblval; else this->dblval = 0.0;
-	if (mask & BOOLVAL) this->boolval = boolval; else this->boolval = false;
-	if (mask & TXTVAL) this->txtval = txtval;
-};
-
-bool Arg::operator==(
-			const Arg& comp
-		) const {
-	return((mask == comp.mask) && (ix == comp.ix) && (ref == comp.ref) && (refs == comp.refs) && (sref == comp.sref)
-				&& (intval == comp.intval) && (dblval == comp.dblval) && (boolval == comp.boolval) && (txtval == comp.txtval));
-};
-
-bool Arg::operator!=(
-			const Arg& comp
-		) const {
-	return(!operator==(comp));
-};
-
-string Arg::writeText() const {
-	string retval;
-
-	if (mask == IX) retval = to_string(ix);
-	else if (mask == REF) retval = to_string(ref);
-	else if (mask == REFS) {
-		retval = "{";
-		for (unsigned int i=0;i<refs.size();i++) {
-			if (i != 0) retval += ",";
-			retval += to_string(refs[i]);
-		};
-		retval += "}";
-	} else if (mask == SREF) retval = sref;
-	else if (mask == INTVAL) retval = to_string(intval);
-	else if (mask == BOOLVAL) {
-		if (boolval) retval = "true"; else retval = "false";
-	} else if (mask == TXTVAL) retval = txtval;
-	else if (mask != 0) retval = "(multiple components)";
-	else retval = "(empty)";
-
-	return(retval);
-};
+using namespace std;
 
 /******************************************************************************
  class clstnref_t
  ******************************************************************************/
 
-clstnref_t::clstnref_t(
+Sbecore::clstnref_t::clstnref_t(
 			const uint ixVCall
 			, const ubigint jref
 			, const uint ixVTarget
 			, const uint ixVJobmask
 			, const ubigint jrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 		) {
 	this->ixVCall = ixVCall;
 	this->jref = jref;
 	this->ixVTarget = ixVTarget;
 	this->ixVJobmask = ixVJobmask;
 	this->jrefTrig = jrefTrig;
+	this->arg = arg;
+	this->ixVSge = ixVSge;
 };
 
-bool clstnref_t::operator<(
+bool Sbecore::clstnref_t::operator<(
 			const clstnref_t& comp
 		) const {
+	// rigged < operator to allow multimap "any" filtering
+
 	if (ixVCall < comp.ixVCall) return true;
-	else if (ixVCall > comp.ixVCall) return false;
+	if (ixVCall != comp.ixVCall) return false;
 
 	if ((jref == 0) || (comp.jref == 0)) return false;
 	if (jref < comp.jref) return true;
-	else if (jref > comp.jref) return false;
+	if (jref != comp.jref) return false;
 
 	if ((ixVTarget == 0) || (comp.ixVTarget == 0)) return false;
 	if (ixVTarget < comp.ixVTarget) return true;
-	else if (ixVTarget > comp.ixVTarget) return false;
+	if (ixVTarget != comp.ixVTarget) return false;
 
 	if ((ixVJobmask == 0) || (comp.ixVJobmask == 0)) return false;
 	if (ixVJobmask < comp.ixVJobmask) return true;
-	else if (ixVJobmask > comp.ixVJobmask) return false;
+	if (ixVJobmask != comp.ixVJobmask) return false;
 
-	if ((jrefTrig == 0) || (comp.jrefTrig == 0)) return false;
-	return(jrefTrig < comp.jrefTrig);
+	// jrefTrig makes sense to be non-zero for job mask type SPEC only
+	if (ixVJobmask == Clstn::VecVJobmask::SPEC) {
+		if ((jrefTrig == 0) || (comp.jrefTrig == 0)) return false;
+		if (jrefTrig < comp.jrefTrig) return true;
+		if (jrefTrig != comp.jrefTrig) return false;
+	};
+
+	// arg can be empty
+	if ((arg.mask != 0) || (comp.arg.mask != 0)) {
+		if ((arg.mask == 0) || (comp.arg.mask == 0)) return false;
+		if (arg.mask < comp.arg.mask) return true;
+		if (arg.mask != comp.arg.mask) return false;
+		
+		// compare individual components of arg; "any" filtering available for IX, REF and SREF only
+		if (arg.mask & Arg::IX) {
+			if ((arg.ix == 0) || (comp.arg.ix == 0)) return false;
+			if (arg.ix < comp.arg.ix) return true;
+			if (arg.ix != comp.arg.ix) return false;
+		};
+
+		if (arg.mask & Arg::REF) {
+			if ((arg.ref == 0) || (comp.arg.ref == 0)) return false;
+			if (arg.ref < comp.arg.ref) return true;
+			if (arg.ref != comp.arg.ref) return false;
+		};
+
+		if (arg.mask & Arg::SREF) {
+			if ((arg.sref == "") || (comp.arg.sref == "")) return false;
+			if (arg.sref < comp.arg.sref) return true;
+			if (arg.sref != comp.arg.sref) return false;
+		};
+
+		if (arg < comp.arg) return true;
+		if (arg != comp.arg) return false;
+	};
+
+	// ixVSge can be empty
+	//if ((ixVSge == 0) && (comp.ixVSge == 0)) return false;
+	if ((ixVSge == 0) || (comp.ixVSge == 0)) return false;
+	return(ixVSge < comp.ixVSge);
 };
 
 /******************************************************************************
  class clstnref2_t
  ******************************************************************************/
 
-clstnref2_t::clstnref2_t(
+Sbecore::clstnref2_t::clstnref2_t(
 			const ubigint jref
 			, const uint ixVTarget
 			, const uint ixVCall
 			, const uint ixVJobmask
 			, const ubigint jrefTrig
+			, const Arg& arg
+			, const uint ixVSge
 		) {
 	this->jref = jref;
 	this->ixVTarget = ixVTarget;
 	this->ixVCall = ixVCall;
 	this->ixVJobmask = ixVJobmask;
 	this->jrefTrig = jrefTrig;
+	this->arg = arg;
+	this->ixVSge = ixVSge;
 };
 
-clstnref2_t::clstnref2_t(
+Sbecore::clstnref2_t::clstnref2_t(
 			const clstnref_t& cref
-		) : clstnref2_t(cref.jref, cref.ixVTarget, cref.ixVCall, cref.ixVJobmask, cref.jrefTrig) {
+		) : clstnref2_t(cref.jref, cref.ixVTarget, cref.ixVCall, cref.ixVJobmask, cref.jrefTrig, cref.arg, cref.ixVSge) {
 };
 
-
-bool clstnref2_t::operator<(
+bool Sbecore::clstnref2_t::operator<(
 			const clstnref2_t& comp
 		) const {
+	// rigged < operator to allow multimap "any" filtering
+
 	if (jref < comp.jref) return true;
-	else if (jref > comp.jref) return false;
+	if (jref != comp.jref) return false;
 
 	if ((ixVTarget == 0) || (comp.ixVTarget == 0)) return false;
 	if (ixVTarget < comp.ixVTarget) return true;
-	else if (ixVTarget > comp.ixVTarget) return false;
+	if (ixVTarget != comp.ixVTarget) return false;
 
 	if ((ixVCall == 0) || (comp.ixVCall == 0)) return false;
 	if (ixVCall < comp.ixVCall) return true;
-	else if (ixVCall > comp.ixVCall) return false;
+	if (ixVCall != comp.ixVCall) return false;
 
 	if ((ixVJobmask == 0) || (comp.ixVJobmask == 0)) return false;
 	if (ixVJobmask < comp.ixVJobmask) return true;
-	else if (ixVJobmask > comp.ixVJobmask) return false;
+	if (ixVJobmask != comp.ixVJobmask) return false;
 
 	if ((jrefTrig == 0) || (comp.jrefTrig == 0)) return false;
-	return(jrefTrig < comp.jrefTrig);
+	if (jrefTrig < comp.jrefTrig) return true;
+	if (jrefTrig != comp.jrefTrig) return false;
+
+	if (arg < comp.arg) return true;
+	if (arg != comp.arg) return false;
+
+	return(ixVSge < comp.ixVSge);
 };
 
 /******************************************************************************
  class Call
  ******************************************************************************/
 
-Call::Call(
+Sbecore::Call::Call(
 			const uint ixVCall
 			, const ubigint jref
 			, const Arg& argInv
 		) {
 	this->ixVCall = ixVCall;
 	this->jref = jref;
+
 	this->argInv = argInv;
 
 	abort = false;
@@ -177,30 +172,26 @@ Call::Call(
  class Clstn::VecVJobmask
  ******************************************************************************/
 
-uint Clstn::VecVJobmask::getIx(
+uint Sbecore::Clstn::VecVJobmask::getIx(
 			const string& sref
 		) {
 	string s = StrMod::lc(sref);
 
 	if (s.compare("all") == 0) return ALL;
 	else if (s.compare("imm") == 0) return IMM;
-	else if (s.compare("mast") == 0) return MAST;
 	else if (s.compare("self") == 0) return SELF;
-	else if (s.compare("slv") == 0) return SLV;
 	else if (s.compare("spec") == 0) return SPEC;
 	else if (s.compare("tree") == 0) return TREE;
 
 	return 0;
 };
 
-string Clstn::VecVJobmask::getSref(
+string Sbecore::Clstn::VecVJobmask::getSref(
 			const uint ix
 		) {
 	if (ix == ALL) return("all");
 	else if (ix == IMM) return("imm");
-	else if (ix == MAST) return("mast");
 	else if (ix == SELF) return("self");
-	else if (ix == SLV) return("slv");
 	else if (ix == SPEC) return("spec");
 	else if (ix == TREE) return("tree");
 
@@ -211,7 +202,7 @@ string Clstn::VecVJobmask::getSref(
  class Clstn::VecVJactype
  ******************************************************************************/
 
-uint Clstn::VecVJactype::getIx(
+uint Sbecore::Clstn::VecVJactype::getIx(
 			const string& sref
 		) {
 	string s = StrMod::lc(sref);
@@ -223,7 +214,7 @@ uint Clstn::VecVJactype::getIx(
 	return 0;
 };
 
-string Clstn::VecVJactype::getSref(
+string Sbecore::Clstn::VecVJactype::getSref(
 			const uint ix
 		) {
 	if (ix == LOCK) return("lock");
@@ -237,7 +228,7 @@ string Clstn::VecVJactype::getSref(
  class Clstn::VecVTarget
  ******************************************************************************/
 
-uint Clstn::VecVTarget::getIx(
+uint Sbecore::Clstn::VecVTarget::getIx(
 			const string& sref
 		) {
 	string s = StrMod::lc(sref);
@@ -250,7 +241,7 @@ uint Clstn::VecVTarget::getIx(
 	return 0;
 };
 
-string Clstn::VecVTarget::getSref(
+string Sbecore::Clstn::VecVTarget::getSref(
 			const uint ix
 		) {
 	if (ix == JOB) return("job");
@@ -265,21 +256,49 @@ string Clstn::VecVTarget::getSref(
  class Clstn
  ******************************************************************************/
 
-Clstn::Clstn(
+Sbecore::Clstn::Clstn(
 			const clstnref_t& cref
-			, const Arg& argMask
 			, const uint ixVJactype
 		) {
 	this->cref = cref;
-	this->argMask = argMask;
 	this->ixVJactype = ixVJactype;
+};
+
+/******************************************************************************
+ class Claim
+ ******************************************************************************/
+
+Sbecore::Claim::Claim() {
+	takenNotAvailable = false;
+	fulfilled = false;
+
+	filedNotRetracted = false;
+	retractable = false;
+};
+
+/******************************************************************************
+ class Csjobinfo
+ ******************************************************************************/
+
+Sbecore::Csjobinfo::Csjobinfo(
+			const uint ixVJob
+		) :
+			mClaims("mClaims", "Csjobinfo", "Csjobinfo")
+		{
+	this->ixVJob = ixVJob;
+
+	jrefSrv = 0;
+};
+
+Sbecore::Csjobinfo::~Csjobinfo() {
+	for (auto it = claims.begin(); it != claims.end(); it++) delete(it->second);
 };
 
 /******************************************************************************
  class Expr::VecVTokentype
  ******************************************************************************/
 
-unsigned int Expr::VecVTokentype::getIx(
+unsigned int Sbecore::Expr::VecVTokentype::getIx(
 			const string& sref
 		) {
 	if (sref.compare("lpar") == 0) return LPAR;
@@ -298,7 +317,7 @@ unsigned int Expr::VecVTokentype::getIx(
 	return(0);
 };
 
-string Expr::VecVTokentype::getSref(
+string Sbecore::Expr::VecVTokentype::getSref(
 			const unsigned int ix
 		) {
 	if (ix == LPAR) return("lpar");
@@ -321,7 +340,7 @@ string Expr::VecVTokentype::getSref(
  class Expr::Token
  ******************************************************************************/
 
-Expr::Token::Token(
+Sbecore::Expr::Token::Token(
 			const unsigned int ixVTokentype
 			, const unsigned int ptr
 			, const unsigned int len
@@ -337,7 +356,7 @@ Expr::Token::Token(
  class Expr::VecVNodetype
  ******************************************************************************/
 
-unsigned int Expr::VecVNodetype::getIx(
+unsigned int Sbecore::Expr::VecVNodetype::getIx(
 			const string& sref
 		) {
 	if (sref.compare("void") == 0) return VOID;
@@ -350,7 +369,7 @@ unsigned int Expr::VecVNodetype::getIx(
 	return(0);
 };
 
-string Expr::VecVNodetype::getSref(
+string Sbecore::Expr::VecVNodetype::getSref(
 			const unsigned int ix
 		) {
 	if (ix == VOID) return("void");
@@ -367,7 +386,7 @@ string Expr::VecVNodetype::getSref(
  class Expr::Node
  ******************************************************************************/
 
-Expr::Node::Node(
+Sbecore::Expr::Node::Node(
 			const string& s
 			, const vector<Token*>& tkns
 			, unsigned int ixTkn0
@@ -424,7 +443,7 @@ Expr::Node::Node(
 		ixTkn = ixTkn0;
 
 		// - find operator token with the lowest strength
-		for (unsigned int i=0;i<icsTknstrength.size();i++) icsTknstrength[i] = ixTkn1+1;
+		for (unsigned int i = 0; i<icsTknstrength.size(); i++) icsTknstrength[i] = ixTkn1+1;
 		while (ixTkn < ixTkn1) {
 			tkn = tkns[ixTkn];
 
@@ -453,7 +472,7 @@ Expr::Node::Node(
 		};
 
 		ixTkn = ixTkn1+1;
-		for (unsigned int i=0;i<icsTknstrength.size();i++) {
+		for (unsigned int i = 0; i<icsTknstrength.size(); i++) {
 			if (icsTknstrength[i] != (ixTkn1+1)) {
 				ixTkn = icsTknstrength[i];
 				break;
@@ -513,7 +532,7 @@ Expr::Node::Node(
 
 				ixTkn = ixTkn0+1;
 
-				for (unsigned int i=0;i<icsTkncomma.size();i++) {
+				for (unsigned int i = 0; i<icsTkncomma.size(); i++) {
 					subs.push_back(new Node(s, tkns, ixTkn, icsTkncomma[i]-1, err));
 					ixTkn = icsTkncomma[i]+1;
 				};
@@ -525,7 +544,7 @@ Expr::Node::Node(
 				err = "invalid token " + to_string(ixTkn) + " at position " + to_string(tkn->ptr);
 			};
 
-			for (unsigned int i=0;i<subs.size();i++) {
+			for (unsigned int i = 0; i<subs.size(); i++) {
 				if (subs[i]->ixVNodetype == VecVNodetype::VOID) {
 					ixVNodetype = VecVNodetype::VOID;
 					break;
@@ -535,12 +554,12 @@ Expr::Node::Node(
 	};
 };
 
-Expr::Node::~Node() {
-	for (unsigned int i=0;i<subs.size();i++) delete subs[i];
+Sbecore::Expr::Node::~Node() {
+	for (unsigned int i = 0; i<subs.size(); i++) delete subs[i];
 	subs.resize(0);
 };
 
-void Expr::Node::expand() {
+void Sbecore::Expr::Node::expand() {
 	bool valid;
 
 	Node* node = NULL;
@@ -565,11 +584,11 @@ void Expr::Node::expand() {
 		delete node;
 
 	} else {
-		for (unsigned int i=0;i<subs.size();i++) subs[i]->expand();
+		for (unsigned int i = 0; i<subs.size(); i++) subs[i]->expand();
 	};
 };
 
-bool Expr::Node::has(
+bool Sbecore::Expr::Node::has(
 			unsigned int _ixVNodetype
 			, const string& _key
 		) {
@@ -577,7 +596,7 @@ bool Expr::Node::has(
 	if (retval && (_key.length() > 0)) retval = (key.compare(_key) == 0);
 
 	if (!retval) {
-		for (unsigned int i=0;i<subs.size();i++) {
+		for (unsigned int i = 0; i<subs.size(); i++) {
 			retval = subs[i]->has(_ixVNodetype, _key);
 			if (retval) break;
 		};
@@ -586,7 +605,7 @@ bool Expr::Node::has(
 	return retval;
 };
 
-bool Expr::Node::logicfct() {
+bool Sbecore::Expr::Node::logicfct() {
 	bool retval = (ixVNodetype == VecVNodetype::FCT);
 
 	if (retval) {
@@ -600,7 +619,7 @@ bool Expr::Node::logicfct() {
 	return retval;
 };
 
-bool Expr::Node::logictree() {
+bool Sbecore::Expr::Node::logictree() {
 	bool retval = false;
 
 	if (subs.size() == 0) {
@@ -610,7 +629,7 @@ bool Expr::Node::logictree() {
 		retval = logicfct();
 
 		if (retval) {
-			for (unsigned int i=0;i<subs.size();i++) {
+			for (unsigned int i = 0; i<subs.size(); i++) {
 				retval = subs[i]->logictree();
 				if (!retval) break;
 			};
@@ -620,7 +639,7 @@ bool Expr::Node::logictree() {
 	return retval;
 };
 
-void Expr::Node::fctToLeaves(
+void Sbecore::Expr::Node::fctToLeaves(
 			const string& fctkey
 		) {
 	if (subs.size() == 0) {
@@ -633,14 +652,14 @@ void Expr::Node::fctToLeaves(
 		txtval = "";
 
 	} else {
-		for (unsigned int i=0;i<subs.size();i++) subs[i]->fctToLeaves(fctkey);
+		for (unsigned int i = 0; i<subs.size(); i++) subs[i]->fctToLeaves(fctkey);
 	};
 };
 
-void Expr::Node::dump(
+void Sbecore::Expr::Node::dump(
 			unsigned int il
 		) {
-	for (unsigned int i=0;i<il;i++) cout << "\t";
+	for (unsigned int i = 0; i<il; i++) cout << "\t";
 
 	if (subs.size() == 0) cout << "- "; else cout << "+ ";
 
@@ -660,25 +679,25 @@ void Expr::Node::dump(
 
 	cout << endl;
 
-	for (unsigned int i=0;i<subs.size();i++) subs[i]->dump(il+1);
+	for (unsigned int i = 0; i<subs.size(); i++) subs[i]->dump(il+1);
 };
 
 /******************************************************************************
  class Expr
  ******************************************************************************/
 
-Expr::Expr() {
+Sbecore::Expr::Expr() {
 	root = NULL;
 
 	ixVState = VecVState::RESET;
 };
 
-Expr::~Expr() {
+Sbecore::Expr::~Expr() {
 	reset();
 };
 
-void Expr::reset() {
-	for (unsigned int i=0;i<tkns.size();i++) delete tkns[i];
+void Sbecore::Expr::reset() {
+	for (unsigned int i = 0; i<tkns.size(); i++) delete tkns[i];
 	tkns.resize(0);
 
 	if (root) {
@@ -690,7 +709,7 @@ void Expr::reset() {
 	err = "";
 };
 
-bool Expr::tokenize(
+bool Sbecore::Expr::tokenize(
 			const string& expr
 		) {
 	bool retval;
@@ -784,12 +803,12 @@ bool Expr::tokenize(
 	retval = (tkns.size() > 0);
 	if (!retval) err = "no tokens recognized";
 
-//	for (unsigned int i=0;i<tkns.size();i++) cout << tkns[i]->ixVBasetype << endl;
+//	for (unsigned int i = 0; i<tkns.size(); i++) cout << tkns[i]->ixVBasetype << endl;
 
 	if (retval) {
 		// --- find siblings
 		sbls.resize(0);
-		for (unsigned int i=0;i<tkns.size();i++) {
+		for (unsigned int i = 0; i<tkns.size(); i++) {
 			if (tkns[i]->ixVTokentype == VecVTokentype::LPAR) {
 				sbls.push_back(tkns[i]);
 			} else if (tkns[i]->ixVTokentype == VecVTokentype::RPAR) {
@@ -800,7 +819,7 @@ bool Expr::tokenize(
 			};
 		};
 
-		for (unsigned int i=0;i<tkns.size();i++) {
+		for (unsigned int i = 0; i<tkns.size(); i++) {
 			if (tkns[i]->ixVTokentype == VecVTokentype::LPAR) {
 				if (tkns[i]->ixSibling > tkns.size()) {
 					err = "token " + to_string(i) + " at position " + to_string(tkns[i]->ptr) + " does not have a sibling";
@@ -818,7 +837,7 @@ bool Expr::tokenize(
 	return retval;
 };
 
-bool Expr::parse() {
+bool Sbecore::Expr::parse() {
 	if (ixVState != VecVState::TOKENIZED) return false;
 
 	bool retval;
@@ -845,7 +864,7 @@ bool Expr::parse() {
 	return retval;
 };
 
-bool Expr::has(
+bool Sbecore::Expr::has(
 			unsigned int ixVNodetype
 			, const string& key
 		) {
@@ -853,7 +872,7 @@ bool Expr::has(
 	else return false;
 };
 
-void Expr::dump() {
+void Sbecore::Expr::dump() {
 	if (ixVState == VecVState::PARSED) root->dump(0);
 };
 
@@ -861,7 +880,7 @@ void Expr::dump() {
  class featix_t
  ******************************************************************************/
 
-featix_t::featix_t(
+Sbecore::featix_t::featix_t(
 			const uint ixVFeatgroup
 			, const string& srefIxVFeature
 		) {
@@ -869,21 +888,63 @@ featix_t::featix_t(
 	this->srefIxVFeature = srefIxVFeature;
 };
 
-bool featix_t::operator<(
+bool Sbecore::featix_t::operator<(
 			const featix_t& comp
 		) const {
+	// rigged < operator to allow multimap "any" filtering in srefIxVFeature
 	if (ixVFeatgroup < comp.ixVFeatgroup) return true;
-	else if (ixVFeatgroup > comp.ixVFeatgroup) return false;
+	if (ixVFeatgroup != comp.ixVFeatgroup) return false;
 
 	if ((srefIxVFeature == "") || (comp.srefIxVFeature == "")) return false;
 	return(srefIxVFeature < comp.srefIxVFeature);
 };
 
 /******************************************************************************
+ class Jobinfo
+ ******************************************************************************/
+
+Sbecore::Jobinfo::Jobinfo(
+			const ubigint jrefSup
+		) {
+	this->jrefSup = jrefSup;
+
+	ixVSge = 1;
+};
+
+/******************************************************************************
+ class lockref_t
+ ******************************************************************************/
+
+Sbecore::lockref_t::lockref_t(
+			const ubigint jref
+			, const uint ix
+		) {
+	this->jref = jref;
+	this->ix = ix;
+};
+
+bool Sbecore::lockref_t::operator==(
+			const lockref_t& comp
+		) const {
+	return((jref == comp.jref) && (ix == comp.ix));
+};
+
+bool Sbecore::lockref_t::operator<(
+			const lockref_t& comp
+		) const {
+	// rigged < operator to allow multimap "any" filtering in ix
+	if (jref < comp.jref) return true;
+	if (jref != comp.jref) return false;
+
+	if ((ix == 0) || (comp.ix == 0)) return false;
+	return(ix < comp.ix);
+};
+
+/******************************************************************************
  class Method
  ******************************************************************************/
 
-Method::Method(
+Sbecore::Method::Method(
 			const uint ixVFeatgroup
 			, const string& srefIxVMethod
 		) {
@@ -894,24 +955,10 @@ Method::Method(
 };
 
 /******************************************************************************
- class Msjobinfo
- ******************************************************************************/
-
-Msjobinfo::Msjobinfo(
-			const uint ixVJob
-		) {
-	this->ixVJob = ixVJob;
-
-	jrefMast = 0;
-	
-	ixVSge = 1;
-};
-
-/******************************************************************************
  namespace VecOpVOpres
  ******************************************************************************/
 
-uint VecOpVOpres::getIx(
+uint Sbecore::VecOpVOpres::getIx(
 			const string& sref
 		) {
 	if (sref.compare("progress") == 0) return PROGRESS;
@@ -922,7 +969,7 @@ uint VecOpVOpres::getIx(
 	return(0);
 };
 
-string VecOpVOpres::getSref(
+string Sbecore::VecOpVOpres::getSref(
 			const uint ix
 		) {
 	if (ix == PROGRESS) return("progress");
@@ -937,7 +984,7 @@ string VecOpVOpres::getSref(
  class Op
  ******************************************************************************/
 
-Op::Op(
+Sbecore::Op::Op(
 			const ubigint oref
 			, const uint ixVDpch
 			, const string& squawk
@@ -951,7 +998,7 @@ Op::Op(
  class presetref_t
  ******************************************************************************/
 
-presetref_t::presetref_t(
+Sbecore::presetref_t::presetref_t(
 			const ubigint jref
 			, const uint ixVPreset
 		) {
@@ -959,11 +1006,12 @@ presetref_t::presetref_t(
 	this->ixVPreset = ixVPreset;
 };
 
-bool presetref_t::operator<(
+bool Sbecore::presetref_t::operator<(
 			const presetref_t& comp
 		) const {
+	// rigged < operator to allow multimap "any" filtering in ixVPreset
 	if (jref < comp.jref) return true;
-	else if (jref > comp.jref) return false;
+	if (jref != comp.jref) return false;
 
 	if ((ixVPreset == 0) || (comp.ixVPreset == 0)) return false;
 	return(ixVPreset < comp.ixVPreset);
@@ -973,10 +1021,183 @@ bool presetref_t::operator<(
  class Preset
  ******************************************************************************/
 
-Preset::Preset(
+Sbecore::Preset::Preset(
 			const presetref_t& pref
 			, const Arg& arg
 		) {
 	this->pref = pref;
 	this->arg = arg;
+};
+
+/******************************************************************************
+ class Resultitem
+ ******************************************************************************/
+
+Sbecore::Resultitem::Resultitem() {
+};
+
+/******************************************************************************
+ class Result
+ ******************************************************************************/
+
+Sbecore::Result::Result() :
+			mAccess("mAccess", "Result", "Result")
+		{
+};
+
+Sbecore::Result::~Result() {
+	clear();
+};
+
+void Sbecore::Result::clear() {
+	for (unsigned int i = 0; i < size(); i++) delete nodes[i];
+	nodes.resize(0);
+
+	icsQueue.clear();
+
+	locks.clear();
+};
+
+unsigned int Sbecore::Result::size() const {
+	return(nodes.size());
+};
+
+void Sbecore::Result::append(
+			Resultitem* ri
+		) {
+	nodes.push_back(ri);
+
+	queue(nodes.size() - 1);
+};
+
+void Sbecore::Result::queue(
+			const uint ix
+		) {
+	// append item to queue, without checking for duplicates 
+
+	mAccess.lock("Result", "queue");
+
+	icsQueue.push_back(ix);
+
+	mAccess.unlock("Result", "queue");
+};
+
+bool Sbecore::Result::dequeue(
+			uint& ix
+		) {
+	// release first item from queue
+
+	bool success = false;
+
+	mAccess.lock("Result", "dequeue");
+
+	if (!icsQueue.empty()) {
+		ix = *icsQueue.begin();
+		icsQueue.erase(icsQueue.begin());
+
+		success = true;
+	};
+
+	mAccess.unlock("Result", "dequeue");
+
+	return success;
+};
+
+bool Sbecore::Result::lock(
+			const ubigint jref
+			, const uint ix
+		) {
+	// add lock to item, duplicates are allowed, only permissible if item not in queue
+
+	bool success = false;
+
+	lockref_t lockref(jref, ix);
+
+	bool found;
+
+	mAccess.lock("Result", "lock");
+
+	if (ix < nodes.size()) {
+		found = false;
+
+		for (auto it = icsQueue.begin(); it != icsQueue.end(); it++)
+			if (*it == ix) {
+				found = true;
+				break;
+			};
+
+		success = !found;
+
+		if (success) locks.push_back(lockref);
+	};
+
+	mAccess.unlock("Result", "lock");
+
+	return success;
+};
+
+void Sbecore::Result::unlock(
+			const ubigint jref
+			, const uint ix
+		) {
+	// remove lock from item, without checking for duplicates, put back in queue if last lock on item removed
+
+	lockref_t lockref(jref, ix);
+
+	bool found;
+
+	mAccess.lock("Result", "unlock");
+
+	for (auto it = locks.begin(); it != locks.end(); it++)
+		if (*it == lockref) {
+			locks.erase(it);
+			break;
+		};
+
+	found = false;
+
+	for (auto it = locks.begin(); it != locks.end(); it++) {
+		if ((*it).ix == ix) {
+			found = true;
+			break;
+		};
+
+		if (!found) queue(ix);
+	};
+
+	mAccess.unlock("Result", "unlock");
+};
+
+void Sbecore::Result::unlockByJref(
+			const ubigint jref
+		) {
+	// remove all locks associated with specified job / jref
+
+	bool found;
+
+	mAccess.lock("Result", "unlockByJref");
+
+	do {
+		found = false;
+
+		for (auto it = locks.begin(); it != locks.end(); it++) {
+			if ((*it).jref == jref) {
+				unlock((*it).jref, (*it).ix);
+				found = true;
+			};
+		};
+
+	} while (found);
+
+	mAccess.unlock("Result", "unlockByJref");
+};
+
+Sbecore::Resultitem* Sbecore::Result::operator[](
+			const uint ix
+		) {
+	Resultitem* ri = NULL;
+
+	if (ix < nodes.size()) ri = nodes[ix];
+
+	return ri;
 };

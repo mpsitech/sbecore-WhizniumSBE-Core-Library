@@ -3,28 +3,18 @@
   * methods for reading hierarchical text input (implementation)
   * \author Alexander Wirthmüller
   * \date created: 8 Oct 2015
-  * \date modified: 8 Oct 2015
+  * \date modified: 22 Apr 2020
   */
 
 #include "Txtrd.h"
+
+using namespace std;
 
 /******************************************************************************
  class Txtrd
  ******************************************************************************/
 
-Txtrd::Txtrd(
-			uint (*getIxVToken)(const string&)
-		) {
-	this->getIxVToken = getIxVToken;
-
-	buf = new char[4096];
-
-	skip = false;
-
-	linecnt = 0;
-};
-
-Txtrd::Txtrd(
+Sbecore::Txtrd::Txtrd(
 			const string& fullpath
 			, const string& iexsref
 			, const Version& minversion
@@ -64,38 +54,17 @@ Txtrd::Txtrd(
 };
 
 
-Txtrd::~Txtrd() {
+Sbecore::Txtrd::~Txtrd() {
 	if (infile.is_open()) infile.close();
 	delete[] buf;
 };
 
-void Txtrd::openFile(
-			const string& fullpath
-			, const string& iexsref
-			, const Version& minversion
-		) {
-	infile.open(fullpath.c_str(), ifstream::in);
-	if (infile.fail()) throw SbeException(SbeException::PATHNF, {{"path",fullpath}});
-
-	// tolerance towards identifier line, e.g. 'IexWznmDbs v0.9.14'
-	if (readLine())
-		if (ixVLinetype == VecVLinetype::DATA)
-			if (fields.size() >= 1)
-				if (fields[0].find("Iex") == 0) return;
-
-	skip = true;
-};
-
-void Txtrd::closeFile() {
-	infile.close();
-};
-
-bool Txtrd::eof() {
+bool Sbecore::Txtrd::eof() {
 	if (!infile.good()) return false;
 	return infile.eof();
 };
 
-bool Txtrd::readLine() {
+bool Sbecore::Txtrd::readLine() {
 	if (skip) {
 		skip = false;
 		return true;
@@ -115,19 +84,13 @@ bool Txtrd::readLine() {
 	return true;
 };
 
-void Txtrd::tokenizeLine() {
+void Sbecore::Txtrd::tokenizeLine() {
 	string dline;
 
 	size_t ptr;
 
 	il = 0;
-///
 	ixVLinetype = VecVLinetype::VOID;
-/// > OUT
-	comment = false;
-	header = false;
-	data = false;
-/// <
 	ixVToken = 0;
 	fields.resize(0);		
 
@@ -136,13 +99,10 @@ void Txtrd::tokenizeLine() {
 
 	line = line.substr(il);
 
-///
 	if (line.find("- ") == 0) line = line.substr(2);
 
 	if (line.find("//") == 0) {
-///
 		ixVLinetype = VecVLinetype::COMMENT;
-		comment = true;
 
 	} else {
 		// check for header tokens
@@ -153,22 +113,15 @@ void Txtrd::tokenizeLine() {
 			if (ixVToken != 0) {
 				if (line.substr(ptr).find(".end") == 0) {
 					ixVLinetype = VecVLinetype::FOOTER;
-/// OUT:
-					comment = true; // helps skipping footer lines in old iex code
 				} else {
 					ixVLinetype = VecVLinetype::HEADER;
-/// OUT:
-					header = true;
 				};
 			};
 		};
 
 		if (ixVLinetype == VecVLinetype::VOID) {
 			// regular data row - split at \t character
-
-///
 			ixVLinetype = VecVLinetype::DATA;
-			data = true;
 
 			while (line.find('\t') != string::npos) {
 				dline = line.substr(0, line.find('\t'));
@@ -181,9 +134,7 @@ void Txtrd::tokenizeLine() {
 	};
 
 //	cout << "line: il=" << il;
-//	if (comment) cout << " comment";
-//	if (header) cout << " header";
-//	if (data) cout << " data";
+//	cout << " ixVLinetype=" << ixVLinetype;
 //	cout << " ixVToken=" << ixVToken;
 //	cout << " fields.size()=" << fields.size();
 //	cout << endl;

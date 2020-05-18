@@ -3,32 +3,34 @@
   * database access code globals for MySQL (implementation)
   * \author Alexander Wirthmüller
   * \date created: 1 Jan 2009
-  * \date modified: 10 Aug 2014
+  * \date modified: 22 Apr 2020
   */
 
 #include "MyDbs.h"
+
+using namespace std;
 
 /******************************************************************************
  class MyTable
  ******************************************************************************/
 
-MyTable::MyTable() {
+Sbecore::MyTable::MyTable() {
 };
 
-MyTable::~MyTable() {
+Sbecore::MyTable::~MyTable() {
 };
 
-void MyTable::init(
+void Sbecore::MyTable::init(
 			MYSQL* _dbs
 		) {
 	dbs = _dbs;
 	initStatements();
 };
 
-void MyTable::initStatements() {
+void Sbecore::MyTable::initStatements() {
 };
 
-MYSQL_BIND MyTable::bindTinyint(
+MYSQL_BIND Sbecore::MyTable::bindTinyint(
 			tinyint* t
 			, unsigned long* length
 			, my_bool* is_null
@@ -52,7 +54,7 @@ MYSQL_BIND MyTable::bindTinyint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindUtinyint(
+MYSQL_BIND Sbecore::MyTable::bindUtinyint(
 			utinyint* t
 			, unsigned long* length
 			, my_bool* is_null
@@ -76,7 +78,7 @@ MYSQL_BIND MyTable::bindUtinyint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindSmallint(
+MYSQL_BIND Sbecore::MyTable::bindSmallint(
 			smallint* s
 			, unsigned long* length
 			, my_bool* is_null
@@ -100,7 +102,7 @@ MYSQL_BIND MyTable::bindSmallint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindUsmallint(
+MYSQL_BIND Sbecore::MyTable::bindUsmallint(
 			usmallint* s
 			, unsigned long* length
 			, my_bool* is_null
@@ -124,7 +126,7 @@ MYSQL_BIND MyTable::bindUsmallint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindInt(
+MYSQL_BIND Sbecore::MyTable::bindInt(
 			int* i
 			, unsigned long* length
 			, my_bool* is_null
@@ -148,7 +150,7 @@ MYSQL_BIND MyTable::bindInt(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindUint(
+MYSQL_BIND Sbecore::MyTable::bindUint(
 			uint* i
 			, unsigned long* length
 			, my_bool* is_null
@@ -172,7 +174,7 @@ MYSQL_BIND MyTable::bindUint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindBigint(
+MYSQL_BIND Sbecore::MyTable::bindBigint(
 			bigint* b
 			, unsigned long* length
 			, my_bool* is_null
@@ -196,7 +198,7 @@ MYSQL_BIND MyTable::bindBigint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindUbigint(
+MYSQL_BIND Sbecore::MyTable::bindUbigint(
 			ubigint* b
 			, unsigned long* length
 			, my_bool* is_null
@@ -220,7 +222,7 @@ MYSQL_BIND MyTable::bindUbigint(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindCstring(
+MYSQL_BIND Sbecore::MyTable::bindCstring(
 			char* str
 			, unsigned long* length
 			, my_bool* is_null
@@ -246,7 +248,7 @@ MYSQL_BIND MyTable::bindCstring(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindCstring0(
+MYSQL_BIND Sbecore::MyTable::bindCstring0(
 			unsigned long* length
 			, my_bool* is_null
 			, my_bool* error
@@ -268,7 +270,7 @@ MYSQL_BIND MyTable::bindCstring0(
 	return(result);
 };
 
-MYSQL_BIND MyTable::bindDouble(
+MYSQL_BIND Sbecore::MyTable::bindDouble(
 			double* d
 			, unsigned long* length
 			, my_bool* is_null
@@ -291,25 +293,25 @@ MYSQL_BIND MyTable::bindDouble(
 	return(result);
 };
 
-MYSQL_STMT* MyTable::createStatement(
+MYSQL_STMT* Sbecore::MyTable::createStatement(
 			const string& stmtSQL
 			, my_bool getlength
 		) {
 	MYSQL_STMT* result = mysql_stmt_init(dbs);
-	if (!result) throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","MyTable::createStatement()"}, {"sql",stmtSQL}});
+	if (!result) throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","Sbecore::MyTable::createStatement()"}, {"sql",stmtSQL}});
 
 	if (mysql_stmt_prepare(result, stmtSQL.c_str(), stmtSQL.length()))
-				throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","MyTable::createStatement()"}, {"sql",stmtSQL}});
+				throw SbeException(SbeException::DBS_STMTPREP, {{"dbms","Sbecore::MyTable::createStatement()"}, {"sql",stmtSQL}});
 	if (getlength) mysql_stmt_attr_set(result, STMT_ATTR_UPDATE_MAX_LENGTH, &getlength);
 
 	return(result);
 };
 
-void MyTable::begin() {
-	if (mysql_query(dbs, "BEGIN")) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::begin()"}, {"sql","BEGIN"}});
+void Sbecore::MyTable::begin() {
+	if (mysql_query(dbs, "BEGIN")) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::begin()"}, {"sql","BEGIN"}});
 };
 
-bool MyTable::commit() {
+bool Sbecore::MyTable::commit() {
 	if (mysql_query(dbs, "COMMIT")) {
 		rollback();
 		return false;
@@ -318,11 +320,11 @@ bool MyTable::commit() {
 	return true;
 };
 
-void MyTable::rollback() {
-	if (mysql_query(dbs, "ROLLBACK")) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::rollback()"}, {"sql","ROLLBACK"}});
+void Sbecore::MyTable::rollback() {
+	if (mysql_query(dbs, "ROLLBACK")) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::rollback()"}, {"sql","ROLLBACK"}});
 };
 
-bool MyTable::loadUintBySQL(
+bool Sbecore::MyTable::loadUintBySQL(
 			const string& sqlstr
 			, uint& val
 		) {
@@ -330,10 +332,10 @@ bool MyTable::loadUintBySQL(
 
 	bool retval = false;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadUintBySQL()"}, {"sql",sqlstr}});
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadUintBySQL()"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadUintBySQLMy() / store result"}, {"sql",sqlstr}});
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadUintBySQLMy() / store result"}, {"sql",sqlstr}});
 
 	if (mysql_num_rows(dbresult) == 1) {
 		dbrow = mysql_fetch_row(dbresult);
@@ -347,7 +349,7 @@ bool MyTable::loadUintBySQL(
 	return retval;
 };
 
-bool MyTable::loadStringBySQL(
+bool Sbecore::MyTable::loadStringBySQL(
 			const string& sqlstr
 			, string& val
 		) {
@@ -355,10 +357,10 @@ bool MyTable::loadStringBySQL(
 
 	bool retval = false;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadStringBySQL()"}, {"sql",sqlstr}});
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadStringBySQL()"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadStringBySQL() / store result"}, {"sql",sqlstr}});
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadStringBySQL() / store result"}, {"sql",sqlstr}});
 
 	if (mysql_num_rows(dbresult) == 1) {
 		dbrow = mysql_fetch_row(dbresult);
@@ -373,7 +375,7 @@ bool MyTable::loadStringBySQL(
 	return retval;
 };
 
-bool MyTable::loadRefBySQL(
+bool Sbecore::MyTable::loadRefBySQL(
 			const string& sqlstr
 			, ubigint& ref
 		) {
@@ -384,7 +386,7 @@ bool MyTable::loadRefBySQL(
 	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MySQL"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadRefBySQL() / store result"}, {"sql",sqlstr}});
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadRefBySQL() / store result"}, {"sql",sqlstr}});
 
 	if (mysql_num_rows(dbresult) == 1) {
 		dbrow = mysql_fetch_row(dbresult);
@@ -398,17 +400,17 @@ bool MyTable::loadRefBySQL(
 	return retval;
 };
 
-ubigint MyTable::loadRefsBySQL(
+Sbecore::ubigint Sbecore::MyTable::loadRefsBySQL(
 			const string& sqlstr
 			, const bool append
 			, vector<ubigint>& refs
 		) {
 	MYSQL_RES* dbresult; MYSQL_ROW dbrow; ubigint numrow; ubigint numread = 0;
 
-	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadRefsBySQL()"}, {"sql",sqlstr}});
+	if (mysql_real_query(dbs, sqlstr.c_str(), sqlstr.length())) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadRefsBySQL()"}, {"sql",sqlstr}});
 
 	dbresult = mysql_store_result(dbs);
-	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","MyTable::loadRefsBySQL() / store result"}, {"sql",sqlstr}});
+	if (!dbresult) throw SbeException(SbeException::DBS_QUERY, {{"dbms","Sbecore::MyTable::loadRefsBySQL() / store result"}, {"sql",sqlstr}});
 
 	numrow = mysql_num_rows(dbresult);
 	if (!append) refs.resize(0);

@@ -3,16 +3,18 @@
   * POSIX threading types and data types with thread safety (implementation)
   * \author Alexander Wirthmüller
   * \date created: 28 Dec 2018
-  * \date modified: 28 Dec 2018
+  * \date modified: 22 Apr 2020
   */
 
 #include "Mttypes.h"
+
+using namespace std;
 
 /******************************************************************************
  class Cond
  ******************************************************************************/
 
-Cond::Cond(
+Sbecore::Cond::Cond(
 			const string& sref
 			, const string& srefObject
 			, const string& srefMember
@@ -42,7 +44,7 @@ Cond::Cond(
 #endif
 };
 
-Cond::~Cond() {
+Sbecore::Cond::~Cond() {
 #ifdef POSIXNOTCPP11
 	int res;
 	
@@ -73,7 +75,7 @@ Cond::~Cond() {
 #endif
 };
 
-void Cond::lockMutex(
+void Sbecore::Cond::lockMutex(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -96,7 +98,7 @@ void Cond::lockMutex(
 	else Mt::logDebug("successfully locked mutex", sref + ".m", srefObject, srefMember);
 };
 
-void Cond::unlockMutex(
+void Sbecore::Cond::unlockMutex(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -113,7 +115,7 @@ void Cond::unlockMutex(
 #endif
 };
 
-void Cond::signal(
+void Sbecore::Cond::signal(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -154,7 +156,7 @@ void Cond::signal(
 	};
 };
 
-void Cond::broadcast(
+void Sbecore::Cond::broadcast(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -195,7 +197,7 @@ void Cond::broadcast(
 	};
 };
 
-void Cond::wait(
+void Sbecore::Cond::wait(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -218,7 +220,7 @@ void Cond::wait(
 	else Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
 };
 
-bool Cond::timedwait(
+bool Sbecore::Cond::timedwait(
 			const unsigned int dt
 			, const string& srefObject
 			, const string& srefMember
@@ -285,7 +287,7 @@ bool Cond::timedwait(
  namespace Mt
  ******************************************************************************/
 
-string Mt::getTid(
+string Sbecore::Mt::getTid(
 			const bool textNotBare
 		) {
 #ifdef POSIXNOTCPP11
@@ -312,7 +314,7 @@ string Mt::getTid(
 #endif
 };
 
-void Mt::logDebug(
+void Sbecore::Mt::logDebug(
 			const string& what
 			, const string& srefCondMutex
 			, const string& srefObject
@@ -333,7 +335,7 @@ void Mt::logDebug(
 	cout << s << endl;
 };
 
-void Mt::logError(
+void Sbecore::Mt::logError(
 			const int res
 			, const string& err
 			, const string& srefCondMutex
@@ -358,13 +360,13 @@ void Mt::logError(
 	cout << s << endl;
 };
 
-uint Mt::ixVVerbose = Mt::VecVVerbose::OFF;
+Sbecore::uint Sbecore::Mt::ixVVerbose = Sbecore::Mt::VecVVerbose::OFF;
 
 /******************************************************************************
  class Mutex
  ******************************************************************************/
 
-Mutex::Mutex(
+Sbecore::Mutex::Mutex(
 			const string& sref
 			, const string& srefObject
 			, const string& srefMember
@@ -389,7 +391,7 @@ Mutex::Mutex(
 #endif
 };
 
-Mutex::~Mutex() {
+Sbecore::Mutex::~Mutex() {
 #ifdef POSIXNOTCPP11
 	int res;
 
@@ -415,7 +417,7 @@ Mutex::~Mutex() {
 #endif
 };
 
-void Mutex::lock(
+void Sbecore::Mutex::lock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -438,7 +440,7 @@ void Mutex::lock(
 	else Mt::logDebug("successfully locked mutex", sref, srefObject, srefMember);
 };
 
-bool Mutex::trylock(
+bool Sbecore::Mutex::trylock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -464,7 +466,7 @@ bool Mutex::trylock(
 	};
 };
 
-void Mutex::unlock(
+void Sbecore::Mutex::unlock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -485,7 +487,7 @@ void Mutex::unlock(
  class Rwmutex
  ******************************************************************************/
 
-Rwmutex::Rwmutex(
+Sbecore::Rwmutex::Rwmutex(
 			const string& sref
 			, const string& srefObject
 			, const string& srefMember
@@ -524,7 +526,7 @@ Rwmutex::Rwmutex(
 #endif
 };
 
-Rwmutex::~Rwmutex() {
+Sbecore::Rwmutex::~Rwmutex() {
 #ifdef POSIXNOTCPP11
 	int res;
 	
@@ -555,7 +557,7 @@ Rwmutex::~Rwmutex() {
 #endif
 };
 
-void Rwmutex::rlock(
+void Sbecore::Rwmutex::rlock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -630,7 +632,7 @@ void Rwmutex::rlock(
 	if (res == 0) Mt::logDebug("successfully locked r/w mutex for read operation", sref, srefObject, srefMember);
 };
 
-bool Rwmutex::rtrylock(
+bool Sbecore::Rwmutex::rtrylock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -704,7 +706,7 @@ bool Rwmutex::rtrylock(
 	return true;
 };
 
-void Rwmutex::runlock(
+void Sbecore::Rwmutex::runlock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -750,7 +752,7 @@ void Rwmutex::runlock(
 	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from read operation", sref, srefObject, srefMember);
 };
 
-void Rwmutex::wlock(
+void Sbecore::Rwmutex::wlock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -821,7 +823,7 @@ void Rwmutex::wlock(
 	if (res == 0) Mt::logDebug("successfully locked r/w mutex for write operation", sref, srefObject, srefMember);
 };
 
-bool Rwmutex::wtrylock(
+bool Sbecore::Rwmutex::wtrylock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -889,7 +891,7 @@ bool Rwmutex::wtrylock(
 	return true;
 };
 
-void Rwmutex::wunlock(
+void Sbecore::Rwmutex::wunlock(
 			const string& srefObject
 			, const string& srefMember
 		) {
@@ -942,7 +944,7 @@ void Rwmutex::wunlock(
  class Refseq
  ******************************************************************************/
 
-Refseq::Refseq(
+Sbecore::Refseq::Refseq(
 			const string& sref
 		) :
 			mAccess("mAccess", "Refseq(" + sref + ")", "Refseq")
@@ -952,7 +954,7 @@ Refseq::Refseq(
 	ref = 0;
 };
 
-ubigint Refseq::getNewRef() {
+Sbecore::ubigint Sbecore::Refseq::getNewRef() {
 	ubigint ref_backup;
 
 	mAccess.lock("Refseq(" + sref + ")", "getNewRef");
@@ -969,7 +971,7 @@ ubigint Refseq::getNewRef() {
  namespace Scr
  ******************************************************************************/
 
-string Scr::scramble(
+string Sbecore::Scr::scramble(
 			const ubigint ref
 		) {
 	string retval;
@@ -1004,7 +1006,7 @@ string Scr::scramble(
 	return retval;
 };
 
-ubigint Scr::descramble(
+Sbecore::ubigint Sbecore::Scr::descramble(
 			const string& scrRef
 		) {
 	ubigint retval = 0;
@@ -1019,7 +1021,7 @@ ubigint Scr::descramble(
 	return retval;
 };
 
-string Scr::random() {
+string Sbecore::Scr::random() {
 	string retval;
 
 	int digit;
@@ -1027,7 +1029,7 @@ string Scr::random() {
 	// assume advance random seed
 
 	// fetch digits and make sure their ASCII code is in the range 0..9/a..z
-	for (unsigned int i=0;i<16;i++) {
+	for (unsigned int i = 0; i<16; i++) {
 		digit = rand() % 36 + 48;
 		if (digit > 57) digit += (97-48-10);
 
@@ -1037,6 +1039,6 @@ string Scr::random() {
 	return retval;
 };
 
-Rwmutex Scr::rwm("rwm", "Scr", "Scr");
-map<ubigint,string> Scr::scr;
-map<string,ubigint> Scr::descr;
+Sbecore::Rwmutex Sbecore::Scr::rwm("rwm", "Scr", "Scr");
+map<Sbecore::ubigint,string> Sbecore::Scr::scr;
+map<string,Sbecore::ubigint> Sbecore::Scr::descr;
