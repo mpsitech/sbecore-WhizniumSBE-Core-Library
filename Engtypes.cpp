@@ -268,12 +268,15 @@ Sbecore::Clstn::Clstn(
  class Claim
  ******************************************************************************/
 
-Sbecore::Claim::Claim() {
+Sbecore::Claim::Claim(
+			const bool retractable
+			, const bool run
+		) {
 	takenNotAvailable = false;
 	fulfilled = false;
 
-	filedNotRetracted = false;
-	retractable = false;
+	this->retractable = retractable;
+	this->run = run;
 };
 
 /******************************************************************************
@@ -1156,14 +1159,13 @@ void Sbecore::Result::unlock(
 
 	found = false;
 
-	for (auto it = locks.begin(); it != locks.end(); it++) {
+	for (auto it = locks.begin(); it != locks.end(); it++)
 		if ((*it).ix == ix) {
 			found = true;
 			break;
 		};
 
-		if (!found) queue(ix);
-	};
+	if (!found) queue(ix);
 
 	mAccess.unlock("Result", "unlock");
 };

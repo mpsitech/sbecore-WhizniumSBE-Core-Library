@@ -147,7 +147,7 @@ void Sbecore::TxtMon::insertNode(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "insertNode");
 
-	monfile << "node/" << xnref << ": inserted node " << Ip << ":" << Port << " with " << Opprcn << " operation processors" << endl;
+	monfile << "node/" << xnref << ": inserted node " << Ip << ":" << Port << " with " << ((uint) Opprcn) << " operation processors" << endl;
 
 	unlockAccess("TxtMon", "insertNode");
 };
@@ -370,7 +370,7 @@ void Sbecore::TxtMon::eventAddNode(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventAddNode");
 
-	monfile << "[" << getDt() << "] node/" << xnref << ": added node " << Ip << ":" << Port << " with " << Opprcn << " operation processors" << endl;
+	monfile << "[" << getDt() << "] node/" << xnref << ": added node " << Ip << ":" << Port << " with " << ((uint) Opprcn) << " operation processors" << endl;
 
 	unlockAccess("TxtMon", "eventAddNode");
 };

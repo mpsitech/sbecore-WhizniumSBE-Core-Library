@@ -148,7 +148,7 @@ namespace Sbecore {
 	class Claim {
 
 	public:
-		Claim();
+		Claim(const bool retractable = true, const bool run = true);
 
 	public:
 		// managed by server
@@ -156,8 +156,8 @@ namespace Sbecore {
 		bool fulfilled;
 
 		// managed by client
-		bool filedNotRetracted;
 		bool retractable;
+		bool run; // most frequent extra parameter for claim
 	};
 
 	/**
