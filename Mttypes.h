@@ -41,7 +41,7 @@ namespace Sbecore {
 	class Cond {
 
 	public:
-		Cond(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "");
+		Cond(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 		~Cond();
 
 	private:
@@ -56,14 +56,14 @@ namespace Sbecore {
 		std::string sref;
 
 	public:
-		void lockMutex(const std::string& srefObject = "", const std::string& srefMember = "");
-		void unlockMutex(const std::string& srefObject = "", const std::string& srefMember = "");
+		void lockMutex(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void unlockMutex(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 
-		void signal(const std::string& srefObject = "", const std::string& srefMember = "");
-		void broadcast(const std::string& srefObject = "", const std::string& srefMember = "");
+		void signal(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void broadcast(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 
-		void wait(const std::string& srefObject = "", const std::string& srefMember = "");
-		bool timedwait(const unsigned int dt, const std::string& srefObject = "", const std::string& srefMember = "");
+		void wait(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		bool timedwait(const unsigned int dt, const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 	};
 
 	/**
@@ -81,8 +81,8 @@ namespace Sbecore {
 
 		std::string getTid(const bool textNotBare = false);
 
-		void logDebug(const std::string& what, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "");
-		void logError(const int res, const std::string& err, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "");
+		void logDebug(const std::string& what, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void logError(const int res, const std::string& err, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 
 		extern uint ixVVerbose;
 	};
@@ -93,7 +93,7 @@ namespace Sbecore {
 	class Mutex {
 
 	public:
-		Mutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "");
+		Mutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 		~Mutex();
 
 	private:
@@ -106,9 +106,9 @@ namespace Sbecore {
 		std::string sref;
 
 	public:
-		void lock(const std::string& srefObject = "", const std::string& srefMember = "");
-		bool trylock(const std::string& srefObject = "", const std::string& srefMember = "");
-		void unlock(const std::string& srefObject = "", const std::string& srefMember = "");
+		void lock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		bool trylock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void unlock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 	};
 
 	/**
@@ -121,7 +121,7 @@ namespace Sbecore {
 		// a read lock cannot be bumped up to become a write lock
 
 	public:
-		Rwmutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "");
+		Rwmutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 		~Rwmutex();
 
 	private:
@@ -145,13 +145,13 @@ namespace Sbecore {
 		std::string sref;
 
 	public:
-		void rlock(const std::string& srefObject = "", const std::string& srefMember = "");
-		bool rtrylock(const std::string& srefObject = "", const std::string& srefMember = "");
-		void runlock(const std::string& srefObject = "", const std::string& srefMember = "");
+		void rlock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		bool rtrylock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void runlock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 
-		void wlock(const std::string& srefObject = "", const std::string& srefMember = "");
-		bool wtrylock(const std::string& srefObject = "", const std::string& srefMember = "");
-		void wunlock(const std::string& srefObject = "", const std::string& srefMember = "");
+		void wlock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		bool wtrylock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void wunlock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 	};
 
 	/**

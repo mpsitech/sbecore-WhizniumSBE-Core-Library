@@ -48,7 +48,7 @@ void Sbecore::DbsMon::start(
 	try {
 		dbswzem->init(ixDbsVDbstype, dbspath, dbsname, ip, port, dbsusername, dbspassword);
 
-	} catch (SbeException e) {
+	} catch (SbeException& e) {
 		unlockAccess("DbsMon", "start");
 		return;
 	};

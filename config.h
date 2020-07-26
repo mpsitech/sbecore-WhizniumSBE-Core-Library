@@ -10,8 +10,8 @@
 #define SBECORE_CONFIG_H
 
 //#define SBECORE_MAR
-#define SBECORE_MY
-#define SBECORE_PG
+//#define SBECORE_MY
+//#define SBECORE_PG
 #define SBECORE_LITE
 
 #endif

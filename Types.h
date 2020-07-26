@@ -163,7 +163,7 @@ namespace Sbecore {
 		std::map<std::string,std::string> vals;
 
 	public:
-		std::string getSref();
+		virtual std::string getSref();
 		std::string getSquawk(uint (*getIx)(const std::string&), std::string (*getTitle)(const uint, const uint), const uint ixVLocale);
 	};
 

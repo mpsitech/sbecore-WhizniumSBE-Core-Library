@@ -3,7 +3,7 @@
   * POSIX threading types and data types with thread safety (implementation)
   * \author Alexander Wirthmüller
   * \date created: 28 Dec 2018
-  * \date modified: 22 Apr 2020
+  * \date modified: 9 Jul 2020
   */
 
 #include "Mttypes.h"
@@ -18,6 +18,7 @@ Sbecore::Cond::Cond(
 			const string& sref
 			, const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 #ifdef POSIXNOTCPP11
 	int res;
@@ -27,20 +28,20 @@ Sbecore::Cond::Cond(
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
 	res = pthread_mutex_init(&m, &attr);
-	if (res != 0) Mt::logError(res, "error initializing mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error initializing mutex", sref + ".m", srefObject, srefMember, args);
 
 	pthread_mutexattr_destroy(&attr);
 
 	if (res == 0) {
 		res = pthread_cond_init(&c, NULL);
-		if (res != 0) Mt::logError(res, "error initializing condition", sref, srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error initializing condition", sref, srefObject, srefMember, args);
 	};
 
 	this->sref = sref;
 
-	if (res == 0) Mt::logDebug("successfully initialized condition", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully initialized condition", sref, srefObject, srefMember, args);
 #else
-	Mt::logDebug("successfully initialized condition", sref, srefObject, srefMember);
+	Mt::logDebug("successfully initialized condition", sref, srefObject, srefMember, args);
 #endif
 };
 
@@ -78,10 +79,11 @@ Sbecore::Cond::~Cond() {
 void Sbecore::Cond::lockMutex(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
-	Mt::logDebug("attempting to lock mutex", sref + ".m", srefObject, srefMember);
+	Mt::logDebug("attempting to lock mutex", sref + ".m", srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
@@ -94,30 +96,32 @@ void Sbecore::Cond::lockMutex(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
-	else Mt::logDebug("successfully locked mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
+	else Mt::logDebug("successfully locked mutex", sref + ".m", srefObject, srefMember, args);
 };
 
 void Sbecore::Cond::unlockMutex(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 #ifdef POSIXNOTCPP11
 	int res;
 
 	res = pthread_mutex_unlock(&m);
 
-	if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
-	else Mt::logDebug("successfully unlocked mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
+	else Mt::logDebug("successfully unlocked mutex", sref + ".m", srefObject, srefMember, args);
 #else
 	m.unlock();
-	Mt::logDebug("successfully unlocked mutex", sref + ".m", srefObject, srefMember);
+	Mt::logDebug("successfully unlocked mutex", sref + ".m", srefObject, srefMember, args);
 #endif
 };
 
 void Sbecore::Cond::signal(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -132,24 +136,24 @@ void Sbecore::Cond::signal(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_cond_signal(&c);
 
-		if (res != 0) Mt::logError(res, "error signalling condition", sref, srefObject, srefMember);
-		else Mt::logDebug("successfully signalled condition", sref, srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error signalling condition", sref, srefObject, srefMember, args);
+		else Mt::logDebug("successfully signalled condition", sref, srefObject, srefMember, args);
 #else
 		c.notify_one();
-		Mt::logDebug("successfully signalled condition", sref, srefObject, srefMember);
+		Mt::logDebug("successfully signalled condition", sref, srefObject, srefMember, args);
 #endif
 	};
 
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
@@ -159,6 +163,7 @@ void Sbecore::Cond::signal(
 void Sbecore::Cond::broadcast(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -173,24 +178,24 @@ void Sbecore::Cond::broadcast(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_cond_broadcast(&c);
 
-		if (res != 0) Mt::logError(res, "error broadcasting condition", sref, srefObject, srefMember);
-		else Mt::logDebug("successfully broadcast condition", sref, srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error broadcasting condition", sref, srefObject, srefMember, args);
+		else Mt::logDebug("successfully broadcast condition", sref, srefObject, srefMember, args);
 #else
 		c.notify_all();
-		Mt::logDebug("successfully broadcast condition", sref, srefObject, srefMember);
+		Mt::logDebug("successfully broadcast condition", sref, srefObject, srefMember, args);
 #endif
 	};
 
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
@@ -200,10 +205,11 @@ void Sbecore::Cond::broadcast(
 void Sbecore::Cond::wait(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
-	Mt::logDebug("waiting for condition", sref, srefObject, srefMember);
+	Mt::logDebug("waiting for condition", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_cond_wait(&c, &m);
@@ -216,14 +222,15 @@ void Sbecore::Cond::wait(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember);
-	else Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember, args);
+	else Mt::logDebug("done waiting for condition", sref, srefObject, srefMember, args);
 };
 
 bool Sbecore::Cond::timedwait(
 			const unsigned int dt
 			, const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -233,7 +240,7 @@ bool Sbecore::Cond::timedwait(
 #endif
 
 	if (dt == 0) {
-		wait(srefObject, srefMember);
+		wait(srefObject, srefMember, args);
 		return true;
 
 	} else {
@@ -248,18 +255,18 @@ bool Sbecore::Cond::timedwait(
 		};
 #endif
 
-		Mt::logDebug("waiting for condition", sref, srefObject, srefMember);
+		Mt::logDebug("waiting for condition", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 		res = pthread_cond_timedwait(&c, &m, &then);
 		if ((res != 0) && (res != ETIMEDOUT)) {
-			Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember);
+			Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember, args);
 			return false;
 		} else if (res == ETIMEDOUT) {
-			Mt::logDebug("timed out waiting for condition", sref, srefObject, srefMember);
+			Mt::logDebug("timed out waiting for condition", sref, srefObject, srefMember, args);
 			return false;
 		} else {
-			Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
+			Mt::logDebug("done waiting for condition", sref, srefObject, srefMember, args);
 			return true;
 		};
 #else
@@ -267,16 +274,16 @@ bool Sbecore::Cond::timedwait(
 			auto res = c.wait_for(m, chrono::microseconds(dt));
 
 			if (res == cv_status::timeout) {
-				Mt::logDebug("timed out waiting for condition", sref, srefObject, srefMember);
+				Mt::logDebug("timed out waiting for condition", sref, srefObject, srefMember, args);
 				return false;
 			} else {
-				Mt::logDebug("done waiting for condition", sref, srefObject, srefMember);
+				Mt::logDebug("done waiting for condition", sref, srefObject, srefMember, args);
 				return true;
 			};
 
 		} catch (system_error e) {
 			res = -1;
-			Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember);
+			Mt::logError(res, "error waiting for condition", sref, srefObject, srefMember, args);
 			return false;
 		};
 #endif
@@ -319,6 +326,7 @@ void Sbecore::Mt::logDebug(
 			, const string& srefCondMutex
 			, const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	// ex. [tid 1234] JobXyz::test()[1] successfully locked mutex mcNewdata
 	if (ixVVerbose < VecVVerbose::ALL) return;
@@ -327,7 +335,7 @@ void Sbecore::Mt::logDebug(
 
 	if (srefObject.length() > 0) s += srefObject;
 	if ((srefObject.length() > 0) && (srefMember.length() > 0)) s += "::";
-	if (srefMember.length() > 0) s += srefMember + "()";
+	if (srefMember.length() > 0) s += srefMember + "(" + args + ")";
 	if ((srefObject.length() > 0) || (srefMember.length() > 0)) s += " ";
 	s += what;
 	if (srefCondMutex.length() > 0) s += " " + srefCondMutex;
@@ -341,6 +349,7 @@ void Sbecore::Mt::logError(
 			, const string& srefCondMutex
 			, const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	// ex. JobXyz::test() error waiting for condition cNewdata (18: not possible)
 	if (ixVVerbose < VecVVerbose::ERROR) return;
@@ -349,7 +358,7 @@ void Sbecore::Mt::logError(
 
 	if (srefObject.length() > 0) s += srefObject;
 	if ((srefObject.length() > 0) && (srefMember.length() > 0)) s += "::";
-	if (srefMember.length() > 0) s += srefMember + "()";
+	if (srefMember.length() > 0) s += srefMember + "(" + args + ")";
 	if ((srefObject.length() > 0) || (srefMember.length() > 0)) s += " ";
 	s += err;
 	if (srefCondMutex.length() > 0) s += " " + srefCondMutex;
@@ -370,6 +379,7 @@ Sbecore::Mutex::Mutex(
 			const string& sref
 			, const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 #ifdef POSIXNOTCPP11
 	int res;
@@ -379,15 +389,15 @@ Sbecore::Mutex::Mutex(
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
 	res = pthread_mutex_init(&m, &attr);
-	if (res != 0) Mt::logError(res, "error initializing mutex", sref, srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error initializing mutex", sref, srefObject, srefMember, args);
 
 	pthread_mutexattr_destroy(&attr);
 
 	this->sref = sref;
 
-	if (res == 0) Mt::logDebug("successfully initialized mutex", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully initialized mutex", sref, srefObject, srefMember, args);
 #else
-	Mt::logDebug("successfully initialized mutex", sref, srefObject, srefMember);
+	Mt::logDebug("successfully initialized mutex", sref, srefObject, srefMember, args);
 #endif
 };
 
@@ -420,10 +430,11 @@ Sbecore::Mutex::~Mutex() {
 void Sbecore::Mutex::lock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
-	Mt::logDebug("attempting to lock mutex", sref, srefObject, srefMember);
+	Mt::logDebug("attempting to lock mutex", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
@@ -436,17 +447,18 @@ void Sbecore::Mutex::lock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref, srefObject, srefMember);
-	else Mt::logDebug("successfully locked mutex", sref, srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref, srefObject, srefMember, args);
+	else Mt::logDebug("successfully locked mutex", sref, srefObject, srefMember, args);
 };
 
 bool Sbecore::Mutex::trylock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
-	Mt::logDebug("trying to lock mutex", sref, srefObject, srefMember);
+	Mt::logDebug("trying to lock mutex", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_trylock(&m);
@@ -455,13 +467,13 @@ bool Sbecore::Mutex::trylock(
 #endif
 
 	if ((res != EBUSY) && (res != 0)) {
-		Mt::logError(res, "error try-locking mutex", sref, srefObject, srefMember);
+		Mt::logError(res, "error try-locking mutex", sref, srefObject, srefMember, args);
 		return false;
 	} else if (res == EBUSY) {
-		Mt::logDebug("failed try-locking busy mutex", sref, srefObject, srefMember);
+		Mt::logDebug("failed try-locking busy mutex", sref, srefObject, srefMember, args);
 		return false;
 	} else {
-		Mt::logDebug("successfully try-locked mutex", sref, srefObject, srefMember);
+		Mt::logDebug("successfully try-locked mutex", sref, srefObject, srefMember, args);
 		return true;
 	};
 };
@@ -469,17 +481,18 @@ bool Sbecore::Mutex::trylock(
 void Sbecore::Mutex::unlock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 #ifdef POSIXNOTCPP11
 	int res;
 	
 	res = pthread_mutex_unlock(&m);
 
-	if (res != 0) Mt::logError(res, "error unlocking mutex", sref, srefObject, srefMember);
-	else Mt::logDebug("successfully unlocked mutex", sref, srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error unlocking mutex", sref, srefObject, srefMember, args);
+	else Mt::logDebug("successfully unlocked mutex", sref, srefObject, srefMember, args);
 #else
 	m.unlock();
-	Mt::logDebug("successfully unlocked mutex", sref, srefObject, srefMember);
+	Mt::logDebug("successfully unlocked mutex", sref, srefObject, srefMember, args);
 #endif
 };
 
@@ -491,6 +504,7 @@ Sbecore::Rwmutex::Rwmutex(
 			const string& sref
 			, const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 #ifdef POSIXNOTCPP11
 	int res;
@@ -500,13 +514,13 @@ Sbecore::Rwmutex::Rwmutex(
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
 	res = pthread_mutex_init(&m, &attr);
-	if (res != 0) Mt::logError(res, "error initializing mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error initializing mutex", sref + ".m", srefObject, srefMember, args);
 
 	pthread_mutexattr_destroy(&attr);
 
 	if (res == 0) {
 		res = pthread_cond_init(&c, NULL);
-		if (res != 0) Mt::logError(res, "error initializing condition", sref + ".c", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error initializing condition", sref + ".c", srefObject, srefMember, args);
 	};
 #endif
 
@@ -520,9 +534,9 @@ Sbecore::Rwmutex::Rwmutex(
 	this->sref = sref;
 
 #ifdef POSIXNOTCPP11
-	if (res == 0) Mt::logDebug("successfully initialized r/w mutex", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully initialized r/w mutex", sref, srefObject, srefMember, args);
 #else
-	Mt::logDebug("successfully initialized r/w mutex", sref, srefObject, srefMember);
+	Mt::logDebug("successfully initialized r/w mutex", sref, srefObject, srefMember, args);
 #endif
 };
 
@@ -560,12 +574,13 @@ Sbecore::Rwmutex::~Rwmutex() {
 void Sbecore::Rwmutex::rlock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
 	bool haswlock = false;
 
-	Mt::logDebug("attempting to lock r/w mutex for read operation", sref, srefObject, srefMember);
+	Mt::logDebug("attempting to lock r/w mutex for read operation", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
@@ -578,7 +593,7 @@ void Sbecore::Rwmutex::rlock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (res == 0) {
 		if (w > 0) {
@@ -614,7 +629,7 @@ void Sbecore::Rwmutex::rlock(
 #endif
 			};
 
-			if (res != 0) Mt::logError(res, "error waiting for condition", sref + ".c", srefObject, srefMember);
+			if (res != 0) Mt::logError(res, "error waiting for condition", sref + ".c", srefObject, srefMember, args);
 		};
 	};
 
@@ -623,24 +638,25 @@ void Sbecore::Rwmutex::rlock(
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
 	};
 
-	if (res == 0) Mt::logDebug("successfully locked r/w mutex for read operation", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully locked r/w mutex for read operation", sref, srefObject, srefMember, args);
 };
 
 bool Sbecore::Rwmutex::rtrylock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
 	bool haswlock = false;
 
-	Mt::logDebug("trying to lock r/w mutex for read operation", sref, srefObject, srefMember);
+	Mt::logDebug("trying to lock r/w mutex for read operation", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
@@ -653,7 +669,7 @@ bool Sbecore::Rwmutex::rtrylock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (res == 0) {
 		if (w > 0) {
@@ -678,11 +694,11 @@ bool Sbecore::Rwmutex::rtrylock(
 #ifdef POSIXNOTCPP11
 				res = pthread_mutex_unlock(&m);
 
-				if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
-				else Mt::logDebug("failed try-locking busy r/w mutex for read operation", sref, srefObject, srefMember);
+				if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
+				else Mt::logDebug("failed try-locking busy r/w mutex for read operation", sref, srefObject, srefMember, args);
 #else
 				m.unlock();
-				Mt::logDebug("failed try-locking busy r/w mutex for read operation", sref, srefObject, srefMember);
+				Mt::logDebug("failed try-locking busy r/w mutex for read operation", sref, srefObject, srefMember, args);
 #endif
 
 				return false;
@@ -695,13 +711,13 @@ bool Sbecore::Rwmutex::rtrylock(
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
 	};
 
-	if (res == 0) Mt::logDebug("successfully try-locked r/w mutex for read operation", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully try-locked r/w mutex for read operation", sref, srefObject, srefMember, args);
 	
 	return true;
 };
@@ -709,6 +725,7 @@ bool Sbecore::Rwmutex::rtrylock(
 void Sbecore::Rwmutex::runlock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -723,7 +740,7 @@ void Sbecore::Rwmutex::runlock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (w == 0) {
 		r--;
@@ -732,7 +749,7 @@ void Sbecore::Rwmutex::runlock(
 			if (r == 0) {
 #ifdef POSIXNOTCPP11
 				res = pthread_cond_signal(&c);
-				if (res != 0) Mt::logError(res, "error signalling condition", sref + ".c", srefObject, srefMember);
+				if (res != 0) Mt::logError(res, "error signalling condition", sref + ".c", srefObject, srefMember, args);
 #else
 				c.notify_one();
 #endif
@@ -743,18 +760,19 @@ void Sbecore::Rwmutex::runlock(
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
 	};
 
-	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from read operation", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from read operation", sref, srefObject, srefMember, args);
 };
 
 void Sbecore::Rwmutex::wlock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -773,7 +791,7 @@ void Sbecore::Rwmutex::wlock(
 	thread::id tid = this_thread::get_id();
 #endif
 
-	Mt::logDebug("attempting to lock r/w mutex for write operation", sref, srefObject, srefMember);
+	Mt::logDebug("attempting to lock r/w mutex for write operation", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
@@ -786,7 +804,7 @@ void Sbecore::Rwmutex::wlock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (res == 0) {
 		if (tidW != tid) {
@@ -804,7 +822,7 @@ void Sbecore::Rwmutex::wlock(
 #endif
 			};
 
-			if (res != 0) Mt::logError(res, "error waiting for condition", sref + ".c", srefObject, srefMember);
+			if (res != 0) Mt::logError(res, "error waiting for condition", sref + ".c", srefObject, srefMember, args);
 		};
 	};
 
@@ -814,18 +832,19 @@ void Sbecore::Rwmutex::wlock(
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
 	};
 
-	if (res == 0) Mt::logDebug("successfully locked r/w mutex for write operation", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully locked r/w mutex for write operation", sref, srefObject, srefMember, args);
 };
 
 bool Sbecore::Rwmutex::wtrylock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -844,7 +863,7 @@ bool Sbecore::Rwmutex::wtrylock(
 	thread::id tid = this_thread::get_id();
 #endif
 
-	Mt::logDebug("trying to lock r/w mutex for write operation", sref, srefObject, srefMember);
+	Mt::logDebug("trying to lock r/w mutex for write operation", sref, srefObject, srefMember, args);
 
 #ifdef POSIXNOTCPP11
 	res = pthread_mutex_lock(&m);
@@ -857,15 +876,15 @@ bool Sbecore::Rwmutex::wtrylock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	if (res == 0) {
 		if ((tidW != tid) || (r > 0)) {
 #ifdef POSIXNOTCPP11
 			res = pthread_mutex_unlock(&m);
 
-			if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
-			else Mt::logDebug("failed try-locking busy r/w mutex for write operation", sref, srefObject, srefMember);
+			if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
+			else Mt::logDebug("failed try-locking busy r/w mutex for write operation", sref, srefObject, srefMember, args);
 #else
 			m.unlock();
 #endif
@@ -880,13 +899,13 @@ bool Sbecore::Rwmutex::wtrylock(
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
 	};
 
-	if (res == 0) Mt::logDebug("successfully try-locked r/w mutex for write operation", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully try-locked r/w mutex for write operation", sref, srefObject, srefMember, args);
 	
 	return true;
 };
@@ -894,6 +913,7 @@ bool Sbecore::Rwmutex::wtrylock(
 void Sbecore::Rwmutex::wunlock(
 			const string& srefObject
 			, const string& srefMember
+			, const string& args
 		) {
 	int res;
 
@@ -908,7 +928,7 @@ void Sbecore::Rwmutex::wunlock(
 	};
 #endif
 
-	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember);
+	if (res != 0) Mt::logError(res, "error locking mutex", sref + ".m", srefObject, srefMember, args);
 
 	w--;
 #ifdef POSIXNOTCPP11
@@ -921,7 +941,7 @@ void Sbecore::Rwmutex::wunlock(
 		if (w == 0) {
 #ifdef POSIXNOTCPP11
 			res = pthread_cond_broadcast(&c);
-			if (res != 0) Mt::logError(res, "error broadcasting condition", sref + ".c", srefObject, srefMember);
+			if (res != 0) Mt::logError(res, "error broadcasting condition", sref + ".c", srefObject, srefMember, args);
 #else
 			c.notify_all();
 #endif
@@ -931,13 +951,13 @@ void Sbecore::Rwmutex::wunlock(
 	if (res == 0) {
 #ifdef POSIXNOTCPP11
 		res = pthread_mutex_unlock(&m);
-		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember);
+		if (res != 0) Mt::logError(res, "error unlocking mutex", sref + ".m", srefObject, srefMember, args);
 #else
 		m.unlock();
 #endif
 	};
 
-	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from write operation", sref, srefObject, srefMember);
+	if (res == 0) Mt::logDebug("successfully unlocked r/w mutex from write operation", sref, srefObject, srefMember, args);
 };
 
 /******************************************************************************

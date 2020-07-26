@@ -148,7 +148,7 @@ namespace Sbecore {
 	class Claim {
 
 	public:
-		Claim();
+		Claim(const bool retractable = true, const bool run = true);
 
 	public:
 		// managed by server
@@ -156,8 +156,8 @@ namespace Sbecore {
 		bool fulfilled;
 
 		// managed by client
-		bool filedNotRetracted;
 		bool retractable;
+		bool run; // most frequent extra parameter for claim
 	};
 
 	/**
@@ -444,7 +444,7 @@ namespace Sbecore {
 
 	public:
 		Result();
-		~Result();
+		virtual ~Result();
 
 	public:
 		void clear();
@@ -453,8 +453,8 @@ namespace Sbecore {
 		void append(Resultitem* ri);
 
 		// methods for writing to result (one writer / writing thread)
-		void queue(const uint ix);
-		bool dequeue(uint& ix);
+		virtual void queue(const uint ix);
+		virtual bool dequeue(uint& ix);
 
 		// methods for reading from result (multiple readers)
 		bool lock(const ubigint jref, const uint ix); // only de-queued items can be locked

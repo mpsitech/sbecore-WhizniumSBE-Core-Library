@@ -268,12 +268,15 @@ Sbecore::Clstn::Clstn(
  class Claim
  ******************************************************************************/
 
-Sbecore::Claim::Claim() {
+Sbecore::Claim::Claim(
+			const bool retractable
+			, const bool run
+		) {
 	takenNotAvailable = false;
 	fulfilled = false;
 
-	filedNotRetracted = false;
-	retractable = false;
+	this->retractable = retractable;
+	this->run = run;
 };
 
 /******************************************************************************
@@ -1075,11 +1078,11 @@ void Sbecore::Result::queue(
 		) {
 	// append item to queue, without checking for duplicates 
 
-	mAccess.lock("Result", "queue");
+	mAccess.lock("Result", "queue", "ix=" + to_string(ix));
 
 	icsQueue.push_back(ix);
 
-	mAccess.unlock("Result", "queue");
+	mAccess.unlock("Result", "queue", "ix=" + to_string(ix));
 };
 
 bool Sbecore::Result::dequeue(
@@ -1089,7 +1092,7 @@ bool Sbecore::Result::dequeue(
 
 	bool success = false;
 
-	mAccess.lock("Result", "dequeue");
+	mAccess.lock("Result", "dequeue", "ix=" + to_string(ix));
 
 	if (!icsQueue.empty()) {
 		ix = *icsQueue.begin();
@@ -1098,7 +1101,7 @@ bool Sbecore::Result::dequeue(
 		success = true;
 	};
 
-	mAccess.unlock("Result", "dequeue");
+	mAccess.unlock("Result", "dequeue", "ix=" + to_string(ix));
 
 	return success;
 };
@@ -1115,7 +1118,7 @@ bool Sbecore::Result::lock(
 
 	bool found;
 
-	mAccess.lock("Result", "lock");
+	mAccess.lock("Result", "lock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
 
 	if (ix < nodes.size()) {
 		found = false;
@@ -1131,7 +1134,7 @@ bool Sbecore::Result::lock(
 		if (success) locks.push_back(lockref);
 	};
 
-	mAccess.unlock("Result", "lock");
+	mAccess.unlock("Result", "lock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
 
 	return success;
 };
@@ -1146,7 +1149,7 @@ void Sbecore::Result::unlock(
 
 	bool found;
 
-	mAccess.lock("Result", "unlock");
+	mAccess.lock("Result", "unlock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
 
 	for (auto it = locks.begin(); it != locks.end(); it++)
 		if (*it == lockref) {
@@ -1156,16 +1159,15 @@ void Sbecore::Result::unlock(
 
 	found = false;
 
-	for (auto it = locks.begin(); it != locks.end(); it++) {
+	for (auto it = locks.begin(); it != locks.end(); it++)
 		if ((*it).ix == ix) {
 			found = true;
 			break;
 		};
 
-		if (!found) queue(ix);
-	};
+	if (!found) queue(ix);
 
-	mAccess.unlock("Result", "unlock");
+	mAccess.unlock("Result", "unlock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
 };
 
 void Sbecore::Result::unlockByJref(
@@ -1175,7 +1177,7 @@ void Sbecore::Result::unlockByJref(
 
 	bool found;
 
-	mAccess.lock("Result", "unlockByJref");
+	mAccess.lock("Result", "unlockByJref", "jref=" + to_string(jref));
 
 	do {
 		found = false;
@@ -1189,7 +1191,7 @@ void Sbecore::Result::unlockByJref(
 
 	} while (found);
 
-	mAccess.unlock("Result", "unlockByJref");
+	mAccess.unlock("Result", "unlockByJref", "jref=" + to_string(jref));
 };
 
 Sbecore::Resultitem* Sbecore::Result::operator[](
