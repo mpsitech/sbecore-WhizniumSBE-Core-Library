@@ -1,2 +1,3 @@
 # sbecore
-MPSI Technologies WhizniumSBE core library
+
+WhizniumSBE core library; simple helpers
