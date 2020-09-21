@@ -175,7 +175,7 @@ namespace Sbecore {
 		ubigint jrefSrv;
 		std::set<ubigint> jrefsCli;
 
-		Mutex mClaims;
+		Rwmutex mClaims;
 		std::map<ubigint,Claim*> claims;
 	};
 
