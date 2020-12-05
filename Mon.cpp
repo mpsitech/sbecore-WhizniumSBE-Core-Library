@@ -1,10 +1,10 @@
 /**
-  * \file Mon.cpp
-  * monitoring (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 24 Jan 2016
-  * \date modified: 29 Apr 2020
-  */
+	* \file Mon.cpp
+	* monitoring (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 24 Jan 2016
+	*/
 
 #include "Mon.h"
 

@@ -1,10 +1,10 @@
 /**
-  * \file PgDbs.h
-  * database access code globals for PostgreSQL (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 1 Jan 2009
-  * \date modified: 22 Apr 2020
-  */
+	* \file PgDbs.h
+	* database access code globals for PostgreSQL (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 1 Jan 2009
+	*/
 
 #include "PgDbs.h"
 

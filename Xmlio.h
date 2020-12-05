@@ -1,10 +1,10 @@
 /**
-  * \file Xmlio.h
-  * methods for XML tree input/output based on libxml2 (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 19 Feb 2007
-  * \date modified: 29 Apr 2020
-  */
+	* \file Xmlio.h
+	* methods for XML tree input/output based on libxml2 (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 19 Feb 2007
+	*/
 
 #ifndef SBECORE_XMLIO_H
 #define SBECORE_XMLIO_H

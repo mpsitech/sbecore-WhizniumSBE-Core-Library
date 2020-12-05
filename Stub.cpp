@@ -1,10 +1,10 @@
 /**
-  * \file Stub.cpp
-  * stub cache functionality (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 6 Oct 2015
-  * \date modified: 22 Apr 2020
-  */
+	* \file Stub.cpp
+	* stub cache functionality (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 6 Oct 2015
+	*/
 
 #include "Stub.h"
 

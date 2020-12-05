@@ -1,13 +1,15 @@
 /**
-  * \file Txtrd.h
-  * methods for reading hierarchical text input (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 8 Oct 2015
-  * \date modified: 22 Apr 2020
-  */
+	* \file Txtrd.h
+	* methods for reading hierarchical text input (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 8 Oct 2015
+	*/
 
 #ifndef SBECORE_TXTRD_H
 #define SBECORE_TXTRD_H
+
+#include <iconv.h>
 
 #include <fstream>
 
@@ -26,15 +28,14 @@ namespace Sbecore {
 		class VecVLinetype {
 
 		public:
-			static const uint VOID = 1;
-			static const uint HEADER = 2;
-			static const uint DATA = 3;
-			static const uint FOOTER = 4;
-			static const uint COMMENT = 5;
+			static const uint HEADER = 1;
+			static const uint DATA = 2;
+			static const uint FOOTER = 3;
+			static const uint COMMENT = 4;
 		};
 
 	public:
-		Txtrd(const std::string& fullpath, const std::string& iexsref, const Version& minversion, uint (*getIxVToken)(const std::string&));
+		Txtrd(const std::string& inpath, const std::string& rectpath, const std::string& iexsref, const Version& minversion, uint (*getIxVToken)(const std::string&));
 		~Txtrd();
 
 	public:
@@ -42,10 +43,13 @@ namespace Sbecore {
 
 		std::ifstream infile;
 		char* buf;
+		iconv_t conv;
+
+		std::fstream rectfile;
 
 		bool skip;
+		unsigned int hdril;
 		unsigned int linecnt;
-		std::string line;
 
 		unsigned int il;
 		uint ixVLinetype;
@@ -56,7 +60,9 @@ namespace Sbecore {
 		bool eof();
 
 		bool readLine();
-		void tokenizeLine();
+
+		std::string unicodeToHexcode(unsigned int unicode);
+		void strISO8859(std::string& s);
 	};
 };
 #endif

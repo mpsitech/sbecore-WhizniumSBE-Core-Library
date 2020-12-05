@@ -1,10 +1,10 @@
 /**
-  * \file Mttypes.h
-  * POSIX threading types and data types with thread safety (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 28 Dec 2018
-  * \date modified: 22 Apr 2020
-  */
+	* \file Mttypes.h
+	* POSIX threading types and data types with thread safety (declarations)
+	* \copyright (C) 2018-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 28 Dec 2018
+	*/
 
 #ifndef SBECORE_MTTYPES_H
 #define SBECORE_MTTYPES_H

@@ -1,10 +1,10 @@
 /**
-  * \file Engtypes.h
-  * engine data types (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 6 Oct 2015
-  * \date modified: 12 May 2020
-  */
+	* \file Engtypes.h
+	* engine data types (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 6 Oct 2015
+	*/
 
 #ifndef SBECORE_ENGTYPES_H
 #define SBECORE_ENGTYPES_H

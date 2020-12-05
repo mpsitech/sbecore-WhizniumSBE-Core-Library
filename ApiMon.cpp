@@ -1,10 +1,10 @@
 /**
-  * \file ApiMon.cpp
-  * monitoring via API (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 25 Jan 2016
-  * \date modified: 22 Apr 2020
-  */
+	* \file ApiMon.cpp
+	* monitoring via API (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 25 Jan 2016
+	*/
 
 #include "ApiMon.h"
 

@@ -1,10 +1,10 @@
 /**
-  * \file Types.cpp
-  * common data types, string manipulation and exception (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 10 Aug 2014
-  * \date modified: 29 Apr 2020
-  */
+	* \file Types.cpp
+	* common data types, string manipulation and exception (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 10 Aug 2014
+	*/
 
 #include "Types.h"
 
@@ -830,10 +830,10 @@ void Sbecore::StrMod::stringToVector(
 
 	vec.resize(0);
 
-	for (unsigned int i = 0; i<len; i++) {
+	for (unsigned int i = 0; i < len; i++) {
 		c = str[i];
 
-		if (c == '&') {
+		if ((sep == ';') && (c == '&')) {
 			ignore = true;
 		} else if (c == sep) {
 			if (ignore) {

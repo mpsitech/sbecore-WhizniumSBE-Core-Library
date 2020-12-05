@@ -1,9 +1,9 @@
 /**
-  * \file Dbs.cpp
-  * database access code globals (implementation)
+	* \file Dbs.cpp
+	* database access code globals (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
   * \author Alexander Wirthmüller
   * \date created: 1 Jan 2009
-  * \date modified: 10 Aug 2014
   */
 
 #include "Dbs.h"

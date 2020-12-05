@@ -1,10 +1,10 @@
 /**
-  * \file TxtMon.cpp
-  * monitoring to text file (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 26 Jan 2016
-  * \date modified: 17 May 2020
-  */
+	* \file TxtMon.cpp
+	* monitoring to text file (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 26 Jan 2016
+	*/
 
 #include "TxtMon.h"
 

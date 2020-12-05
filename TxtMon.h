@@ -1,10 +1,10 @@
 /**
-  * \file TxtMon.h
-  * monitoring to text file (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 26 Jan 2016
-  * \date modified: 22 Apr 2020
-  */
+	* \file TxtMon.h
+	* monitoring to text file (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 26 Jan 2016
+	*/
 
 #ifndef SBECORE_TXTMON_H
 #define SBECORE_TXTMON_H

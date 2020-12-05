@@ -1,10 +1,10 @@
 /**
-  * \file Mttypes.cpp
-  * POSIX threading types and data types with thread safety (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 28 Dec 2018
-  * \date modified: 9 Jul 2020
-  */
+	* \file Mttypes.cpp
+	* POSIX threading types and data types with thread safety (implementation)
+	* \copyright (C) 2018-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 28 Dec 2018
+	*/
 
 #include "Mttypes.h"
 

@@ -1,10 +1,10 @@
 /**
-  * \file MyDbs.h
-  * database access code globals for MySQL (implementation)
-  * \author Alexander Wirthmüller
-  * \date created: 1 Jan 2009
-  * \date modified: 22 Apr 2020
-  */
+	* \file MyDbs.h
+	* database access code globals for MySQL (implementation)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 1 Jan 2009
+	*/
 
 #include "MyDbs.h"
 

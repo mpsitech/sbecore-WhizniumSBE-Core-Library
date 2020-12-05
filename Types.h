@@ -1,10 +1,10 @@
 /**
-  * \file Types.h
-  * common data types, string manipulation and exception (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 10 Aug 2014
-  * \date modified: 22 Apr 2020
-  */
+	* \file Types.h
+	* common data types, string manipulation and exception (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 10 Aug 2014
+	*/
 
 #ifndef SBECORE_TYPES_H
 #define SBECORE_TYPES_H

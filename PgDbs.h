@@ -1,10 +1,10 @@
 /**
-  * \file PgDbs.h
-  * database access code globals for PostgreSQL (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 1 Jan 2009
-  * \date modified: 22 Apr 2020
-  */
+	* \file PgDbs.h
+	* database access code globals for PostgreSQL (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 1 Jan 2009
+	*/
 
 #ifndef SBECORE_PGDBS_H
 #define SBECORE_PGDBS_H

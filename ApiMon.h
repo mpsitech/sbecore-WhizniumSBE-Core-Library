@@ -1,10 +1,10 @@
 /**
-  * \file ApiMon.h
-  * monitoring via API (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 24 Jan 2016
-  * \date modified: 22 Apr 2020
-  */
+	* \file ApiMon.h
+	* monitoring via API (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 24 Jan 2016
+	*/
 
 #ifndef SBECORE_APIMON_H
 #define SBECORE_APIMON_H

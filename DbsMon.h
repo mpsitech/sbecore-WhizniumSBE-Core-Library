@@ -1,10 +1,10 @@
 /**
-  * \file DbsMon.h
-  * monitoring to database (declarations)
-  * \author Alexander Wirthmüller
-  * \date created: 24 Jan 2016
-  * \date modified: 30 Apr 2020
-  */
+	* \file DbsMon.h
+	* monitoring to database (declarations)
+	* \copyright (C) 2016-2020 MPSI Technologies GmbH
+	* \author Alexander Wirthmüller
+	* \date created: 24 Jan 2016
+	*/
 
 #ifndef SBECORE_DBSMON_H
 #define SBECORE_DBSMON_H
