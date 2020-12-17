@@ -182,11 +182,12 @@ namespace Sbecore {
 		std::string boolToString(const bool b);
 		std::string timetToString(const time_t rawtime);
 		bool has(const std::vector<std::string>& vec, const std::string& str);
-		void stringToVector(const std::string& str, std::vector<std::string>& vec, const char sep = ';');
+		void stringToVector(const std::string& str, std::vector<std::string>& vec, const char sep = ';', const bool crop = false);
 		void stringToDoublevec(const std::string& str, std::vector<double>& vec, const char sep = ';');
 		void vectorToString(const std::vector<std::string>& vec, std::string& str, const char sep = ';');
 		bool srefInSrefs(const std::string& srefs, const std::string& sref);
 		void refsToVector(const std::string& refs, std::vector<ubigint>& vec);
+		void srefsToVector(const std::string& srefs, std::vector<std::string>& vec);
 		std::string replaceChar(const std::string& s, const char c, const char d);
 		void findPlhs(const std::string& s, std::set<std::string>& plhs, const bool add = false);
 		std::string findFirstPlh(const std::string& s, size_t start);

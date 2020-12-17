@@ -658,7 +658,7 @@ string Sbecore::StrMod::lc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i = 0; i<s.length(); i++) retval[i] = tolower(retval[i]);
+	for (unsigned int i = 0; i < s.length(); i++) retval[i] = tolower(retval[i]);
 
 	return(retval);
 };
@@ -667,7 +667,7 @@ string Sbecore::StrMod::uc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i = 0; i<s.length(); i++) retval[i] = toupper(retval[i]);
+	for (unsigned int i = 0; i < s.length(); i++) retval[i] = toupper(retval[i]);
 
 	return(retval);
 };
@@ -703,7 +703,7 @@ string Sbecore::StrMod::dotToUsc(
 			const string& s
 		) {
 	string retval = s;
-	for (unsigned int i = 0; i<s.length(); i++) if ((retval[i] == '-') || (retval[i] == '.')) retval[i] = '_';
+	for (unsigned int i = 0; i < s.length(); i++) if ((retval[i] == '-') || (retval[i] == '.')) retval[i] = '_';
 
 	return(retval);
 };
@@ -806,7 +806,7 @@ bool Sbecore::StrMod::has(
 		) {
 	bool found = false;
 
-	for (unsigned int i = 0; i<vec.size(); i++) {
+	for (unsigned int i = 0; i < vec.size(); i++) {
 		if (vec[i] == str) {
 			found = true;
 			break;
@@ -820,6 +820,7 @@ void Sbecore::StrMod::stringToVector(
 			const string& str
 			, vector<string>& vec
 			, const char sep
+			, const bool crop
 		) {
 	unsigned int len = str.length();
 
@@ -840,14 +841,14 @@ void Sbecore::StrMod::stringToVector(
 				ignore = false;
 			} else {
 				vec.push_back(str.substr(start, i-start));
-				start = i+1;
+				start = i + 1;
 			};
 		};
 	};
 	if (start < len) vec.push_back(str.substr(start));
 	else if (start == len) if (len != 0) if (str[start-1] == sep) vec.push_back("");
 
-	for (unsigned int i = 0; i < vec.size(); i++) vec[i] = spcex(vec[i]);
+	if (crop) for (unsigned int i = 0; i < vec.size(); i++) vec[i] = spcex(vec[i]);
 };
 
 void Sbecore::StrMod::stringToDoublevec(
@@ -857,10 +858,10 @@ void Sbecore::StrMod::stringToDoublevec(
 		) {
 	vector<string> _vec;
 
-	stringToVector(str, _vec, sep);
+	stringToVector(str, _vec, sep, true);
 
 	vec.resize(_vec.size());
-	for (unsigned int i = 0; i<_vec.size(); i++) vec[i] = atof(_vec[i].c_str());
+	for (unsigned int i = 0; i < _vec.size(); i++) vec[i] = atof(_vec[i].c_str());
 };
 
 void Sbecore::StrMod::vectorToString(
@@ -869,7 +870,7 @@ void Sbecore::StrMod::vectorToString(
 			, const char sep
 		) {
 	str = "";
-	for (unsigned int i = 0; i<vec.size(); i++) str += sep + vec[i];
+	for (unsigned int i = 0; i < vec.size(); i++) str += sep + vec[i];
 
 	if (str.length() > 0) str = str.substr(1);
 };
@@ -897,15 +898,15 @@ bool Sbecore::StrMod::srefInSrefs(
 		if (ptr2 == 0) {
 			bgnvalid = true;
 		} else {
-			if ((srefs[ptr2-1] == ';') || (srefs[ptr2-1] == ' ')) bgnvalid = true;
+			if ((srefs[ptr2 - 1] == ';') || (srefs[ptr2 - 1] == ' ')) bgnvalid = true;
 		};
 
 		// validate ending
 		if (bgnvalid) {
-			if ((ptr2+sreflen) == srefslen) {
+			if ((ptr2 + sreflen) == srefslen) {
 				endvalid = true;
 			} else {
-				if ((srefs[ptr2+sreflen] == ';') || (srefs[ptr2+sreflen] == ' ')) endvalid = true;
+				if ((srefs[ptr2 + sreflen] == ';') || (srefs[ptr2 + sreflen] == ' ')) endvalid = true;
 			};
 		};
 
@@ -913,7 +914,7 @@ bool Sbecore::StrMod::srefInSrefs(
 			isin = true;
 			break;
 		} else {
-			ptr1 = ptr2+1;
+			ptr1 = ptr2 + 1;
 			ptr2 = srefs.find(sref, ptr1);
 		};
 	};
@@ -927,11 +928,18 @@ void Sbecore::StrMod::refsToVector(
 		) {
 	vector<string> strvec;
 
-	stringToVector(refs, strvec);
+	stringToVector(refs, strvec, ';', true);
 
 	vec.resize(0);
 
-	for (unsigned int i = 0; i<strvec.size(); i++) vec.push_back(atoll(strvec[i].c_str()));
+	for (unsigned int i = 0; i < strvec.size(); i++) vec.push_back(atoll(strvec[i].c_str()));
+};
+
+void Sbecore::StrMod::srefsToVector(
+			const string& srefs
+			, vector<string>& vec
+		) {
+	stringToVector(srefs, vec, ';', true);
 };
 
 string Sbecore::StrMod::replaceChar(
@@ -941,7 +949,7 @@ string Sbecore::StrMod::replaceChar(
 		) {
 	string retval = s;
 
-	for (size_t ptr=0;ptr<retval.length();ptr++) if (retval[ptr] == c) retval[ptr] = d;
+	for (size_t ptr = 0; ptr < retval.length(); ptr++) if (retval[ptr] == c) retval[ptr] = d;
 
 	return retval;
 };
@@ -958,7 +966,7 @@ void Sbecore::StrMod::findPlhs(
 	ptr1 = s.find('&');
 	while (ptr1 != string::npos) {
 		ptr2 = s.find(';', ptr1);
-		if (ptr2 != string::npos) plhs.insert(s.substr(ptr1+1, ptr2-ptr1-1));
+		if (ptr2 != string::npos) plhs.insert(s.substr(ptr1 + 1, ptr2 - ptr1 - 1));
 		ptr1 = s.find('&', ptr2);
 	};
 };
@@ -975,7 +983,7 @@ string Sbecore::StrMod::findFirstPlh(
 	if (ptr1 != string::npos) {
 		ptr2 = s.find(';', ptr1);
 
-		if (ptr2 != string::npos) retval = s.substr(ptr1+1, ptr2-ptr1-1);
+		if (ptr2 != string::npos) retval = s.substr(ptr1 + 1, ptr2 - ptr1 - 1);
 	};
 
 	return retval;

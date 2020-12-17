@@ -113,7 +113,7 @@ bool Sbecore::Txtrd::readLine() {
 	linecnt++;
 
 	if (s.length() == 0) {
-		cout << "returning because of empty line" << endl;
+		//cout << "returning because of empty line" << endl;
 		return false;
 	};
 
@@ -127,12 +127,12 @@ bool Sbecore::Txtrd::readLine() {
 	Nconv = iconv(conv, &inbuf, &inlen, &outbuf, &outlen);
 
 	if (Nconv == ((size_t) -1)) {
-		cout << "returning because of iconv problem (" << errno << "): s='" << s << "' inlen=" << inlen << ", outlen=" << outlen << endl;
+		//cout << "returning because of iconv problem (" << errno << "): s='" << s << "' inlen=" << inlen << ", outlen=" << outlen << endl;
 		return false;
 	};
 
 	if (Nconv > 0) {
-		cout << "line " << linecnt << " modified by iconv" << endl;
+		//cout << "line " << linecnt << " modified by iconv" << endl;
 		buf[4095 - outlen] = '\0';
 		s = string(buf);
 	};
@@ -191,6 +191,8 @@ bool Sbecore::Txtrd::readLine() {
 
 						if (s.substr(ptr).find(".end") == 0) {
 							ixVLinetype = VecVLinetype::FOOTER;
+							if (il != 0) hdril--;
+
 						} else {
 							ixVLinetype = VecVLinetype::HEADER;
 						};
@@ -202,12 +204,15 @@ bool Sbecore::Txtrd::readLine() {
 		};
 	};
 
+	// in this case, stringToVector() returns one more vector item than is actually present
+	if (findil) il--;
+
 	// adjust data and comment lines to header
-	if (findil && (il < hdril)) il = hdril;
+	if (findil) il = hdril;
 	else if (!findil && (il > hdril)) il = hdril;
 
 	// identify appended empty fields
-	for (ptr = ss.size(); ptr > 0; ptr--) if (ss[ptr-1] != "") break;
+	for (ptr = ss.size(); ptr > 0; ptr--) if (ss[ptr - 1] != "") break;
 
 	if (ixVLinetype == VecVLinetype::DATA) {
 		// extract fields
@@ -226,11 +231,11 @@ bool Sbecore::Txtrd::readLine() {
 		rectfile << endl;
 	};
 
-//	cout << "line " << linecnt << ": il=" << il;
-//	cout << " ixVLinetype=" << ixVLinetype;
-//	cout << " ixVToken=" << ixVToken;
-//	cout << " fields.size()=" << fields.size();
-//	cout << endl;
+	//cout << "line " << linecnt << ": il=" << il;
+	//cout << " ixVLinetype=" << ixVLinetype;
+	//cout << " ixVToken=" << ixVToken;
+	//cout << " fields.size()=" << fields.size();
+	//cout << endl;
 
 	return true;
 };
