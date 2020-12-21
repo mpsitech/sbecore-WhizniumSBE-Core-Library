@@ -9,8 +9,5 @@ export set BUILDROOT=${WHIZSDKROOT}/build
 
 mkdir ${SYSROOT}${BUILDROOT}/sbecore
 
-cp config.h ${SYSROOT}${BUILDROOT}/sbecore/
-cp Makefile ${SYSROOT}${BUILDROOT}/sbecore/
-
 cp ../*.h ${SYSROOT}${BUILDROOT}/sbecore/
 cp ../*.cpp ${SYSROOT}${BUILDROOT}/sbecore/
