@@ -1,6 +1,6 @@
 /**
 	* \file TxtMon.cpp
-	* monitoring to text file (implementation)
+	* engine monitoring to text file (implementation)
 	* \copyright (C) 2016-2020 MPSI Technologies GmbH
 	* \author Alexander Wirthmüller
 	* \date created: 26 Jan 2016

@@ -25,6 +25,8 @@
 #include <vector>
 #include <cmath>
 
+#include <json/json.h>
+
 #include <libxml/encoding.h>
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
@@ -34,6 +36,133 @@
 #include <sbecore/Types.h>
 
 namespace Sbecore {
+	/**
+		* Block
+		*/
+	class Block {
+
+	public:
+		static const uint NONE = 0;
+
+	public:
+		Block();
+		virtual ~Block();
+	
+	public:
+		std::set<uint> mask;
+
+	public:
+		bool has(const uint item);
+		bool hasAll(const std::set<uint>& items);
+		bool hasAny(const std::set<uint>& items);
+
+		void add(const uint item);
+		void clear();
+	};
+
+	/**
+		* Feeditem
+		*/
+	class Feeditem {
+
+	public:
+		Feeditem(const bool Avail = true, const uint ix = 0, const ubigint ref = 0, const std::string& sref = "", const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
+
+	public:
+		bool Avail;
+		uint ix;
+		ubigint ref;
+		std::string sref;
+		std::string Title1;
+		std::string Title2;
+		std::string Title3;
+
+	public:
+		bool operator==(const Feeditem& comp);
+		bool operator!=(const Feeditem& comp);
+
+		void cap(const bool tit1 = true, const bool tit2 = false, const bool tit3 = false);
+
+		bool readJSON(Json::Value& me, const unsigned int ix, const bool shorttags);
+		bool readXML(xmlXPathContext* docctx, std::string basexpath, const unsigned int num, const bool shorttags);
+		void writeJSON(Json::Value& sup, const unsigned int num);
+		void writeXML(xmlTextWriter* wr, const unsigned int num, std::string difftag = "");
+	};
+
+	/**
+		* Feed
+		*/
+	class Feed {
+
+	public:
+		Feed(const std::string& tag = "");
+		Feed(const Feed& src);
+		~Feed();
+
+	public:
+		std::string tag;
+		std::vector<Feeditem*> nodes;
+
+	public:
+		void clear();
+		unsigned int size() const;
+
+		void appendIxSrefTitles(const uint ix, const std::string& sref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
+		void appendIxRefSrefTitles(const uint ix, const ubigint ref, const std::string& sref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
+		void appendRefTitles(const ubigint ref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
+		void appendRefSrefTitles(const ubigint ref, const std::string& sref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
+		void appendTitles(const std::string& Title1, const std::string& Title2 = "", const std::string& Title3 = "");
+
+		Feeditem* operator[](const uint ix);
+		Feeditem* getByNum(const uint num);
+		Sbecore::uint getNumByIx(const uint ix);
+		Sbecore::uint getNumByRef(const ubigint ref);
+		Sbecore::uint getNumBySref(const std::string& sref);
+		Sbecore::uint getIxByNum(const uint num);
+		Sbecore::ubigint getRefByNum(const uint num);
+		std::string getSrefByNum(const uint num);
+
+		Feed& operator=(const Feed& src);
+		bool operator==(const Feed& comp);
+		bool operator!=(const Feed& comp);
+
+		void cap(const bool tit1 = true, const bool tit2 = false, const bool tit3 = false);
+
+		bool readJSON(Json::Value& sup, bool addbasetag = false);
+		bool readXML(xmlXPathContext* docctx, std::string basexpath = "", bool addbasetag = false);
+		void writeJSON(Json::Value& sup, std::string difftag = "");
+		void writeXML(xmlTextWriter* wr, std::string difftag = "");
+	};
+
+	/**
+		* Jsonio
+		*/
+	namespace Jsonio {
+		bool extractBoolvec(Json::Value& sup, const std::string& tag, std::vector<bool>& vec);
+		bool extractUtinyintvec(Json::Value& sup, const std::string& tag, std::vector<utinyint>& vec);
+		bool extractUsmallintvec(Json::Value& sup, const std::string& tag, std::vector<usmallint>& vec);
+		bool extractIntvec(Json::Value& sup, const std::string& tag, std::vector<int>& vec);
+		bool extractUintvec(Json::Value& sup, const std::string& tag, std::vector<uint>& vec);
+		bool extractUbigintvec(Json::Value& sup, const std::string& tag, std::vector<ubigint>& vec);
+		bool extractFloatvec(Json::Value& sup, const std::string& tag, std::vector<float>& vec);
+		bool extractFloatmat(Json::Value& sup, const std::string& tag, Floatmat& mat);
+		bool extractDoublevec(Json::Value& sup, const std::string& tag, std::vector<double>& vec);
+		bool extractDoublemat(Json::Value& sup, const std::string& tag, Doublemat& mat);
+		bool extractStringvec(Json::Value& sup, const std::string& tag, std::vector<std::string>& vec);
+
+		void writeBoolvec(Json::Value& sup, const std::string& tag, const std::vector<bool>& vec);
+		void writeUtinyintvec(Json::Value& sup, const std::string& tag, const std::vector<utinyint>& vec);
+		void writeUsmallintvec(Json::Value& sup, const std::string& tag, const std::vector<usmallint>& vec);
+		void writeIntvec(Json::Value& sup, const std::string& tag, const std::vector<int>& vec);
+		void writeUintvec(Json::Value& sup, const std::string& tag, const std::vector<uint>& vec);
+		void writeUbigintvec(Json::Value& sup, const std::string& tag, const std::vector<ubigint>& vec);
+		void writeFloatvec(Json::Value& sup, const std::string& tag, const std::vector<float>& vec);
+		void writeFloatmat(Json::Value& sup, const std::string& tag, const Floatmat& mat);
+		void writeDoublevec(Json::Value& sup, const std::string& tag, const std::vector<double>& vec);
+		void writeDoublemat(Json::Value& sup, const std::string& tag, const Doublemat& mat);
+		void writeStringvec(Json::Value& sup, const std::string& tag, const std::vector<std::string>& vec);
+	};
+
 	/**
 		* Xmlio: set of methods to for XML structure input / output
 		*/
@@ -52,6 +181,11 @@ namespace Sbecore {
 
 		bool bigendian();
 		void invertBuffer(unsigned char* buf, const unsigned int len, const unsigned int varlen);
+
+		void base64ToUtinyintvec(const char* buf, const unsigned int buflen, std::vector<Sbecore::utinyint>& vec);
+		template<class T> void base64ToVec(const char* buf, const unsigned int buflen, std::vector<T>& vec);
+
+		std::string dataToBase64(const unsigned char* _buf, const unsigned int len, const unsigned int varlen);
 
 																														//! parse XML file (doc, docctx are returned)
 		void parseFile(const std::string& fullpath, xmlDoc** doc, xmlXPathContext** docctx);
@@ -224,100 +358,6 @@ namespace Sbecore {
 
 		void push_back(std::vector<uint>& ics, const uint ix);
 		void push_back(std::vector<uint>& ics, const std::vector<uint>& _ics);
-
-		/**
-			* Block
-			*/
-		class Block {
-
-		public:
-			static const uint NONE = 0;
-
-		public:
-			Block();
-			virtual ~Block();
-		
-		public:
-			std::set<uint> mask;
-
-		public:
-			bool has(const uint item);
-			bool hasAll(const std::set<uint>& items);
-			bool hasAny(const std::set<uint>& items);
-
-			void add(const uint item);
-			void clear();
-		};
-
-		/**
-			* Feeditem
-			*/
-		class Feeditem {
-
-		public:
-			Feeditem(const bool Avail = true, const uint ix = 0, const ubigint ref = 0, const std::string& sref = "", const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
-
-		public:
-			bool Avail;
-			uint ix;
-			ubigint ref;
-			std::string sref;
-			std::string Title1;
-			std::string Title2;
-			std::string Title3;
-
-		public:
-			bool operator==(const Feeditem& comp);
-			bool operator!=(const Feeditem& comp);
-
-			void cap(const bool tit1 = true, const bool tit2 = false, const bool tit3 = false);
-
-			bool readXML(xmlXPathContext* docctx, std::string basexpath = "", bool addbasetag = false);
-			void writeXML(xmlTextWriter* wr, unsigned int num, std::string difftag = "");
-		};
-
-		/**
-			* Feed
-			*/
-		class Feed {
-
-		public:
-			Feed(const std::string& tag = "");
-			Feed(const Feed& src);
-			~Feed();
-
-		public:
-			std::string tag;
-			std::vector<Feeditem*> nodes;
-
-		public:
-			void clear();
-			unsigned int size() const;
-
-			void appendIxSrefTitles(const uint ix, const std::string& sref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
-			void appendIxRefSrefTitles(const uint ix, const ubigint ref, const std::string& sref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
-			void appendRefTitles(const ubigint ref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
-			void appendRefSrefTitles(const ubigint ref, const std::string& sref, const std::string& Title1 = "", const std::string& Title2 = "", const std::string& Title3 = "");
-			void appendTitles(const std::string& Title1, const std::string& Title2 = "", const std::string& Title3 = "");
-
-			Feeditem* operator[](const uint ix);
-			Feeditem* getByNum(const uint num);
-			Sbecore::uint getNumByIx(const uint ix);
-			Sbecore::uint getNumByRef(const ubigint ref);
-			Sbecore::uint getNumBySref(const std::string& sref);
-			Sbecore::uint getIxByNum(const uint num);
-			Sbecore::ubigint getRefByNum(const uint num);
-			std::string getSrefByNum(const uint num);
-
-			Feed& operator=(const Feed& src);
-			bool operator==(const Feed& comp);
-			bool operator!=(const Feed& comp);
-
-			void cap(const bool tit1 = true, const bool tit2 = false, const bool tit3 = false);
-
-			bool readXML(xmlXPathContext* docctx, std::string basexpath = "", bool addbasetag = false);
-			void writeXML(xmlTextWriter* wr, std::string difftag = "");
-		};
 	};
 };
 #endif

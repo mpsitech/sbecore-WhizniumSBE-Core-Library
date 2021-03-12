@@ -1,6 +1,6 @@
 /**
 	* \file TxtMon.h
-	* monitoring to text file (declarations)
+	* engine monitoring to text file (declarations)
 	* \copyright (C) 2016-2020 MPSI Technologies GmbH
 	* \author Alexander Wirthmüller
 	* \date created: 26 Jan 2016

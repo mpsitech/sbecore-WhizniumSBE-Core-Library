@@ -11,6 +11,865 @@
 using namespace std;
 
 /******************************************************************************
+ class Block
+ ******************************************************************************/
+
+Sbecore::Block::Block() {
+};
+
+Sbecore::Block::~Block() {
+};
+
+bool Sbecore::Block::has(
+			const uint item
+		) {
+	return(mask.find(item) != mask.end());
+};
+
+bool Sbecore::Block::hasAll(
+			const set<uint>& items
+		) {
+	for (set<uint>::iterator it=items.begin();it!=items.end();it++) if (!has(*it)) return false;
+	return true;
+};
+
+bool Sbecore::Block::hasAny(
+			const set<uint>& items
+		) {
+	for (set<uint>::iterator it=items.begin();it!=items.end();it++) if (has(*it)) return true;
+	return false;
+};
+
+void Sbecore::Block::add(
+			const uint item
+		) {
+	mask.insert(item);
+};
+
+void Sbecore::Block::clear() {
+	mask.clear();
+};
+
+/******************************************************************************
+ class Feeditem
+ ******************************************************************************/
+
+Sbecore::Feeditem::Feeditem(
+			const bool Avail
+			, const uint ix
+			, const ubigint ref
+			, const string& sref
+			, const string& Title1
+			, const string& Title2
+			, const string& Title3
+		) {
+	this->Avail = Avail;
+	this->ix = ix;
+	this->ref = ref;
+	this->sref = sref;
+	this->Title1 = Title1;
+	this->Title2 = Title2;
+	this->Title3 = Title3;
+};
+
+bool Sbecore::Feeditem::operator==(
+			const Feeditem& comp
+		) {
+	return ( (Avail == comp.Avail) && (ix == comp.ix) && (ref == comp.ref) && (sref == comp.sref) && (Title1 == comp.Title1) && (Title2 == comp.Title2) && (Title3 == comp.Title3) );
+};
+
+bool Sbecore::Feeditem::operator!=(
+			const Feeditem& comp
+		) {
+	return(!operator==(comp));
+};
+
+void Sbecore::Feeditem::cap(
+			const bool tit1
+			, const bool tit2
+			, const bool tit3
+		) {
+	if (tit1) Title1 = StrMod::cap(Title1);
+	if (tit2) Title2 = StrMod::cap(Title2);
+	if (tit3) Title3 = StrMod::cap(Title3);
+};
+
+bool Sbecore::Feeditem::readJSON(
+			Json::Value& sup
+			, const unsigned int ix
+			, const bool shorttags
+		) {
+	Json::Value& me = sup[ix];
+
+	bool found = me.isMember("num");
+
+	if (found) {
+		//Avail = me["Avail"].asBool();
+		//ix = me["ix"].asInt();
+		//ref = me["ref"].asInt64();
+		if (shorttags) {
+			sref = me["sref"].asString();
+			Title1 = me["tit1"].asString();
+			Title2 = me["tit2"].asString();
+			Title3 = me["tit3"].asString();
+		} else {
+			sref = me["sref"].asString();
+			Title1 = me["Title1"].asString();
+			Title2 = me["Title2"].asString();
+			Title3 = me["Title3"].asString();
+		};
+	};
+
+	return found;
+};
+
+bool Sbecore::Feeditem::readXML(
+			xmlXPathContext* docctx
+			, string basexpath
+			, const unsigned int num
+			, const bool shorttags
+		) {
+	bool found;
+	
+	if (shorttags) basexpath += "/Fi[@num='" + to_string(num) + "']";
+	else basexpath += "/Feeditem[@num='" + to_string(num) + "']";
+
+	found = Xmlio::checkXPath(docctx, basexpath);
+
+	if (found) {
+		//Xmlio::extractBoolUclc(docctx, basexpath, "Avail", "Avail", Avail);
+		//Xmlio::extractUintUclc(docctx, basexpath, "ix", "ix", ix);
+		//Xmlio::extractUbigintUclc(docctx, basexpath, "ref", "ref", ref);
+		Xmlio::extractStringUclc(docctx, basexpath, "sref", "sref", sref);
+		Xmlio::extractStringUclc(docctx, basexpath, "Title1", "tit1", Title1);
+		Xmlio::extractStringUclc(docctx, basexpath, "Title2", "tit2", Title2);
+		Xmlio::extractStringUclc(docctx, basexpath, "Title3", "tit3", Title3);
+	};
+
+	return found;
+};
+
+void Sbecore::Feeditem::writeJSON(
+			Json::Value& sup
+			, unsigned int num
+		) {
+	Json::Value& me = sup.append(Json::Value(Json::objectValue));
+
+	me["num"] = num;
+	me["sref"] = sref;
+	me["tit1"] = Title1;
+	me["tit2"] = Title2;
+	me["tit3"] = Title3;
+};
+
+void Sbecore::Feeditem::writeXML(
+			xmlTextWriter* wr
+			, unsigned int num
+			, string difftag
+		) {
+	ostringstream str;
+
+	if (difftag.length() == 0) difftag = "Fi";
+
+	xmlTextWriterStartElement(wr, BAD_CAST difftag.c_str());
+
+	str.str(""); str << num;
+	xmlTextWriterWriteAttribute(wr, BAD_CAST "num", BAD_CAST str.str().c_str());
+
+	//Xmlio::writeBool(wr, "Avail", Avail);
+	//Xmlio::writeUint(wr, "ix", ix);
+	//Xmlio::writeUbigint(wr, "ref", ref);
+	Xmlio::writeString(wr, "sref", sref);
+	Xmlio::writeString(wr, "tit1", Title1);
+	Xmlio::writeString(wr, "tit2", Title2);
+	Xmlio::writeString(wr, "tit3", Title3);
+
+	xmlTextWriterEndElement(wr);
+};
+
+/******************************************************************************
+ class Feed
+ ******************************************************************************/
+
+Sbecore::Feed::Feed(
+			const string& tag
+		) {
+	this->tag = tag;
+};
+
+Sbecore::Feed::Feed(
+			const Feed& src
+		) {
+	Feeditem* item;
+
+	tag = src.tag;
+
+	clear();
+	for (unsigned int i = 0; i < src.size(); i++) {
+		item = new Feeditem(*(src.nodes[i]));
+		nodes.push_back(item);
+	};
+};
+
+Sbecore::Feed::~Feed() {
+	clear();
+};
+
+void Sbecore::Feed::clear() {
+	for (unsigned int i = 0; i < size(); i++) delete nodes[i];
+	nodes.resize(0);
+};
+
+unsigned int Sbecore::Feed::size() const {
+	return(nodes.size());
+};
+
+void Sbecore::Feed::appendIxSrefTitles(
+			const uint ix
+			, const string& sref
+			, const string& Title1
+			, const string& Title2
+			, const string& Title3
+		) {
+	Feeditem* item = new Feeditem(true, ix, 0, sref, Title1, Title2, Title3);
+
+	nodes.push_back(item);
+};
+
+void Sbecore::Feed::appendIxRefSrefTitles(
+			const uint ix
+			, const ubigint ref
+			, const string& sref
+			, const string& Title1
+			, const string& Title2
+			, const string& Title3
+		) {
+	Feeditem* item = new Feeditem(true, ix, ref, sref, Title1, Title2, Title3);
+
+	nodes.push_back(item);
+};
+
+void Sbecore::Feed::appendRefTitles(
+			const ubigint ref
+			, const string& Title1
+			, const string& Title2
+			, const string& Title3
+		) {
+	Feeditem* item = new Feeditem(true, 0, ref, "", Title1, Title2, Title3);
+
+	nodes.push_back(item);
+};
+
+void Sbecore::Feed::appendRefSrefTitles(
+			const ubigint ref
+			, const string& sref
+			, const string& Title1
+			, const string& Title2
+			, const string& Title3
+		) {
+	Feeditem* item = new Feeditem(true, 0, ref, sref, Title1, Title2, Title3);
+
+	nodes.push_back(item);
+};
+
+void Sbecore::Feed::appendTitles(
+			const string& Title1
+			, const string& Title2
+			, const string& Title3
+		) {
+	Feeditem* item = new Feeditem(true, 0, 0, "", Title1, Title2, Title3);
+
+	nodes.push_back(item);
+};
+
+Sbecore::Feeditem* Sbecore::Feed::operator[](
+			const uint ix
+		) {
+	Feeditem* retval = NULL;
+
+	for (unsigned int i = 0; i < size(); i++) {
+		if (nodes[i]->ix == ix) {
+			retval = nodes[i];
+			break;
+		};
+	};
+
+	return retval;
+};
+
+Sbecore::Feeditem* Sbecore::Feed::getByNum(
+			const uint num
+		) {
+	if ( (num <= size()) && (num > 0) ) {
+		return(nodes[num-1]);
+	} else {
+		return NULL;
+	};
+};
+
+Sbecore::uint Sbecore::Feed::getNumByIx(
+			const uint ix
+		) {
+	uint retval = 0;
+
+	for (unsigned int i = 0; i < size(); i++) {
+		if (nodes[i]->ix == ix) {
+			retval = i + 1;
+			break;
+		};
+	};
+
+	return retval;
+};
+
+Sbecore::uint Sbecore::Feed::getNumByRef(
+			const ubigint ref
+		) {
+	uint retval = 0;
+
+	for (unsigned int i = 0; i < size(); i++) {
+		if (nodes[i]->ref == ref) {
+			retval = i + 1;
+			break;
+		};
+	};
+
+	return retval;
+};
+
+Sbecore::uint Sbecore::Feed::getNumBySref(
+			const string& sref
+		) {
+	uint retval = 0;
+
+	for (unsigned int i = 0; i < size(); i++) {
+		if (nodes[i]->sref == sref) {
+			retval = i + 1;
+			break;
+		};
+	};
+
+	return retval;
+};
+
+Sbecore::uint Sbecore::Feed::getIxByNum(
+			const uint num
+		) {
+	Feeditem* item = getByNum(num);
+	if (item) return item->ix; else return 0;
+};
+
+Sbecore::ubigint Sbecore::Feed::getRefByNum(
+			const uint num
+		) {
+	Feeditem* item = getByNum(num);
+	if (item) return item->ref; else return 0;
+};
+
+string Sbecore::Feed::getSrefByNum(
+			const uint num
+		) {
+	Feeditem* item = getByNum(num);
+	if (item) return item->sref; else return "";
+};
+
+Sbecore::Feed& Sbecore::Feed::operator=(
+			const Feed& src
+		) {
+	Feeditem* item;
+
+	if (&src != this) {
+		tag = src.tag;
+
+		clear();
+		for (unsigned int i = 0; i < src.size(); i++) {
+			item = new Feeditem(*(src.nodes[i]));
+			nodes.push_back(item);
+		};
+	};
+
+	return(*this);
+};
+
+bool Sbecore::Feed::operator==(
+			const Feed& comp
+		) {
+	bool retval;
+
+	retval = (size() == comp.size());
+
+	if (retval) {
+		for (unsigned int i = 0; i < size(); i++) {
+			retval = ( *(nodes[i]) == *(comp.nodes[i]) );
+
+			if (!retval) break;
+		};
+	};
+
+	return retval;
+};
+
+bool Sbecore::Feed::operator!=(
+			const Feed& comp
+		) {
+	return(!operator==(comp));
+};
+
+void Sbecore::Feed::cap(
+			const bool tit1
+			, const bool tit2
+			, const bool tit3
+		) {
+	for (unsigned int i = 0; i < size(); i++) nodes[i]->cap(tit1, tit2, tit3);
+};
+
+bool Sbecore::Feed::readJSON(
+			Json::Value& sup
+			, bool addbasetag
+		) {
+	bool basefound;
+
+	vector<unsigned int> ics;
+	unsigned int ix;
+	vector<unsigned int> nums;
+	unsigned int num;
+	vector<bool> shorttags;
+	bool shorttag;
+
+	Feeditem* item = NULL;
+
+	Json::Value& me = sup;
+	if (addbasetag) me = sup[tag];
+
+	basefound = (me != Json::nullValue);
+
+	clear();
+
+	if (me.isArray()) {
+		// extractList() JSON-style
+		ics.clear();
+		nums.clear();
+		shorttags.clear();
+
+		for (unsigned int i = 0; i < me.size(); i++) {
+			if (me[i].isMember("num")) {
+				ics.push_back(i);
+				nums.push_back(me[i]["num"].asInt());
+				shorttags.push_back(me[i].isMember("tit1") || me[i].isMember("tit2") || me[i].isMember("tit3"));
+			};
+		};
+
+		for (unsigned int i = 0; i < ics.size(); i++) {
+			for (unsigned int j = i + 1; j < ics.size(); j++) {
+				if (nums[j] < nums[i]) {
+					ix = ics[i];
+					num = nums[i];
+					shorttag = shorttags[i];
+
+					ics[i] = ics[j];
+					nums[i] = nums[j];
+					shorttags[i] = shorttags[j];
+					
+					ics[j] = ix;
+					nums[j] = num;
+					shorttags[j] = shorttag;
+				};
+			};
+		};
+		//
+
+		for (unsigned int i = 0; i < ics.size(); i++) {
+			item = new Feeditem();
+
+			if (item->readJSON(me, ics[i], shorttags[i])) nodes.push_back(item);
+			else delete item;
+		};
+	};
+
+	return basefound;
+};
+
+bool Sbecore::Feed::readXML(
+			xmlXPathContext* docctx
+			, string basexpath
+			, bool addbasetag
+		) {
+	bool basefound;
+
+	vector<unsigned int> nums;
+	vector<bool> shorttags;
+
+	Feeditem* item = NULL;
+
+	if (addbasetag)
+		basefound = Xmlio::checkUclcXPaths(docctx, basexpath, basexpath, tag);
+	else
+		basefound = Xmlio::checkXPath(docctx, basexpath);
+
+	Xmlio::extractList(docctx, basexpath, "Feeditem", "Fi", "num", nums, shorttags);
+
+	clear();
+
+	for (unsigned int i = 0; i < nums.size(); i++) {
+		item = new Feeditem();
+
+		if (item->readXML(docctx, basexpath, nums[i], shorttags[i])) nodes.push_back(item);
+		else delete item;
+	};
+
+	return basefound;
+};
+
+void Sbecore::Feed::writeJSON(
+			Json::Value& sup
+			, std::string difftag
+		) {
+	if (difftag == "") difftag = tag;
+	if (difftag == "") return;
+
+	Json::Value& me = sup[difftag] = Json::Value(Json::arrayValue);
+	for (unsigned int i = 0; i < nodes.size(); i++) if (nodes[i]->Avail) nodes[i]->writeJSON(me, i + 1);
+};
+
+void Sbecore::Feed::writeXML(
+			xmlTextWriter* wr
+			, string difftag
+		) {
+	if (difftag == "") difftag = tag;
+	if (difftag == "") return;
+
+	xmlTextWriterStartElement(wr, BAD_CAST difftag.c_str());
+		for (unsigned int i = 0; i < nodes.size(); i++) if (nodes[i]->Avail) nodes[i]->writeXML(wr, i + 1);
+	xmlTextWriterEndElement(wr);
+};
+
+/******************************************************************************
+ namespace Jsonio
+ ******************************************************************************/
+
+bool Sbecore::Jsonio::extractBoolvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<bool>& vec
+		) {
+	string str;
+
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		str = me.asString();
+
+		vec.resize(str.length());
+		for (unsigned int i = 0; i < vec.size(); i++) vec[i] = (str[i] == '1');
+
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractUtinyintvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<utinyint>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToUtinyintvec(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractUsmallintvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<usmallint>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToVec<usmallint>(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractIntvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<int>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToVec<int>(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractUintvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<uint>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToVec<uint>(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractUbigintvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<ubigint>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToVec<ubigint>(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractFloatvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<float>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToVec<float>(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractFloatmat(
+			Json::Value& sup
+			, const string& tag
+			, Floatmat& mat
+		) {
+	bool valid;
+
+	Json::Value& me = sup[tag];
+
+	valid = (me != Json::nullValue);
+
+	if (valid) valid = extractFloatvec(me, "vec", mat.vec);
+
+	if (valid) valid = me.isMember("M");
+	if (valid) mat.M = me["M"].asInt();
+
+	if (valid) valid = me.isMember("N");
+	if (valid) mat.N = me["N"].asInt();
+
+	if (valid) valid = ((mat.M * mat.N) == mat.vec.size());
+
+	if (!valid) mat = Floatmat();
+
+	return valid;
+};
+
+bool Sbecore::Jsonio::extractDoublevec(
+			Json::Value& sup
+			, const string& tag
+			, vector<double>& vec
+		) {
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		Xmlio::base64ToVec<double>(me.asString().c_str(), me.asString().length(), vec);
+		return true;
+	};
+
+	return false;
+};
+
+bool Sbecore::Jsonio::extractDoublemat(
+			Json::Value& sup
+			, const string& tag
+			, Doublemat& mat
+		) {
+	bool valid;
+
+	Json::Value& me = sup[tag];
+
+	valid = (me != Json::nullValue);
+
+	if (valid) valid = extractDoublevec(me, "vec", mat.vec);
+
+	if (valid) valid = me.isMember("M");
+	if (valid) mat.M = me["M"].asInt();
+
+	if (valid) valid = me.isMember("N");
+	if (valid) mat.N = me["N"].asInt();
+
+	if (valid) valid = ((mat.M * mat.N) == mat.vec.size());
+
+	if (!valid) mat = Doublemat();
+
+	return valid;
+};
+
+bool Sbecore::Jsonio::extractStringvec(
+			Json::Value& sup
+			, const string& tag
+			, vector<string>& vec
+		) {
+	string s;
+
+	vec.resize(0);
+
+	Json::Value& me = sup[tag];
+
+	if (me != Json::nullValue) {
+		s = Xmlio::fromUTF8(me.asString());
+		StrMod::stringToVector(s, vec);
+
+		return true;
+	};
+
+	return false;
+};
+
+void Sbecore::Jsonio::writeBoolvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<bool>& vec
+		) {
+	string str(vec.size(), '0');
+
+	for (unsigned int i = 0; i < vec.size(); i++) if (vec[i]) str[i] = '1';
+
+	sup[tag] = str;
+};
+
+void Sbecore::Jsonio::writeUtinyintvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<utinyint>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(utinyint));
+};
+
+void Sbecore::Jsonio::writeUsmallintvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<usmallint>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(usmallint));
+};
+
+void Sbecore::Jsonio::writeIntvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<int>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(int));
+};
+
+void Sbecore::Jsonio::writeUintvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<uint>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(uint));
+};
+
+void Sbecore::Jsonio::writeUbigintvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<ubigint>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(ubigint));
+};
+
+void Sbecore::Jsonio::writeFloatvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<float>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(float));
+};
+
+void Sbecore::Jsonio::writeFloatmat(
+			Json::Value& sup
+			, const string& tag
+			, const Floatmat& mat
+		) {
+	Json::Value& me = sup[tag] = Json::Value(Json::objectValue);
+
+	me["M"] = mat.M;
+	me["N"] = mat.N;
+	me["vec"] = Xmlio::dataToBase64((const unsigned char*) mat.vec.data(), mat.vec.size(), sizeof(float));
+};
+
+void Sbecore::Jsonio::writeDoublevec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<double>& vec
+		) {
+	sup[tag] = Xmlio::dataToBase64((const unsigned char*) vec.data(), vec.size(), sizeof(double));
+};
+
+void Sbecore::Jsonio::writeDoublemat(
+			Json::Value& sup
+			, const string& tag
+			, const Doublemat& mat
+		) {
+	Json::Value& me = sup[tag] = Json::Value(Json::objectValue);
+
+	me["M"] = mat.M;
+	me["N"] = mat.N;
+	me["vec"] = Xmlio::dataToBase64((const unsigned char*) mat.vec.data(), mat.vec.size(), sizeof(double));
+};
+
+void Sbecore::Jsonio::writeStringvec(
+			Json::Value& sup
+			, const string& tag
+			, const vector<string>& vec
+		) {
+	string s;
+
+	for (unsigned int i = 0; i < vec.size(); i++) {
+		if (i != 0) s = s + ";";
+		s = s + vec[i];
+	};
+
+	sup[tag] = s;
+};
+
+/******************************************************************************
  namespace Xmlio
  ******************************************************************************/
 
@@ -257,6 +1116,84 @@ void Sbecore::Xmlio::invertBuffer(
 			buf[i*varlen+(varlen-j-1)] = c;
 		};
 	};
+};
+
+void Sbecore::Xmlio::base64ToUtinyintvec(
+			const char* _buf
+			, const unsigned int buflen
+			, vector<utinyint>& vec
+		) {
+	unsigned char* buf = NULL;
+	unsigned int len;
+
+	vec.resize(0);
+
+	fromBase64(_buf, buflen, &buf, len);
+
+	if (buf) {
+		vec.resize(len, 0);
+		memcpy((void*) vec.data(), (void*) buf, len);
+
+		delete[] buf;
+	};
+};
+
+template<class T> void Sbecore::Xmlio::base64ToVec(
+			const char* _buf
+			, const unsigned int buflen
+			, vector<T>& vec
+		) {
+	const unsigned int varlen = sizeof(T);
+
+	unsigned char* buf = NULL;
+	unsigned int len;
+
+	vec.resize(0);
+
+	fromBase64(_buf, buflen, &buf, len);
+
+	if (buf) {
+		if ((len%varlen) == 0) {
+			if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
+
+			vec.resize(len/varlen, 0);
+			memcpy((void*) vec.data(), (void*) buf, len);
+		};
+
+		delete[] buf;
+	};
+};
+
+string Sbecore::Xmlio::dataToBase64(
+			const unsigned char* _buf
+			, const unsigned int len
+			, const unsigned int varlen
+		) {
+	string s;
+
+	char* outbuf = NULL;
+	unsigned int outbuflen;
+
+	if (!bigendian()) {
+		unsigned char* buf = new unsigned char[len*varlen];
+
+		memcpy((void*) buf, (void*) _buf, len*varlen);
+		invertBuffer(buf, len, varlen);
+		toBase64(buf, len*varlen, &outbuf, outbuflen);
+
+		delete[] buf;
+
+	} else {
+		toBase64(_buf, len*varlen, &outbuf, outbuflen);
+	};
+
+	if (outbuf) {
+		s.assign(outbuf, outbuflen);
+
+		delete[] outbuf;
+	};
+
+	return s;
 };
 
 void Sbecore::Xmlio::parseFile(
@@ -878,24 +1815,13 @@ void Sbecore::Xmlio::extractUtinyintvec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			vec.resize(len, 0);
-			memcpy((void*) vec.data(), (void*) buf, len);
-
-			delete[] buf;
-		};
-
+		base64ToUtinyintvec((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -910,30 +1836,13 @@ void Sbecore::Xmlio::extractUsmallintvec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned int varlen = sizeof(usmallint);
-
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			if ((len%varlen) == 0) {
-				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
-
-				vec.resize(len/varlen, 0);
-				memcpy((void*) vec.data(), (void*) buf, len);
-			};
-
-			delete[] buf;
-		};
-
+		base64ToVec<usmallint>((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -948,30 +1857,13 @@ void Sbecore::Xmlio::extractIntvec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned int varlen = sizeof(int);
-
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			if ((len%varlen) == 0) {
-				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
-
-				vec.resize(len/varlen, 0);
-				memcpy((void*) vec.data(), (void*) buf, len);
-			};
-
-			delete[] buf;
-		};
-
+		base64ToVec<int>((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -986,30 +1878,13 @@ void Sbecore::Xmlio::extractUintvec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned int varlen = sizeof(uint);
-
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			if ((len%varlen) == 0) {
-				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
-
-				vec.resize(len/varlen, 0);
-				memcpy((void*) vec.data(), (void*) buf, len);
-			};
-
-			delete[] buf;
-		};
-
+		base64ToVec<uint>((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -1024,30 +1899,13 @@ void Sbecore::Xmlio::extractUbigintvec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned int varlen = sizeof(ubigint);
-
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			if ((len%varlen) == 0) {
-				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
-
-				vec.resize(len/varlen, 0);
-				memcpy((void*) vec.data(), (void*) buf, len);
-			};
-
-			delete[] buf;
-		};
-
+		base64ToVec<ubigint>((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -1062,30 +1920,13 @@ void Sbecore::Xmlio::extractFloatvec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned int varlen = sizeof(float);
-
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			if ((len%varlen) == 0) {
-				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
-
-				vec.resize(len/varlen, 0);
-				memcpy((void*) vec.data(), (void*) buf, len);
-			};
-
-			delete[] buf;
-		};
-
+		base64ToVec<float>((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -1101,7 +1942,7 @@ void Sbecore::Xmlio::extractFloatmat(
 	extractUintUclc(docctx, xpath, "M", "M", mat.M);
 	extractUintUclc(docctx, xpath, "N", "N", mat.N);
 
-	if ((mat.M*mat.N) != mat.vec.size()) mat = Floatmat();
+	if ((mat.M * mat.N) != mat.vec.size()) mat = Floatmat();
 };
 
 void Sbecore::Xmlio::extractDoublevec(
@@ -1112,30 +1953,13 @@ void Sbecore::Xmlio::extractDoublevec(
 	xmlXPathObject* obj;
 	xmlChar* nodebuf;
 
-	unsigned int varlen = sizeof(double);
-
-	unsigned char* buf = NULL;
-	unsigned int len;
-
 	vec.resize(0);
 
 	obj = xmlXPathEvalExpression(BAD_CAST xpath.c_str(), docctx);
 	nodebuf = xmlNodeGetContent(obj->nodesetval->nodeTab[0]);
 
 	if (nodebuf) {
-		fromBase64((char*) nodebuf, strlen((char*) nodebuf), &buf, len);
-
-		if (buf) {
-			if ((len%varlen) == 0) {
-				if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
-
-				vec.resize(len/varlen, 0);
-				memcpy((void*) vec.data(), (void*) buf, len);
-			};
-
-			delete[] buf;
-		};
-
+		base64ToVec<double>((const char*) nodebuf, strlen((const char*) nodebuf), vec);
 		xmlFree(nodebuf);
 	};
 
@@ -1151,7 +1975,7 @@ void Sbecore::Xmlio::extractDoublemat(
 	extractUintUclc(docctx, xpath, "M", "M", mat.M);
 	extractUintUclc(docctx, xpath, "N", "N", mat.N);
 
-	if ((mat.M*mat.N) != mat.vec.size()) mat = Doublemat();
+	if ((mat.M * mat.N) != mat.vec.size()) mat = Doublemat();
 };
 
 void Sbecore::Xmlio::extractStringvec(
@@ -2026,54 +2850,33 @@ void Sbecore::Xmlio::extractList(
 	ics.resize(0);
 	shorttags.resize(0);
 
-	s = basexpath + "/" + tag + "/@" + attr;
-	obj = xmlXPathEvalExpression(BAD_CAST s.c_str(), docctx);
+	for (unsigned int i = 0; i < 2; i++) {
+		if (i == 0) s = basexpath + "/" + tag + "/@" + attr;
+		else s = basexpath + "/" + shorttag + "/@" + attr;
 
-	if (obj) {
-		if (obj->nodesetval) {
-			// collect indices
-			for (int i = 0; i < obj->nodesetval->nodeNr; i++) {
-				node = obj->nodesetval->nodeTab[i];
+		obj = xmlXPathEvalExpression(BAD_CAST s.c_str(), docctx);
 
-				if (node->type == XML_ATTRIBUTE_NODE) {
-					nodebuf = xmlNodeGetContent(node);
+		if (obj) {
+			if (obj->nodesetval) {
+				// collect indices
+				for (int j = 0; j < obj->nodesetval->nodeNr; j++) {
+					node = obj->nodesetval->nodeTab[j];
 
-					if (nodebuf) {
-						ics.push_back(atol((char*) nodebuf));
-						shorttags.push_back(false);
+					if (node->type == XML_ATTRIBUTE_NODE) {
+						nodebuf = xmlNodeGetContent(node);
 
-						xmlFree(nodebuf);
+						if (nodebuf) {
+							ics.push_back(atol((char*) nodebuf));
+							shorttags.push_back(i == 1);
+
+							xmlFree(nodebuf);
+						};
 					};
 				};
 			};
+
+			xmlXPathFreeObject(obj);
 		};
-
-		xmlXPathFreeObject(obj);
-	};
-
-	s = basexpath + "/" + shorttag + "/@" + attr;
-	obj = xmlXPathEvalExpression(BAD_CAST s.c_str(), docctx);
-
-	if (obj) {
-		if (obj->nodesetval) {
-			// collect nums
-			for (int i = 0; i < obj->nodesetval->nodeNr; i++) {
-				node = obj->nodesetval->nodeTab[i];
-
-				if (node->type == XML_ATTRIBUTE_NODE) {
-					nodebuf = xmlNodeGetContent(node);
-
-					if (nodebuf) {
-						ics.push_back(atol((char*) nodebuf));
-						shorttags.push_back(true);
-
-						xmlFree(nodebuf);
-					};
-				};
-			};
-		};
-
-		xmlXPathFreeObject(obj);
 	};
 
 	// order by indices ascending
@@ -2943,425 +3746,4 @@ void Sbecore::Xmlio::push_back(
 			, const vector<uint>& _ics
 		) {
 	for (auto it = _ics.begin(); it != _ics.end(); it++) push_back(ics, *it);
-};
-
-/******************************************************************************
- class Sbecore::Xmlio::Block
- ******************************************************************************/
-
-Sbecore::Xmlio::Block::Block() {
-};
-
-Sbecore::Xmlio::Block::~Block() {
-};
-
-bool Sbecore::Xmlio::Block::has(
-			const uint item
-		) {
-	return(mask.find(item) != mask.end());
-};
-
-bool Sbecore::Xmlio::Block::hasAll(
-			const set<uint>& items
-		) {
-	for (set<uint>::iterator it=items.begin();it!=items.end();it++) if (!has(*it)) return false;
-	return true;
-};
-
-bool Sbecore::Xmlio::Block::hasAny(
-			const set<uint>& items
-		) {
-	for (set<uint>::iterator it=items.begin();it!=items.end();it++) if (has(*it)) return true;
-	return false;
-};
-
-void Sbecore::Xmlio::Block::add(
-			const uint item
-		) {
-	mask.insert(item);
-};
-
-void Sbecore::Xmlio::Block::clear() {
-	mask.clear();
-};
-
-/******************************************************************************
- class Sbecore::Xmlio::Feeditem
- ******************************************************************************/
-
-Sbecore::Xmlio::Feeditem::Feeditem(
-			const bool Avail
-			, const uint ix
-			, const ubigint ref
-			, const string& sref
-			, const string& Title1
-			, const string& Title2
-			, const string& Title3
-		) {
-	this->Avail = Avail;
-	this->ix = ix;
-	this->ref = ref;
-	this->sref = sref;
-	this->Title1 = Title1;
-	this->Title2 = Title2;
-	this->Title3 = Title3;
-};
-
-bool Sbecore::Xmlio::Feeditem::operator==(
-			const Feeditem& comp
-		) {
-	return ( (Avail == comp.Avail) && (ix == comp.ix) && (ref == comp.ref) && (sref == comp.sref) && (Title1 == comp.Title1) && (Title2 == comp.Title2) && (Title3 == comp.Title3) );
-};
-
-bool Sbecore::Xmlio::Feeditem::operator!=(
-			const Feeditem& comp
-		) {
-	return(!operator==(comp));
-};
-
-void Sbecore::Xmlio::Feeditem::cap(
-			const bool tit1
-			, const bool tit2
-			, const bool tit3
-		) {
-	if (tit1) Title1 = StrMod::cap(Title1);
-	if (tit2) Title2 = StrMod::cap(Title2);
-	if (tit3) Title3 = StrMod::cap(Title3);
-};
-
-bool Sbecore::Xmlio::Feeditem::readXML(
-			xmlXPathContext* docctx
-			, string basexpath
-			, bool addbasetag
-		) {
-	bool basefound;
-
-	if (addbasetag)
-		basefound = checkUclcXPaths(docctx, basexpath, basexpath, "Fi");
-	else
-		basefound = checkXPath(docctx, basexpath);
-
-	if (basefound) {
-		//extractBoolUclc(docctx, basexpath, "Avail", "Avail", Avail);
-		//extractUintUclc(docctx, basexpath, "ix", "ix", ix);
-		//extractUbigintUclc(docctx, basexpath, "ref", "ref", ref);
-		extractStringUclc(docctx, basexpath, "sref", "sref", sref);
-		extractStringUclc(docctx, basexpath, "Title1", "tit1", Title1);
-		extractStringUclc(docctx, basexpath, "Title2", "tit2", Title2);
-		extractStringUclc(docctx, basexpath, "Title3", "tit3", Title3);
-	};
-
-	return basefound;
-};
-
-void Sbecore::Xmlio::Feeditem::writeXML(
-			xmlTextWriter* wr
-			, unsigned int num
-			, string difftag
-		) {
-	ostringstream str;
-
-	if (difftag.length() == 0) difftag = "Fi";
-
-	xmlTextWriterStartElement(wr, BAD_CAST difftag.c_str());
-
-	str.str(""); str << num;
-	xmlTextWriterWriteAttribute(wr, BAD_CAST "num", BAD_CAST str.str().c_str());
-
-	//writeBool(wr, "Avail", Avail);
-	//writeUint(wr, "ix", ix);
-	//writeUbigint(wr, "ref", ref);
-	writeString(wr, "sref", sref);
-	writeString(wr, "tit1", Title1);
-	writeString(wr, "tit2", Title2);
-	writeString(wr, "tit3", Title3);
-
-	xmlTextWriterEndElement(wr);
-};
-
-/******************************************************************************
- class Sbecore::Xmlio::Feed
- ******************************************************************************/
-
-Sbecore::Xmlio::Feed::Feed(
-			const string& tag
-		) {
-	this->tag = tag;
-};
-
-Sbecore::Xmlio::Feed::Feed(
-			const Feed& src
-		) {
-	Feeditem* item;
-
-	tag = src.tag;
-
-	clear();
-	for (unsigned int i = 0; i < src.size(); i++) {
-		item = new Feeditem(*(src.nodes[i]));
-		nodes.push_back(item);
-	};
-};
-
-Sbecore::Xmlio::Feed::~Feed() {
-	clear();
-};
-
-void Sbecore::Xmlio::Feed::clear() {
-	for (unsigned int i = 0; i < size(); i++) delete nodes[i];
-	nodes.resize(0);
-};
-
-unsigned int Sbecore::Xmlio::Feed::size() const {
-	return(nodes.size());
-};
-
-void Sbecore::Xmlio::Feed::appendIxSrefTitles(
-			const uint ix
-			, const string& sref
-			, const string& Title1
-			, const string& Title2
-			, const string& Title3
-		) {
-	Feeditem* item = new Feeditem(true, ix, 0, sref, Title1, Title2, Title3);
-
-	nodes.push_back(item);
-};
-
-void Sbecore::Xmlio::Feed::appendIxRefSrefTitles(
-			const uint ix
-			, const ubigint ref
-			, const string& sref
-			, const string& Title1
-			, const string& Title2
-			, const string& Title3
-		) {
-	Feeditem* item = new Feeditem(true, ix, ref, sref, Title1, Title2, Title3);
-
-	nodes.push_back(item);
-};
-
-void Sbecore::Xmlio::Feed::appendRefTitles(
-			const ubigint ref
-			, const string& Title1
-			, const string& Title2
-			, const string& Title3
-		) {
-	Feeditem* item = new Feeditem(true, 0, ref, "", Title1, Title2, Title3);
-
-	nodes.push_back(item);
-};
-
-void Sbecore::Xmlio::Feed::appendRefSrefTitles(
-			const ubigint ref
-			, const string& sref
-			, const string& Title1
-			, const string& Title2
-			, const string& Title3
-		) {
-	Feeditem* item = new Feeditem(true, 0, ref, sref, Title1, Title2, Title3);
-
-	nodes.push_back(item);
-};
-
-
-void Sbecore::Xmlio::Feed::appendTitles(
-			const string& Title1
-			, const string& Title2
-			, const string& Title3
-		) {
-	Feeditem* item = new Feeditem(true, 0, 0, "", Title1, Title2, Title3);
-
-	nodes.push_back(item);
-};
-
-Sbecore::Xmlio::Feeditem* Sbecore::Xmlio::Feed::operator[](
-			const uint ix
-		) {
-	Feeditem* retval = NULL;
-
-	for (unsigned int i = 0; i < size(); i++) {
-		if (nodes[i]->ix == ix) {
-			retval = nodes[i];
-			break;
-		};
-	};
-
-	return retval;
-};
-
-Sbecore::Xmlio::Feeditem* Sbecore::Xmlio::Feed::getByNum(
-			const uint num
-		) {
-	if ( (num <= size()) && (num > 0) ) {
-		return(nodes[num-1]);
-	} else {
-		return NULL;
-	};
-};
-
-Sbecore::uint Sbecore::Xmlio::Feed::getNumByIx(
-			const uint ix
-		) {
-	uint retval = 0;
-
-	for (unsigned int i = 0; i < size(); i++) {
-		if (nodes[i]->ix == ix) {
-			retval = i + 1;
-			break;
-		};
-	};
-
-	return retval;
-};
-
-Sbecore::uint Sbecore::Xmlio::Feed::getNumByRef(
-			const ubigint ref
-		) {
-	uint retval = 0;
-
-	for (unsigned int i = 0; i < size(); i++) {
-		if (nodes[i]->ref == ref) {
-			retval = i + 1;
-			break;
-		};
-	};
-
-	return retval;
-};
-
-Sbecore::uint Sbecore::Xmlio::Feed::getNumBySref(
-			const string& sref
-		) {
-	uint retval = 0;
-
-	for (unsigned int i = 0; i < size(); i++) {
-		if (nodes[i]->sref == sref) {
-			retval = i + 1;
-			break;
-		};
-	};
-
-	return retval;
-};
-
-Sbecore::uint Sbecore::Xmlio::Feed::getIxByNum(
-			const uint num
-		) {
-	Feeditem* item = getByNum(num);
-	if (item) return item->ix; else return 0;
-};
-
-Sbecore::ubigint Sbecore::Xmlio::Feed::getRefByNum(
-			const uint num
-		) {
-	Feeditem* item = getByNum(num);
-	if (item) return item->ref; else return 0;
-};
-
-string Sbecore::Xmlio::Feed::getSrefByNum(
-			const uint num
-		) {
-	Feeditem* item = getByNum(num);
-	if (item) return item->sref; else return "";
-};
-
-Sbecore::Xmlio::Feed& Sbecore::Xmlio::Feed::operator=(
-			const Feed& src
-		) {
-	Feeditem* item;
-
-	if (&src != this) {
-		tag = src.tag;
-
-		clear();
-		for (unsigned int i = 0; i < src.size(); i++) {
-			item = new Feeditem(*(src.nodes[i]));
-			nodes.push_back(item);
-		};
-	};
-
-	return(*this);
-};
-
-bool Sbecore::Xmlio::Feed::operator==(
-			const Feed& comp
-		) {
-	bool retval;
-
-	retval = (size() == comp.size());
-
-	if (retval) {
-		for (unsigned int i = 0; i < size(); i++) {
-			retval = ( *(nodes[i]) == *(comp.nodes[i]) );
-
-			if (!retval) break;
-		};
-	};
-
-	return retval;
-};
-
-bool Sbecore::Xmlio::Feed::operator!=(
-			const Feed& comp
-		) {
-	return(!operator==(comp));
-};
-
-void Sbecore::Xmlio::Feed::cap(
-			const bool tit1
-			, const bool tit2
-			, const bool tit3
-		) {
-	for (unsigned int i = 0; i < size(); i++) nodes[i]->cap(tit1, tit2, tit3);
-};
-
-bool Sbecore::Xmlio::Feed::readXML(
-			xmlXPathContext* docctx
-			, string basexpath
-			, bool addbasetag
-		) {
-	bool basefound;
-
-	vector<unsigned int> ics;
-	vector<bool> shorttags;
-
-	Feeditem* item = NULL;
-
-	string s;
-
-	if (addbasetag)
-		basefound = checkUclcXPaths(docctx, basexpath, basexpath, tag);
-	else
-		basefound = checkXPath(docctx, basexpath);
-
-	extractList(docctx, basexpath, "Feeditem", "Fi", "num", ics, shorttags);
-
-	clear();
-
-	for (unsigned int i = 0; i < ics.size(); i++) {
-		item = new Feeditem();
-
-		if (shorttags[i]) s = basexpath + "/Fi[@num='" + to_string(ics[i]) + "']";
-		else s = basexpath + "/Feeditem[@num='" + to_string(ics[i]) + "']";
-
-		if (item->readXML(docctx, s)) nodes.push_back(item);
-		else delete item;
-	};
-
-	return basefound;
-};
-
-void Sbecore::Xmlio::Feed::writeXML(
-			xmlTextWriter* wr
-			, string difftag
-		) {
-	// generate top XML tag
-	if (difftag.length() == 0) difftag = tag;
-	if (difftag.length() == 0) return;
-
-	// XML output
-	xmlTextWriterStartElement(wr, BAD_CAST difftag.c_str());
-		for (unsigned int i = 0; i < nodes.size(); i++) if (nodes[i]->Avail) nodes[i]->writeXML(wr, i+1);
-	xmlTextWriterEndElement(wr);
 };

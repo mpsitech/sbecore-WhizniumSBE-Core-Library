@@ -1,6 +1,6 @@
 /**
 	* \file ApiMon.cpp
-	* monitoring via API (implementation)
+	* engine monitoring via API (implementation)
 	* \copyright (C) 2016-2020 MPSI Technologies GmbH
 	* \author Alexander Wirthmüller
 	* \date created: 25 Jan 2016
