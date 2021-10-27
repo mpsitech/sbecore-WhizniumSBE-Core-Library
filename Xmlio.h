@@ -115,6 +115,8 @@ namespace Sbecore {
 
 		Feeditem* operator[](const uint ix);
 		Feeditem* getByNum(const uint num);
+		bool getAvailByNum(const uint num);
+		bool getAvailByNums(const std::vector<Sbecore::uint>& nums);
 		Sbecore::uint getNumByIx(const uint ix);
 		Sbecore::uint getNumByRef(const ubigint ref);
 		Sbecore::uint getNumBySref(const std::string& sref);
@@ -164,7 +166,7 @@ namespace Sbecore {
 	};
 
 	/**
-		* Xmlio: set of methods to for XML structure input / output
+		* Xmlio: set of methods for XML structure input / output
 		*/
 	namespace Xmlio {
 		bool has(std::set<uint>& items, const uint item);

@@ -307,6 +307,25 @@ Sbecore::Feeditem* Sbecore::Feed::getByNum(
 	};
 };
 
+bool Sbecore::Feed::getAvailByNum(
+			const uint num
+		) {
+	bool retval = false;
+
+	Feeditem* fi = getByNum(num);
+	if (fi) if (fi->Avail) retval = true; 
+
+	return retval;
+};
+
+bool Sbecore::Feed::getAvailByNums(
+			const vector<uint>& nums
+		) {
+	for (unsigned int i = 0; i < nums.size(); i++) if (!getAvailByNum(nums[i])) return false;
+
+	return true;
+};
+
 Sbecore::uint Sbecore::Feed::getNumByIx(
 			const uint ix
 		) {
@@ -959,28 +978,30 @@ void Sbecore::Xmlio::fromBase64(
 			, unsigned char** outbuf
 			, unsigned int& outbuflen
 		) {
+	unsigned int nvoid;
+	unsigned int ix, cnt;
+
 	char quad[4];
 	unsigned char trip[3];
-
-	unsigned int ix, cnt;
 
 	*outbuf = NULL;
 	outbuflen = 0;
 
+	nvoid = 0;
+	for (unsigned int i = 0; i < inbuflen; i++) if ((inbuf[i] == '\n') || (inbuf[i] == '\r') || (inbuf[i] == '\t') || (inbuf[i] == ' ')) nvoid++;
+	inbuflen -= nvoid;
+
+	nvoid = 0;
 	for (unsigned int i = inbuflen; i > 0; i--) {
 		if ((inbuf[i-1] == '\n') || (inbuf[i-1] == '\r') || (inbuf[i-1] == '\t') || (inbuf[i-1] == ' ')) {
-		} else if (inbuf[i-1] == '=') outbuflen--;
+		} else if (inbuf[i-1] == '=') nvoid++;
 		else break;
 	};
-
-	ix = 0;
-	for (unsigned int i = 0; i < inbuflen; i++) if ((inbuf[i] == '\n') || (inbuf[i] == '\r') || (inbuf[i] == '\t') || (inbuf[i] == ' ')) ix++;
-	inbuflen -= ix;
 
 	cnt = inbuflen/4;
 
 	if ((inbuflen >= 4) && ((inbuflen%4) == 0)) {
-		outbuflen += 3*cnt;
+		outbuflen = 3 * cnt - nvoid;
 		*outbuf = new unsigned char[outbuflen];
 
 		ix = 0;
@@ -1002,7 +1023,7 @@ void Sbecore::Xmlio::fromBase64(
 				else if (quad[j] == '+') quad[j] = 62;
 				else if (quad[j] == ' ') quad[j] = 62; // quick fix for HTTP encoding of space as plus
 				else if (quad[j] == '/') quad[j] = 63;
-				else if (quad[j] == '=') quad[j] = -128;
+				else if (quad[j] == '=') quad[j] = 64;
 				else quad[j] = 0;
 			};
 
@@ -1017,10 +1038,10 @@ void Sbecore::Xmlio::fromBase64(
 
 			(*outbuf)[3*i] = trip[0];
 
-			if (i == (cnt-1)) {
-				if (quad[2] != -128) {
+			if ((i+1) == cnt) {
+				if (quad[2] != 64) {
 					(*outbuf)[3*i+1] = trip[1];
-					if (quad[3] != -128) (*outbuf)[3*i+2] = trip[2];
+					if (quad[3] != 64) (*outbuf)[3*i+2] = trip[2];
 				};
 			} else {
 				(*outbuf)[3*i+1] = trip[1];
@@ -1156,7 +1177,7 @@ template<class T> void Sbecore::Xmlio::base64ToVec(
 		if ((len%varlen) == 0) {
 			if (!bigendian()) invertBuffer(buf, len/varlen, varlen);
 
-			vec.resize(len/varlen, 0);
+			vec.resize(len/varlen);
 			memcpy((void*) vec.data(), (void*) buf, len);
 		};
 
