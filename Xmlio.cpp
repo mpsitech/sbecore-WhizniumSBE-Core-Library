@@ -95,11 +95,11 @@ void Sbecore::Feeditem::cap(
 };
 
 bool Sbecore::Feeditem::readJSON(
-			Json::Value& sup
+			const Json::Value& sup
 			, const unsigned int ix
 			, const bool shorttags
 		) {
-	Json::Value& me = sup[ix];
+	const Json::Value& me = sup[ix];
 
 	bool found = me.isMember("num");
 
@@ -443,7 +443,7 @@ void Sbecore::Feed::cap(
 };
 
 bool Sbecore::Feed::readJSON(
-			Json::Value& sup
+			const Json::Value& sup
 			, bool addbasetag
 		) {
 	bool basefound;
@@ -457,8 +457,7 @@ bool Sbecore::Feed::readJSON(
 
 	Feeditem* item = NULL;
 
-	Json::Value& me = sup;
-	if (addbasetag) me = sup[tag];
+	const Json::Value& me = [&]{if (!addbasetag) return sup; return sup[tag];}();
 
 	basefound = (me != Json::nullValue);
 
@@ -567,7 +566,7 @@ void Sbecore::Feed::writeXML(
  ******************************************************************************/
 
 bool Sbecore::Jsonio::extractBoolvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<bool>& vec
 		) {
@@ -575,7 +574,7 @@ bool Sbecore::Jsonio::extractBoolvec(
 
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		str = me.asString();
@@ -590,13 +589,13 @@ bool Sbecore::Jsonio::extractBoolvec(
 };
 
 bool Sbecore::Jsonio::extractUtinyintvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<utinyint>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToUtinyintvec(me.asString().c_str(), me.asString().length(), vec);
@@ -607,13 +606,13 @@ bool Sbecore::Jsonio::extractUtinyintvec(
 };
 
 bool Sbecore::Jsonio::extractUsmallintvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<usmallint>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToVec<usmallint>(me.asString().c_str(), me.asString().length(), vec);
@@ -624,13 +623,13 @@ bool Sbecore::Jsonio::extractUsmallintvec(
 };
 
 bool Sbecore::Jsonio::extractIntvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<int>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToVec<int>(me.asString().c_str(), me.asString().length(), vec);
@@ -641,13 +640,13 @@ bool Sbecore::Jsonio::extractIntvec(
 };
 
 bool Sbecore::Jsonio::extractUintvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<uint>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToVec<uint>(me.asString().c_str(), me.asString().length(), vec);
@@ -658,13 +657,13 @@ bool Sbecore::Jsonio::extractUintvec(
 };
 
 bool Sbecore::Jsonio::extractUbigintvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<ubigint>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToVec<ubigint>(me.asString().c_str(), me.asString().length(), vec);
@@ -675,13 +674,13 @@ bool Sbecore::Jsonio::extractUbigintvec(
 };
 
 bool Sbecore::Jsonio::extractFloatvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<float>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToVec<float>(me.asString().c_str(), me.asString().length(), vec);
@@ -692,13 +691,13 @@ bool Sbecore::Jsonio::extractFloatvec(
 };
 
 bool Sbecore::Jsonio::extractFloatmat(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, Floatmat& mat
 		) {
 	bool valid;
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	valid = (me != Json::nullValue);
 
@@ -718,13 +717,13 @@ bool Sbecore::Jsonio::extractFloatmat(
 };
 
 bool Sbecore::Jsonio::extractDoublevec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<double>& vec
 		) {
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		Xmlio::base64ToVec<double>(me.asString().c_str(), me.asString().length(), vec);
@@ -735,13 +734,13 @@ bool Sbecore::Jsonio::extractDoublevec(
 };
 
 bool Sbecore::Jsonio::extractDoublemat(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, Doublemat& mat
 		) {
 	bool valid;
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	valid = (me != Json::nullValue);
 
@@ -761,7 +760,7 @@ bool Sbecore::Jsonio::extractDoublemat(
 };
 
 bool Sbecore::Jsonio::extractStringvec(
-			Json::Value& sup
+			const Json::Value& sup
 			, const string& tag
 			, vector<string>& vec
 		) {
@@ -769,7 +768,7 @@ bool Sbecore::Jsonio::extractStringvec(
 
 	vec.resize(0);
 
-	Json::Value& me = sup[tag];
+	const Json::Value& me = sup[tag];
 
 	if (me != Json::nullValue) {
 		s = Xmlio::fromUTF8(me.asString());

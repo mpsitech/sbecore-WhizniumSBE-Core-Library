@@ -83,7 +83,7 @@ namespace Sbecore {
 
 		void cap(const bool tit1 = true, const bool tit2 = false, const bool tit3 = false);
 
-		bool readJSON(Json::Value& me, const unsigned int ix, const bool shorttags);
+		bool readJSON(const Json::Value& me, const unsigned int ix, const bool shorttags);
 		bool readXML(xmlXPathContext* docctx, std::string basexpath, const unsigned int num, const bool shorttags);
 		void writeJSON(Json::Value& sup, const unsigned int num);
 		void writeXML(xmlTextWriter* wr, const unsigned int num, std::string difftag = "");
@@ -130,7 +130,7 @@ namespace Sbecore {
 
 		void cap(const bool tit1 = true, const bool tit2 = false, const bool tit3 = false);
 
-		bool readJSON(Json::Value& sup, bool addbasetag = false);
+		bool readJSON(const Json::Value& sup, bool addbasetag = false);
 		bool readXML(xmlXPathContext* docctx, std::string basexpath = "", bool addbasetag = false);
 		void writeJSON(Json::Value& sup, std::string difftag = "");
 		void writeXML(xmlTextWriter* wr, std::string difftag = "");
@@ -140,17 +140,17 @@ namespace Sbecore {
 		* Jsonio
 		*/
 	namespace Jsonio {
-		bool extractBoolvec(Json::Value& sup, const std::string& tag, std::vector<bool>& vec);
-		bool extractUtinyintvec(Json::Value& sup, const std::string& tag, std::vector<utinyint>& vec);
-		bool extractUsmallintvec(Json::Value& sup, const std::string& tag, std::vector<usmallint>& vec);
-		bool extractIntvec(Json::Value& sup, const std::string& tag, std::vector<int>& vec);
-		bool extractUintvec(Json::Value& sup, const std::string& tag, std::vector<uint>& vec);
-		bool extractUbigintvec(Json::Value& sup, const std::string& tag, std::vector<ubigint>& vec);
-		bool extractFloatvec(Json::Value& sup, const std::string& tag, std::vector<float>& vec);
-		bool extractFloatmat(Json::Value& sup, const std::string& tag, Floatmat& mat);
-		bool extractDoublevec(Json::Value& sup, const std::string& tag, std::vector<double>& vec);
-		bool extractDoublemat(Json::Value& sup, const std::string& tag, Doublemat& mat);
-		bool extractStringvec(Json::Value& sup, const std::string& tag, std::vector<std::string>& vec);
+		bool extractBoolvec(const Json::Value& sup, const std::string& tag, std::vector<bool>& vec);
+		bool extractUtinyintvec(const Json::Value& sup, const std::string& tag, std::vector<utinyint>& vec);
+		bool extractUsmallintvec(const Json::Value& sup, const std::string& tag, std::vector<usmallint>& vec);
+		bool extractIntvec(const Json::Value& sup, const std::string& tag, std::vector<int>& vec);
+		bool extractUintvec(const Json::Value& sup, const std::string& tag, std::vector<uint>& vec);
+		bool extractUbigintvec(const Json::Value& sup, const std::string& tag, std::vector<ubigint>& vec);
+		bool extractFloatvec(const Json::Value& sup, const std::string& tag, std::vector<float>& vec);
+		bool extractFloatmat(const Json::Value& sup, const std::string& tag, Floatmat& mat);
+		bool extractDoublevec(const Json::Value& sup, const std::string& tag, std::vector<double>& vec);
+		bool extractDoublemat(const Json::Value& sup, const std::string& tag, Doublemat& mat);
+		bool extractStringvec(const Json::Value& sup, const std::string& tag, std::vector<std::string>& vec);
 
 		void writeBoolvec(Json::Value& sup, const std::string& tag, const std::vector<bool>& vec);
 		void writeUtinyintvec(Json::Value& sup, const std::string& tag, const std::vector<utinyint>& vec);
