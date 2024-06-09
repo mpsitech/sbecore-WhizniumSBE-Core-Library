@@ -449,8 +449,11 @@ namespace Sbecore {
 	public:
 		void clear();
 		unsigned int size() const;
+		unsigned int getNInqueue() const;
 
 		void append(Resultitem* ri);
+
+		void reset();
 
 		// methods for writing to result (one writer / writing thread)
 		virtual void queue(const uint ix);
@@ -466,7 +469,13 @@ namespace Sbecore {
 		Mutex mAccess;
 
 		std::vector<Resultitem*> nodes;
-		std::list<uint> icsQueue;
+
+		//std::list<uint> icsQueue;
+		std::vector<uint> icsQueue;
+		unsigned int ptr0, ptr1;
+
+		std::vector<bool> inqueues;
+
 		std::list<lockref_t> locks;
 
 		Resultitem* operator[](const uint ix);

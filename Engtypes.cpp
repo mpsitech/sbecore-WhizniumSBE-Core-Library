@@ -1046,6 +1046,8 @@ Sbecore::Resultitem::Resultitem() {
 Sbecore::Result::Result() :
 			mAccess("mAccess", "Result", "Result")
 		{
+	ptr0 = 0; // icsQueue pointer for next dequeue
+	ptr1 = 0; // icsQueue pointer for next queue
 };
 
 Sbecore::Result::~Result() {
@@ -1057,6 +1059,10 @@ void Sbecore::Result::clear() {
 	nodes.resize(0);
 
 	icsQueue.clear();
+	ptr0 = 0;
+	ptr1 = 0;
+
+	inqueues.clear();
 
 	locks.clear();
 };
@@ -1065,22 +1071,58 @@ unsigned int Sbecore::Result::size() const {
 	return(nodes.size());
 };
 
+unsigned int Sbecore::Result::getNInqueue() const {
+	if (ptr1 > ptr0) return(ptr1 - ptr0);
+	return((ptr1 + size()) - ptr0);
+};
+
+void Sbecore::Result::reset() {
+	mAccess.lock("Result", "reset");
+
+	if (getNInqueue() == size()) {
+		for (unsigned int i = 0; i < size(); i++) icsQueue[i] = i;
+
+		ptr0 = 0;
+		ptr1 = 0;
+	};
+
+	mAccess.unlock("Result", "reset");
+};
+
 void Sbecore::Result::append(
 			Resultitem* ri
 		) {
-	nodes.push_back(ri);
+	mAccess.lock("Result", "append");
 
-	queue(nodes.size() - 1);
+	if (getNInqueue() == size()) {
+		nodes.push_back(ri);
+		icsQueue.resize(nodes.size(), 0);
+		inqueues.resize(nodes.size(), true);
+
+		ptr0 = 0;
+		ptr1 = 0;
+
+		reset();
+	};
+
+	mAccess.unlock("Result", "append");
 };
 
 void Sbecore::Result::queue(
 			const uint ix
 		) {
-	// append item to queue, without checking for duplicates 
+	// append item to queue, omit duplicates
 
 	mAccess.lock("Result", "queue", "ix=" + to_string(ix));
 
-	icsQueue.push_back(ix);
+	if (ix < size()) if (!inqueues[ix]) {
+		icsQueue[ptr1] = ix;
+
+		ptr1++;
+		if (ptr1 >= size()) ptr1 = 0;
+
+		inqueues[ix] = true;
+	};
 
 	mAccess.unlock("Result", "queue", "ix=" + to_string(ix));
 };
@@ -1094,9 +1136,13 @@ bool Sbecore::Result::dequeue(
 
 	mAccess.lock("Result", "dequeue", "ix=" + to_string(ix));
 
-	if (!icsQueue.empty()) {
-		ix = *icsQueue.begin();
-		icsQueue.erase(icsQueue.begin());
+	if (getNInqueue() > 0) {
+		ix = icsQueue[ptr0];
+
+		ptr0++;
+		if (ptr0 >= size()) ptr0 = 0;
+
+		inqueues[ix] = false;
 
 		success = true;
 	};
@@ -1116,25 +1162,15 @@ bool Sbecore::Result::lock(
 
 	lockref_t lockref(jref, ix);
 
-	bool found;
+	mAccess.lock("Result", "lock", "jref=" + to_string(jref) + ", ix=" + to_string(ix));
 
-	mAccess.lock("Result", "lock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
+	if (ix < nodes.size()) if (!inqueues[ix]) {
+		locks.push_back(lockref);
 
-	if (ix < nodes.size()) {
-		found = false;
-
-		for (auto it = icsQueue.begin(); it != icsQueue.end(); it++)
-			if (*it == ix) {
-				found = true;
-				break;
-			};
-
-		success = !found;
-
-		if (success) locks.push_back(lockref);
+		success = true;
 	};
 
-	mAccess.unlock("Result", "lock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
+	mAccess.unlock("Result", "lock", "jref=" + to_string(jref) + ", ix=" + to_string(ix));
 
 	return success;
 };
@@ -1149,25 +1185,27 @@ void Sbecore::Result::unlock(
 
 	bool found;
 
-	mAccess.lock("Result", "unlock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
+	mAccess.lock("Result", "unlock", "jref=" + to_string(jref) + ", ix=" + to_string(ix));
 
-	for (auto it = locks.begin(); it != locks.end(); it++)
-		if (*it == lockref) {
-			locks.erase(it);
-			break;
-		};
+	if (ix < nodes.size()) {
+		for (auto it = locks.begin(); it != locks.end(); it++)
+			if (*it == lockref) {
+				locks.erase(it);
+				break;
+			};
 
-	found = false;
+		found = false;
 
-	for (auto it = locks.begin(); it != locks.end(); it++)
-		if ((*it).ix == ix) {
-			found = true;
-			break;
-		};
+		for (auto it = locks.begin(); it != locks.end(); it++)
+			if ((*it).ix == ix) {
+				found = true;
+				break;
+			};
 
-	if (!found) queue(ix);
+		if (!found) queue(ix);
+	};
 
-	mAccess.unlock("Result", "unlock", "jref=" + to_string(jref) + ",ix=" + to_string(ix));
+	mAccess.unlock("Result", "unlock", "jref=" + to_string(jref) + ", ix=" + to_string(ix));
 };
 
 void Sbecore::Result::unlockByJref(
