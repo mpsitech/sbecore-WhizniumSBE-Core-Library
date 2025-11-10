@@ -39,7 +39,7 @@ void Sbecore::TxtMon::start(
 
 	t0 = getDt();
 
-	s = "./mon/period_" + to_string(lround(t0)) + ".txt";
+	s = monpath + "/period_" + to_string(lround(t0)) + ".txt";
 	monfile.open(s.c_str(), ios::out);
 	if (!monfile.is_open()) return;
 

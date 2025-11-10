@@ -1044,18 +1044,26 @@ Sbecore::Resultitem::Resultitem() {
  ******************************************************************************/
 
 Sbecore::Result::Result() :
-			mAccess("mAccess", "Result", "Result")
+			ext(NULL)
+			, mAccess("mAccess", "Result", "Result")
+			, ptr0(0)
+			, ptr1(0)
 		{
-	ptr0 = 0; // icsQueue pointer for next dequeue
-	ptr1 = 0; // icsQueue pointer for next queue
 };
 
 Sbecore::Result::~Result() {
 	clear();
 };
 
+unsigned int Sbecore::Result::getNInqueue() const {
+	if (ptr1 > ptr0) return(ptr1 - ptr0);
+	return((ptr1 + size()) - ptr0);
+};
+
 void Sbecore::Result::clear() {
-	for (unsigned int i = 0; i < size(); i++) delete nodes[i];
+	if (ext) return;
+
+	for (unsigned int i = 0; i < nodes.size(); i++) delete nodes[i];
 	nodes.resize(0);
 
 	icsQueue.clear();
@@ -1067,16 +1075,21 @@ void Sbecore::Result::clear() {
 	locks.clear();
 };
 
+void Sbecore::Result::setExternal(
+			Result* _ext
+		) {
+	ext = _ext;
+};
+
 unsigned int Sbecore::Result::size() const {
+	if (ext) return ext->size();
+
 	return(nodes.size());
 };
 
-unsigned int Sbecore::Result::getNInqueue() const {
-	if (ptr1 > ptr0) return(ptr1 - ptr0);
-	return((ptr1 + size()) - ptr0);
-};
-
 void Sbecore::Result::reset() {
+	if (ext) return;
+
 	mAccess.lock("Result", "reset");
 
 	if (getNInqueue() == size()) {
@@ -1092,6 +1105,8 @@ void Sbecore::Result::reset() {
 void Sbecore::Result::append(
 			Resultitem* ri
 		) {
+	if (ext) return;
+
 	mAccess.lock("Result", "append");
 
 	if (getNInqueue() == size()) {
@@ -1112,6 +1127,10 @@ void Sbecore::Result::queue(
 			const uint ix
 		) {
 	// append item to queue, omit duplicates
+	if (ext) {
+		ext->queue(ix);
+		return;
+	};
 
 	mAccess.lock("Result", "queue", "ix=" + to_string(ix));
 
@@ -1131,6 +1150,7 @@ bool Sbecore::Result::dequeue(
 			uint& ix
 		) {
 	// release first item from queue
+	if (ext) return ext->dequeue(ix);
 
 	bool success = false;
 
@@ -1157,6 +1177,7 @@ bool Sbecore::Result::lock(
 			, const uint ix
 		) {
 	// add lock to item, duplicates are allowed, only permissible if item not in queue
+	if (ext) return ext->lock(jref, ix);
 
 	bool success = false;
 
@@ -1180,6 +1201,10 @@ void Sbecore::Result::unlock(
 			, const uint ix
 		) {
 	// remove lock from item, without checking for duplicates, put back in queue if last lock on item removed
+	if (ext) {
+		ext->unlock(jref, ix);
+		return;
+	};
 
 	lockref_t lockref(jref, ix);
 
@@ -1212,6 +1237,10 @@ void Sbecore::Result::unlockByJref(
 			const ubigint jref
 		) {
 	// remove all locks associated with specified job / jref
+	if (ext) {
+		ext->unlockByJref(jref);
+		return;
+	};
 
 	bool found;
 
@@ -1237,7 +1266,8 @@ Sbecore::Resultitem* Sbecore::Result::operator[](
 		) {
 	Resultitem* ri = NULL;
 
-	if (ix < nodes.size()) ri = nodes[ix];
+	if (ext) ri = ext->operator[](ix);
+	else if (ix < nodes.size()) ri = nodes[ix];
 
 	return ri;
 };

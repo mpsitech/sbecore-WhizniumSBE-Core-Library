@@ -446,10 +446,14 @@ namespace Sbecore {
 		Result();
 		virtual ~Result();
 
+	private:
+		unsigned int getNInqueue() const;
+
 	public:
+		void setExternal(Result* ext);
+
 		void clear();
 		unsigned int size() const;
-		unsigned int getNInqueue() const;
 
 		void append(Resultitem* ri);
 
@@ -465,20 +469,23 @@ namespace Sbecore {
 		void unlock(const ubigint jref, const uint ix);
 		void unlockByJref(const ubigint jref);
 
-	public:
+		Resultitem* operator[](const uint ix);
+
+	private:
+		Result* ext;
+
 		Mutex mAccess;
 
 		std::vector<Resultitem*> nodes;
 
-		//std::list<uint> icsQueue;
 		std::vector<uint> icsQueue;
-		unsigned int ptr0, ptr1;
+
+		unsigned int ptr0; // icsQueue pointer for next dequeue
+		unsigned int ptr1; // icsQueue pointer for next queue
 
 		std::vector<bool> inqueues;
 
 		std::list<lockref_t> locks;
-
-		Resultitem* operator[](const uint ix);
 	};
 };
 #endif
