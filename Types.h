@@ -175,7 +175,7 @@ namespace Sbecore {
 		std::string uncap(const std::string& s);
 		std::string lc(const std::string& s);
 		std::string uc(const std::string& s);
-		std::string spcex(const std::string& s);
+		std::string charex(const std::string& s, const char c = ' ');
 		std::string esc(const std::string& s);
 		std::string dotToUsc(const std::string& s);
 		std::string uscToCap(const std::string& s);

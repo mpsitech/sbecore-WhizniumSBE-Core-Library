@@ -30,6 +30,7 @@ Sbecore::TxtMon::~TxtMon() {
 void Sbecore::TxtMon::start(
 			const string& Version
 			, const string& monpath
+			, const double t0
 		) {
 	lockAccess("TxtMon", "start");
 
@@ -37,13 +38,21 @@ void Sbecore::TxtMon::start(
 	
 	if (monfile.is_open()) stop();
 
-	t0 = getDt();
+	if (t0 == 0.0) this->t0 = getDt();
+	else this->t0 = t0;
 
-	s = monpath + "/period_" + to_string(lround(t0)) + ".txt";
+	s = monpath + "/period_" + to_string(lround(this->t0)) + ".txt";
 	monfile.open(s.c_str(), ios::out);
-	if (!monfile.is_open()) return;
 
-	monfile << "[" << Ftm::stamp(lround(t0)) << "] starting monitoring period for version " << Version << endl;
+	if (!monfile.is_open()) {
+		this->t0 = 0.0;
+		return;
+	};
+
+	monfile << "[" << Ftm::stamp(lround(this->t0)) << "] starting monitoring period for version " << Version << endl;
+	monfile << endl;
+
+	monfile << "time [s]\tobject type\tobject reference\tevent" << endl;
 
 	unlockAccess("TxtMon", "start");
 };
@@ -52,6 +61,7 @@ void Sbecore::TxtMon::stop() {
 	lockAccess("TxtMon", "stop");
 
 	if (monfile.is_open()) {
+		monfile << endl;
 		monfile << "[" << Ftm::stamp(lround(t0 + getDt())) << "] stopping monitoring period" << endl;
 		
 		monfile.close();
@@ -79,7 +89,7 @@ void Sbecore::TxtMon::insertJob(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "insertJob");
 
-	monfile << "job/" << xjref << ": inserted " << srefIxVJob;
+	monfile << "\tjob\t" << xjref << "\tinserted " << srefIxVJob;
 	if (xjref != 0) monfile << " as sub-job to " << supXjref;
 	if (Clisrv) {
 		if (!srvNotCli) monfile << " as client";
@@ -109,7 +119,7 @@ void Sbecore::TxtMon::insertClstn(
 	
 	string s;
 	
-	monfile << "call listener/" << ref << ": inserted call listener for " << srefIxVTarget;
+	monfile << "\tcall listener\t" << ref << "\tinserted call listener for " << srefIxVTarget;
 	if (xjref != 0) monfile << "/" << xjref;
 	monfile << " to call " << srefIxVCall;
 	monfile << " with triggering job mask " << srefIxVJobmask;
@@ -133,7 +143,7 @@ void Sbecore::TxtMon::insertPreset(
 
 	ubigint ref = presetseq.getNewRef();
 	
-	monfile << "presetting/" << ref << ": inserted presetting " << srefIxVPreset << " for job " << xjref << " with argument " << arg.to_string() << endl;
+	monfile << "\tpresetting\t" << ref << "\tinserted presetting " << srefIxVPreset << " for job " << xjref << " with argument " << arg.to_string() << endl;
 
 	unlockAccess("TxtMon", "insertPreset");
 };
@@ -147,7 +157,7 @@ void Sbecore::TxtMon::insertNode(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "insertNode");
 
-	monfile << "node/" << xnref << ": inserted node " << Ip << ":" << Port << " with " << ((uint) Opprcn) << " operation processors" << endl;
+	monfile << "\tnode\t" << xnref << "\tinserted node " << Ip << ":" << Port << " with " << ((uint) Opprcn) << " operation processors" << endl;
 
 	unlockAccess("TxtMon", "insertNode");
 };
@@ -162,7 +172,7 @@ void Sbecore::TxtMon::eventAddJob(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventAddJob");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": added " << srefIxVJob;
+	monfile << getDt() << "\tjob\t" << xjref << "\tadded " << srefIxVJob;
 	if (xjref != 0) monfile << " as sub-job to " << supXjref;
 	if (Clisrv) {
 		if (!srvNotCli) monfile << " as client";
@@ -190,7 +200,7 @@ void Sbecore::TxtMon::eventAddDcol(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventAddDcol");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": added dispatch collector" << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\tadded dispatch collector" << endl;
 
 	unlockAccess("TxtMon", "eventAddDcol");
 };
@@ -201,7 +211,7 @@ void Sbecore::TxtMon::eventRemoveDcol(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventRemoveDcol");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": removed dispatch collector" << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\tremoved dispatch collector" << endl;
 
 	unlockAccess("TxtMon", "eventRemoveDcol");
 };
@@ -212,7 +222,7 @@ void Sbecore::TxtMon::eventAddStmgr(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventAddStmgr");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": added stub manager" << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\tadded stub manager" << endl;
 
 	unlockAccess("TxtMon", "eventAddStmgr");
 };
@@ -223,7 +233,7 @@ void Sbecore::TxtMon::eventRemoveStmgr(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventRemoveStmgr");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": removed stub manager" << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\tremoved stub manager" << endl;
 
 	unlockAccess("TxtMon", "eventRemoveStmgr");
 };
@@ -245,7 +255,7 @@ void Sbecore::TxtMon::eventAddClstn(
 	
 	string s;
 
-	monfile << "[" << getDt() << "] call listener/" << ref << ": added call listener for " << srefIxVTarget;
+	monfile << getDt() << "\tcall listener\t" << ref << "\tadded call listener for " << srefIxVTarget;
 	if (xjref != 0) monfile << "/" << xjref;
 	monfile << " to call " << srefIxVCall;
 	monfile << " with triggering job mask " << srefIxVJobmask;
@@ -280,7 +290,7 @@ void Sbecore::TxtMon::eventChangeClstnArg(
 	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, Clstn::VecVJobmask::getIx(srefIxVJobmask), xjrefTrig, argFind, ixVSge));
 	
 	if (it != refsClstn.end()) {
-		monfile << "[" << getDt() << "] call listener/" << it->second << ": changed argument mask to " << arg.to_string() << endl;
+		monfile << getDt() << "\tcall listener\t" << it->second << "\tchanged argument mask to " << arg.to_string() << endl;
 	};
 
 	unlockAccess("TxtMon", "eventChangeClstnArg");
@@ -307,7 +317,7 @@ void Sbecore::TxtMon::eventRemoveClstn(
 	auto it = refsClstn.find(xclstnref_t(xjref, srefIxVTarget, srefIxVCall, Clstn::VecVJobmask::getIx(srefIxVJobmask), xjrefTrig, argFind, ixVSge));
 	
 	if (it != refsClstn.end()) {
-		monfile << "[" << getDt() << "] call listener/" << it->second << ": removed call listener" << endl;
+		monfile << getDt() << "\tcall listener\t" << it->second << "\tremoved call listener" << endl;
 	};
 
 	unlockAccess("TxtMon", "eventRemoveClstn");
@@ -323,7 +333,7 @@ void Sbecore::TxtMon::eventAddPreset(
 
 	ubigint ref = presetseq.getNewRef();
 	
-	monfile << "[" << getDt() << "] presetting/" << ref << ": added presetting " << srefIxVPreset << " for job " << xjref << " with argument " << arg.to_string() << endl;
+	monfile << getDt() << "\tpresetting\t" << ref << "\tadded presetting " << srefIxVPreset << " for job " << xjref << " with argument " << arg.to_string() << endl;
 
 	unlockAccess("TxtMon", "eventAddPreset");
 };
@@ -339,7 +349,7 @@ void Sbecore::TxtMon::eventChangePreset(
 	auto it = refsPreset.find(xpresetref_t(xjref, srefIxVPreset));
 
 	if (it != refsPreset.end()) {
-		monfile << "[" << getDt() << "] presetting/" << it->second << ": changed presetting argument to " << arg.to_string() << endl;
+		monfile << getDt() << "\tpresetting\t" << it->second << "\tchanged presetting argument to " << arg.to_string() << endl;
 	};
 
 	unlockAccess("TxtMon", "eventChangePreset");
@@ -355,7 +365,7 @@ void Sbecore::TxtMon::eventRemovePreset(
 	auto it = refsPreset.find(xpresetref_t(xjref, srefIxVPreset));
 
 	if (it != refsPreset.end()) {
-		monfile << "[" << getDt() << "] presetting/" << it->second << ": removed presetting" << endl;
+		monfile << getDt() << "\tpresetting\t" << it->second << "\tremoved presetting" << endl;
 	};
 
 	unlockAccess("TxtMon", "eventRemovePreset");
@@ -370,7 +380,7 @@ void Sbecore::TxtMon::eventAddNode(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventAddNode");
 
-	monfile << "[" << getDt() << "] node/" << xnref << ": added node " << Ip << ":" << Port << " with " << ((uint) Opprcn) << " operation processors" << endl;
+	monfile << getDt() << "\tnode\t" << xnref << "\tadded node " << Ip << ":" << Port << " with " << ((uint) Opprcn) << " operation processors" << endl;
 
 	unlockAccess("TxtMon", "eventAddNode");
 };
@@ -381,7 +391,7 @@ void Sbecore::TxtMon::eventRemoveNode(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventRemoveNode");
 
-	monfile << "[" << getDt() << "] node/" << xnref << ": removed node" << endl;
+	monfile << getDt() << "\tnode\t" << xnref << "\tremoved node" << endl;
 
 	unlockAccess("TxtMon", "eventRemoveNode");
 };
@@ -396,7 +406,7 @@ Sbecore::ubigint Sbecore::TxtMon::eventTriggerCall(
 
 	ubigint eref = erefseq.getNewRef();
 
-	monfile << "[" << getDt() << "] call/" << eref << ": triggering call " << srefIxVCall;
+	monfile << getDt() << "\tcall\t" << eref << "\ttriggering call " << srefIxVCall;
 	if (xjref != 0) monfile << " from job " << xjref;
 	monfile << " with argument " << argInv.to_string() << endl;
 
@@ -412,7 +422,7 @@ void Sbecore::TxtMon::eventHandleCall(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventHandleCall");
 
-	monfile << "[" << getDt() << "] call/" << eref << ": handling call in job " << xjref << endl;
+	monfile << getDt() << "\tcall\t" << eref << "\thandling call in job " << xjref << endl;
 
 	unlockAccess("TxtMon", "eventHandleCall");
 };
@@ -425,7 +435,7 @@ void Sbecore::TxtMon::eventRetCall(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventRetCall");
 
-	monfile << "[" << getDt() << "] call/" << eref << ": job " << xjref << " returning argument " << argRet.to_string() << endl;
+	monfile << getDt() << "\tcall\t" << eref << "\tjob " << xjref << " returning argument " << argRet.to_string() << endl;
 
 	unlockAccess("TxtMon", "eventRetCall");
 };
@@ -436,7 +446,7 @@ void Sbecore::TxtMon::eventFinalizeCall(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventFinalizeCall");
 
-	monfile << "[" << getDt() << "] call/" << eref << ": finalizing call" << endl;
+	monfile << getDt() << "\tcall\t" << eref << "\tfinalizing call" << endl;
 
 	unlockAccess("TxtMon", "eventFinalizeCall");
 };
@@ -448,7 +458,7 @@ void Sbecore::TxtMon::eventHandleReqCmd(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventHandleReqCmd");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": handling command request " << Cmd << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\thandling command request " << Cmd << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqCmd");
 };
@@ -464,7 +474,7 @@ Sbecore::ubigint Sbecore::TxtMon::eventHandleReqDpchapp(
 
 	ubigint eref = erefseq.getNewRef();
 
-	monfile << "[" << getDt() << "] app request/" << eref << ": job " << xjref << " handling app dispatch " << srefIxVDpch << "{" << srefsMask << "}" << endl;
+	monfile << getDt() << "\tapp request\t" << eref << "\tjob " << xjref << " handling app dispatch " << srefIxVDpch << "{" << srefsMask << "}" << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqDpchapp");
 
@@ -481,7 +491,7 @@ void Sbecore::TxtMon::eventReplyReqDpchapp(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventReplyReqDpchapp");
 
-	monfile << "[" << getDt() << "] app request/" << eref << ": job " << xjref << " replying with engine dispatch " << srefIxVDpch << "{" << srefsMask << "}" << endl;
+	monfile << getDt() << "\tapp request\t" << eref << "\tjob " << xjref << " replying with engine dispatch " << srefIxVDpch << "{" << srefsMask << "}" << endl;
 
 	unlockAccess("TxtMon", "eventReplyReqDpchapp");
 };
@@ -493,7 +503,7 @@ void Sbecore::TxtMon::eventHandleReqUpload(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventHandleReqUpload");
 
-	monfile << "[" << getDt() << "] upload request: job " << xjref << " handling upload of file " << Filename << endl;
+	monfile << getDt() << "\tupload request\t\tjob " << xjref << " handling upload of file " << Filename << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqUpload");
 };
@@ -506,7 +516,7 @@ Sbecore::ubigint Sbecore::TxtMon::eventHandleReqDownload(
 
 	ubigint eref = erefseq.getNewRef();
 
-	monfile << "[" << getDt() << "] download request/" << eref << ": job " << xjref << " handling download" << endl;
+	monfile << getDt() << "\tdownload request\t" << eref << "\tjob " << xjref << " handling download" << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqDownload");
 	
@@ -521,7 +531,7 @@ void Sbecore::TxtMon::eventReplyReqDownload(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventReplyReqDownload");
 
-	monfile << "[" << getDt() << "] download request/" << eref << ": job " << xjref << " replying with file " << Filename << endl;
+	monfile << getDt() << "\tdownload request\t" << eref << "\tjob " << xjref << " replying with file " << Filename << endl;
 
 	unlockAccess("TxtMon", "eventReplyReqDownload");
 };
@@ -535,7 +545,7 @@ void Sbecore::TxtMon::eventHandleReqDpchret(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventHandleReqDpchret");
 
-	monfile << "[" << getDt() << "] operation/" << xoref << ": job " << xjref << " handling operation return request " << srefIxVDpch << endl;
+	monfile << getDt() << "\toperation\t" << xoref << "\tjob " << xjref << " handling operation return request " << srefIxVDpch << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqDpchret");
 };
@@ -548,7 +558,7 @@ void Sbecore::TxtMon::eventHandleReqMethod(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventHandleReqMethod");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": handling method request " << srefIxVFeatgroup << "." << srefIxVMethod << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\thandling method request " << srefIxVFeatgroup << "." << srefIxVMethod << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqMethod");
 };
@@ -560,7 +570,7 @@ void Sbecore::TxtMon::eventHandleReqTimer(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventHandleReqTimer");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": handling timer request with identifier " << xsref << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\thandling timer request with identifier " << xsref << endl;
 
 	unlockAccess("TxtMon", "eventHandleReqTimer");
 };
@@ -574,7 +584,7 @@ void Sbecore::TxtMon::eventSubmitDpch(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventSubmitDpch");
 
-	monfile << "[" << getDt() << "] job/" << xjref << ": submitting engine dispatch " << srefIxVDpch << "{" << srefsMask << "}" << endl;
+	monfile << getDt() << "\tjob\t" << xjref << "\tsubmitting engine dispatch " << srefIxVDpch << "{" << srefsMask << "}" << endl;
 
 	unlockAccess("TxtMon", "eventSubmitDpch");
 };
@@ -588,7 +598,7 @@ void Sbecore::TxtMon::eventAddInv(
 	if (!monfile.is_open()) return;
 	lockAccess("TxtMon", "eventAddInv");
 
-	monfile << "[" << getDt() << "] operation/" << xoref << ": job " << xjref << " adding operation invocation request " << srefIxVDpch << endl;
+	monfile << getDt() << "\toperation\t" << xoref << "\tjob " << xjref << " adding operation invocation request " << srefIxVDpch << endl;
 
 	unlockAccess("TxtMon", "eventAddInv");
 };

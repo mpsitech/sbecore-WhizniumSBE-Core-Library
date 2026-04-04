@@ -38,7 +38,7 @@ namespace Sbecore {
 		std::map<xpresetref_t,ubigint> refsPreset; // {xjref,srefIxVPreset} -> TblWzemMPreset.ref for DBS / scrRefWzemMPreset for API
 
 	public:
-		void start(const std::string& Version, const uint ixDbsVDbstype, const std::string& dbspath, const std::string& dbsname, const std::string& ip, const uint port, const std::string& dbsusername, const std::string& dbspassword, const std::string& username, const std::string& password);
+		void start(const std::string& Version, const uint ixDbsVDbstype, const std::string& dbspath, const std::string& dbsname, const std::string& ip, const uint port, const std::string& dbsusername, const std::string& dbspassword, const std::string& username, const std::string& password, const double t0 = 0.0);
 		void stop();
 
 		void insertJob(const ubigint supXjref, const std::string& srefIxVJob, const ubigint xjref, const bool Clisrv, const bool srvNotCli, const bool Dcol, const bool Stmgr);

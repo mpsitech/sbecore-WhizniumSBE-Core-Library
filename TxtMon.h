@@ -32,7 +32,7 @@ namespace Sbecore {
 		Refseq erefseq;
 
 	public:
-		void start(const std::string& Version, const std::string& monpath);
+		void start(const std::string& Version, const std::string& monpath, const double t0 = 0.0);
 		void stop();
 
 		void insertJob(const ubigint supXjref, const std::string& srefIxVJob, const ubigint xjref, const bool Clisrv, const bool srvNotCli, const bool Dcol, const bool Stmgr);

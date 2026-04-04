@@ -672,13 +672,14 @@ string Sbecore::StrMod::uc(
 	return(retval);
 };
 
-string Sbecore::StrMod::spcex(
+string Sbecore::StrMod::charex(
 			const string& s
+			, const char c
 		) {
 	string retval = s;
 
-	while (retval.length() > 0) if (retval[0] == ' ') retval = retval.substr(1); else break;
-	if (retval.length() > 0) while (retval[retval.length()-1] == ' ') retval = retval.substr(0, retval.length()-1);
+	while (retval.length() > 0) if (retval[0] == c) retval = retval.substr(1); else break;
+	if (retval.length() > 0) while (retval[retval.length()-1] == c) retval = retval.substr(0, retval.length()-1);
 
 	return(retval);
 };
@@ -848,7 +849,7 @@ void Sbecore::StrMod::stringToVector(
 	if (start < len) vec.push_back(str.substr(start));
 	else if (start == len) if (len != 0) if (str[start-1] == sep) vec.push_back("");
 
-	if (crop) for (unsigned int i = 0; i < vec.size(); i++) vec[i] = spcex(vec[i]);
+	if (crop) for (unsigned int i = 0; i < vec.size(); i++) vec[i] = charex(vec[i], ' ');
 };
 
 void Sbecore::StrMod::stringToDoublevec(
@@ -1063,7 +1064,7 @@ Sbecore::Version::Version(
 	vector<string> ss;
 	string s;
 
-	s = StrMod::spcex(_s);
+	s = StrMod::charex(_s, ' ');
 	if (s.length() > 0) if ((s[0] == 'V') || (s[0] == 'v')) s = s.substr(1);
 
 	StrMod::stringToVector(s, ss, '.');

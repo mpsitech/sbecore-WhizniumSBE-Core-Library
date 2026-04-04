@@ -68,7 +68,7 @@ Sbecore::Txtrd::Txtrd(
 Sbecore::Txtrd::~Txtrd() {
 	if (infile.is_open()) infile.close();
 	delete[] buf;
-	iconv_close(conv);
+	if (conv != ((iconv_t) -1)) iconv_close(conv);
 
 	if (rectfile.is_open()) rectfile.close();
 };
@@ -88,7 +88,7 @@ bool Sbecore::Txtrd::readLine() {
 	char* outbuf;
 	size_t outlen;
 
-	size_t Nconv;
+	size_t NConv;
 
 	bool findil;
 
@@ -124,17 +124,19 @@ bool Sbecore::Txtrd::readLine() {
 	outbuf = buf;
 	outlen = 4095;
 
-	Nconv = iconv(conv, &inbuf, &inlen, &outbuf, &outlen);
+	if (conv != ((iconv_t) -1)) {
+		NConv = iconv(conv, &inbuf, &inlen, &outbuf, &outlen);
 
-	if (Nconv == ((size_t) -1)) {
-		//cout << "returning because of iconv problem (" << errno << "): s='" << s << "' inlen=" << inlen << ", outlen=" << outlen << endl;
-		return false;
-	};
+		if (NConv == ((size_t) -1)) {
+			cout << "returning because of iconv problem (" << errno << "): s='" << s << "', inlen=" << inlen << ", outlen=" << outlen << endl;
+			return false;
+		};
 
-	if (Nconv > 0) {
-		//cout << "line " << linecnt << " modified by iconv" << endl;
-		buf[4095 - outlen] = '\0';
-		s = string(buf);
+		if (NConv > 0) {
+			//cout << "line " << linecnt << " modified by iconv" << endl;
+			buf[4095 - outlen] = '\0';
+			s = string(buf);
+		};
 	};
 
 	strISO8859(s);

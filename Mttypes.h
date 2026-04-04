@@ -41,7 +41,7 @@ namespace Sbecore {
 	class Cond {
 
 	public:
-		Cond(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		Cond(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "", const bool nomon = false);
 		~Cond();
 
 	private:
@@ -54,6 +54,7 @@ namespace Sbecore {
 	#endif
 
 		std::string sref;
+		bool nomon;
 
 	public:
 		void lockMutex(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
@@ -67,24 +68,34 @@ namespace Sbecore {
 	};
 
 	/**
-		* Mt
+		* MtMon
 		*/
-	namespace Mt {
+	namespace MtMon {
 		/**
-			* VecVVerbose
+			* VecVLevel
 			*/
-		namespace VecVVerbose {
-			const uint OFF = 1;
+		namespace VecVLevel {
+			const uint VOID = 1;
 			const uint ERROR = 2;
 			const uint ALL = 3;
 		};
 
-		std::string getTid(const bool textNotBare = false);
+		extern pthread_mutex_t mAccess;
+		extern uint ixVLevel;
+		extern std::fstream monfile;
+		extern double t0;
 
-		void logDebug(const std::string& what, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
-		void logError(const int res, const std::string& err, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		bool isRunning();
 
-		extern uint ixVVerbose;
+		double getDt();
+
+		void start(const std::string& Version, const uint ixVLevel, const std::string& monpath, const double t0 = 0.0);
+		void stop(const bool skiplock = false);
+
+		std::string getTid();
+
+		void debug(const std::string& what, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		void error(const int res, const std::string& err, const std::string& srefCondMutex = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
 	};
 
 	/**
@@ -93,7 +104,7 @@ namespace Sbecore {
 	class Mutex {
 
 	public:
-		Mutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		Mutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "", const bool nomon = false);
 		~Mutex();
 
 	private:
@@ -104,6 +115,7 @@ namespace Sbecore {
 	#endif
 
 		std::string sref;
+		bool nomon;
 
 	public:
 		void lock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
@@ -121,7 +133,7 @@ namespace Sbecore {
 		// a read lock cannot be bumped up to become a write lock
 
 	public:
-		Rwmutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
+		Rwmutex(const std::string& sref = "", const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "", const bool nomon = false);
 		~Rwmutex();
 
 	private:
@@ -143,6 +155,7 @@ namespace Sbecore {
 		unsigned int w;
 
 		std::string sref;
+		bool nomon;
 
 	public:
 		void rlock(const std::string& srefObject = "", const std::string& srefMember = "", const std::string& args = "");
@@ -176,13 +189,13 @@ namespace Sbecore {
 		* Scr
 		*/
 	namespace Scr {
-		std::string scramble(const ubigint ref);
-		ubigint descramble(const std::string& scrRef);
-		std::string random();
-
 		extern Rwmutex rwm;
 		extern std::map<ubigint,std::string> scr;
 		extern std::map<std::string,ubigint> descr;
+
+		std::string scramble(const ubigint ref);
+		ubigint descramble(const std::string& scrRef);
+		std::string random();
 	};
 };
 #endif

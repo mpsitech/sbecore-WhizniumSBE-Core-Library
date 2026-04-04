@@ -133,7 +133,7 @@ void Sbecore::Mon::unlockAccess(
 	mAccess.unlock(srefObject, srefMember);
 };
 
-bool Sbecore::Mon::isRunning() {
+bool Sbecore::Mon::isRunning() const {
 	return(t0 != 0.0);
 };
 

@@ -67,7 +67,7 @@ namespace Sbecore {
 		void lockAccess(const std::string& srefObject, const std::string& srefMember);
 		void unlockAccess(const std::string& srefObject, const std::string& srefMember);
 
-		bool isRunning();
+		bool isRunning() const;
 		std::string getSquawk(const std::string& srefLocale);
 
 		double getDt();

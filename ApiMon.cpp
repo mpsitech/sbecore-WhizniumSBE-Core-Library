@@ -35,7 +35,9 @@ void Sbecore::ApiMon::init(
 void Sbecore::ApiMon::term() {
 };
 
-void Sbecore::ApiMon::start() {
+void Sbecore::ApiMon::start(
+			const double t0
+		) {
 };
 
 void Sbecore::ApiMon::stop() {

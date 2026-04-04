@@ -40,6 +40,7 @@ void Sbecore::DbsMon::start(
 			, const string& dbspassword
 			, const string& username
 			, const string& password
+			, const double t0
 		) {
 	lockAccess("DbsMon", "start");
 
@@ -56,9 +57,10 @@ void Sbecore::DbsMon::start(
 	WzemMUser* usr = NULL;
 
 	if (dbswzem->tblwzemmuser->loadRecBySQL("SELECT * FROM TblWzemMUser WHERE sref = '" + username + "' AND Password = '" + password + "'", &usr)) {
-		t0 = getDt();
+		if (t0 == 0.0) this->t0 = getDt();
+		else this->t0 = t0;
 
-		dbswzem->tblwzemmperiod->insertNewRec(&prd, usr->ref, usr->refWzemMUsergroup, Version, lround(t0), 0);
+		dbswzem->tblwzemmperiod->insertNewRec(&prd, usr->ref, usr->refWzemMUsergroup, Version, lround(this->t0), 0);
 		delete usr;
 	};
 

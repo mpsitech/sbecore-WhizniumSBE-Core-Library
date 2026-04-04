@@ -33,7 +33,7 @@ namespace Sbecore {
 		std::string password;
 
 	public:
-		void start();
+		void start(const double t0 = 0.0);
 		void stop();
 
 		void insertJob(const ubigint supXjref, const std::string& srefIxVJob, const ubigint xjref, const bool Clisrv, const bool srvNotCli, const bool Dcol, const bool Stmgr);
