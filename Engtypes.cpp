@@ -1056,7 +1056,8 @@ Sbecore::Result::~Result() {
 };
 
 unsigned int Sbecore::Result::getNInqueue() const {
-	if (ptr1 > ptr0) return(ptr1 - ptr0);
+	if (ptr1 == size()) return size();
+	if (ptr1 >= ptr0) return(ptr1 - ptr0);
 	return((ptr1 + size()) - ptr0);
 };
 
@@ -1096,7 +1097,7 @@ void Sbecore::Result::reset() {
 		for (unsigned int i = 0; i < size(); i++) icsQueue[i] = i;
 
 		ptr0 = 0;
-		ptr1 = 0;
+		ptr1 = size();
 	};
 
 	mAccess.unlock("Result", "reset");
@@ -1111,13 +1112,14 @@ void Sbecore::Result::append(
 
 	if (getNInqueue() == size()) {
 		nodes.push_back(ri);
-		icsQueue.resize(nodes.size(), 0);
+
+		icsQueue.resize(nodes.size());
+		for (unsigned int i = 0; i < size(); i++) icsQueue[i] = i;
+
 		inqueues.resize(nodes.size(), true);
 
 		ptr0 = 0;
-		ptr1 = 0;
-
-		reset();
+		ptr1 = size();
 	};
 
 	mAccess.unlock("Result", "append");
@@ -1139,6 +1141,7 @@ void Sbecore::Result::queue(
 
 		ptr1++;
 		if (ptr1 >= size()) ptr1 = 0;
+		if (ptr1 == ptr0) ptr1 = size();
 
 		inqueues[ix] = true;
 	};
@@ -1159,6 +1162,7 @@ bool Sbecore::Result::dequeue(
 	if (getNInqueue() > 0) {
 		ix = icsQueue[ptr0];
 
+		if (ptr1 == size()) ptr1 = ptr0;
 		ptr0++;
 		if (ptr0 >= size()) ptr0 = 0;
 
